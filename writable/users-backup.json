@@ -1,0 +1,26 @@
+[
+    {
+        "name": "Super Admin",
+        "email": "admin@universalhelpdesk.local",
+        "password_hash": "$2y$12$fbwFnabw3UFYPgI\/lrEWkuWLYz.Q7ldgC1cicXy0QO1QHtMxWXsz.",
+        "role": "superadmin",
+        "department": null,
+        "is_active": 1
+    },
+    {
+        "name": "Kenneth",
+        "email": "kenneth@email.com",
+        "password_hash": "$2y$12$uuYYXvX2kO724L2zH.BIk.ZDiM84oBGdsL9HksfT7dUTV4aZpgR7O",
+        "role": "agent",
+        "department": "IT",
+        "is_active": 1
+    },
+    {
+        "name": "Paul Vincent Javier Alcantara",
+        "email": "paulvincentj.alcantara@gmail.com",
+        "password_hash": "$2y$10$VRrHMGCnaoOL2pSbf9HXee4fVEbMjnWwwy.frB7ar4Q571zhy6HqG",
+        "role": "requester",
+        "department": null,
+        "is_active": 1
+    }
+]
