@@ -52,7 +52,6 @@ class TicketModel extends Model
         'responsible_department' => 'responsible_department',
         'description'            => 'description',
         'expected_deliverable'   => 'expected_deliverable',
-        'suggested_tat'          => 'suggested_tat',
         'requirements_needed'    => 'requirements_needed',
         'closure_criteria'       => 'closure_criteria',
         'matched_catalogue_key'  => 'matched_catalogue_key',

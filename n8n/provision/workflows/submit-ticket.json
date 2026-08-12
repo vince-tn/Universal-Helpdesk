@@ -16,7 +16,10 @@
       },
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "id": "b309534e-6407-4eed-a055-a32fc711c0ad",
       "name": "Webhook",
       "webhookId": "06c817a7-ed79-4f47-a7c8-6b037ac56a77"
@@ -86,7 +89,10 @@
       },
       "type": "@n8n/n8n-nodes-langchain.informationExtractor",
       "typeVersion": 1.2,
-      "position": [220, 0],
+      "position": [
+        220,
+        0
+      ],
       "id": "d6136e89-4481-4d4d-b61a-d72693ec6904",
       "name": "Information Extractor",
       "onError": "continueRegularOutput"
@@ -98,7 +104,10 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
       "typeVersion": 1,
-      "position": [240, 200],
+      "position": [
+        240,
+        200
+      ],
       "id": "7107a44c-f672-430e-bf5a-fd810950f1d9",
       "name": "Ollama Chat Model",
       "credentials": {
@@ -114,7 +123,10 @@
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [460, 0],
+      "position": [
+        460,
+        0
+      ],
       "id": "5b1a77c0-9f2e-4c31-8a10-2c7d61b9f001",
       "name": "Escalation Gate"
     },
@@ -144,7 +156,10 @@
       },
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
-      "position": [680, 0],
+      "position": [
+        680,
+        0
+      ],
       "id": "1f17cea8-ebc5-4f96-9bab-f0859cc9921a",
       "name": "Escalate to Gemini?"
     },
@@ -213,7 +228,10 @@
       },
       "type": "@n8n/n8n-nodes-langchain.informationExtractor",
       "typeVersion": 1.2,
-      "position": [900, -160],
+      "position": [
+        900,
+        -160
+      ],
       "id": "794b2d2c-6ac3-4ba6-be70-c8b2b18a3852",
       "name": "Information Extractor1",
       "onError": "continueRegularOutput"
@@ -225,7 +243,10 @@
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1.1,
-      "position": [920, 40],
+      "position": [
+        920,
+        40
+      ],
       "id": "8304aae8-90dd-4433-b2e8-982ffa94266b",
       "name": "Google Gemini Chat Model",
       "credentials": {
@@ -252,7 +273,10 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [1140, -160],
+      "position": [
+        1140,
+        -160
+      ],
       "id": "a7014c34-74c8-4f79-a7b4-4162d07a2972",
       "name": "Tag Source: Gemini"
     },
@@ -273,17 +297,23 @@
       },
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
-      "position": [900, 180],
+      "position": [
+        900,
+        180
+      ],
       "id": "6090fafe-a481-48b9-8030-401f67ab85d9",
       "name": "Tag Source: Local"
     },
     {
       "parameters": {
-        "jsCode": "// Chikiting System - overlays the approved catalogue wording, verbatim, and\n// writes the first thing the requester reads back on their ticket.\n//\n// This workflow only classifies and drafts. CodeIgniter persists the result,\n// so there is one writer and one source of truth.\n//\n// Exactly one branch reaches here per request - local or escalated - so this\n// runs once either way.\n\nconst CATALOG = {\n  ADVERTISING_MATERIALS_REVIEW: {\n    request_title: 'Advertising Materials Review Request',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Marketing Team needed compliance team approval of all advertising materials that the company will be using',\n    expected_deliverable: 'Compliance team approved the advertising materials.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Marketing Team revision (if applicable)',\n    closure_criteria: 'Marketing Team received the approved advertising materials',\n    priority: 'Medium' },\n  WEBSITE_AUDIT: {\n    request_title: 'Website Audit Request',\n    category: 'Large-Scale Request',\n    responsible_department: 'Compliance HQ',\n    description: \"Website Team needed compliance approval when they make changes in the website specially if it's critical information\",\n    expected_deliverable: 'Compliance team approved the new website webpage or website revision.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Website Team revision (if applicable)',\n    closure_criteria: 'Website Team received the approval of such changes in website',\n    priority: 'High' },\n  THIRD_PARTY_ONBOARDING: {\n    request_title: 'Third Party Onboarding',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Sales team request onboarding of third parties',\n    expected_deliverable: 'Third party agreement is fully signed and welcome email has been sent.',\n    suggested_tat: '1-2 weeks depends on the complexity and/or volume',\n    requirements_needed: 'Third party information, Compliance Manager Approval, Sales Manager Approval, Chief Revenue Officer Approval, Third Party Director contract signing, Chief Revenue Officer contract signing, informing Help Desk for Creation of Account, informing Accounting for Comission Fee and Sales Manager to confirm third party to have onboarding training',\n    closure_criteria: 'Third party agreement is fully signed and welcome email has been sent.',\n    priority: 'High' },\n  COMPLIANCE_REVIEW: {\n    request_title: 'Review Request for Compliance',\n    category: 'Special Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Any team will request a review of current regulatory updates in regards with their processes and/or policy',\n    expected_deliverable: 'Compliance will answer the question with basis',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Details of the request or inquiry',\n    closure_criteria: 'Inquiry answered or comments given by Compliance Team',\n    priority: 'Medium' },\n  REPORT_DATA_COMPLETION: {\n    request_title: 'Request for Report Data Completion',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data completion for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Collection Owner provided the complete data requested',\n    suggested_tat: '5 Working Days',\n    requirements_needed: 'All required data listed in the Regulatory Report',\n    closure_criteria: 'Data Completion requested is completed',\n    priority: 'High' },\n  DATA_VALIDATION: {\n    request_title: 'Request for Data Validation',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data validation for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Responsible Person provided data validation (including comments) requested',\n    suggested_tat: '2 Working Days',\n    requirements_needed: 'Depends on the data being validated',\n    closure_criteria: 'Data Validation requested is completed',\n    priority: 'High' },\n  TRAINING_SUMMARY: {\n    request_title: 'Summary of Training Request',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request of Summary of Training to TQA Team',\n    expected_deliverable: 'TQA Team to provide the requested Training Summary',\n    suggested_tat: '2 Days',\n    requirements_needed: 'Summary of Training in a given period',\n    closure_criteria: 'Summary of Training is provided',\n    priority: 'Medium' },\n  TRAINING_LODGEMENT: {\n    request_title: 'Request to lodge a Training',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request to lodge a Training in the Training Register - Knowledge Base',\n    expected_deliverable: 'TQA Team to lodge the requested Training in the Training Register - Knowledge Base',\n    suggested_tat: '1 Day',\n    requirements_needed: 'Training Date and hour, Training Description, Trainee name',\n    closure_criteria: 'Training is logged in the Training Register',\n    priority: 'Medium' },\n  MONITORING_ASSURANCE_AUDIT: {\n    request_title: 'Compliance Monitoring Assurance Program',\n    category: 'Large-Scale Request',\n    responsible_department: 'AU Operation Team',\n    description: 'Internal Audit every quarter of different team',\n    expected_deliverable: 'Audit Report has been approved by CRC',\n    suggested_tat: 'Every 3 months',\n    requirements_needed: 'Management Review Form, Updated policy or processes if applicable, audit report',\n    closure_criteria: 'Audit report has been finalized',\n    priority: 'High' },\n  IT_EQUIPMENT: {\n    request_title: 'IT equipment',\n    category: 'Special Request',\n    responsible_department: 'IT Team',\n    description: 'Equipment replacement or trouble shooting',\n    expected_deliverable: 'IT team replaced or fix IT equipment',\n    suggested_tat: '1 day',\n    requirements_needed: 'IT equipment',\n    closure_criteria: 'Fully functional IT Equipment',\n    priority: 'High' },\n  LOGIN_LOGOUT: {\n    request_title: 'Log-in / Log - out Request',\n    category: 'Special Request',\n    responsible_department: 'HR / IT',\n    description: 'Cannot log in or log out / Log in log out do not reflect in HRIS',\n    expected_deliverable: 'HR will provide Log in/ log out time. IT will update log in log out time in HRIS',\n    suggested_tat: '1 day',\n    requirements_needed: 'Log in time guard slip',\n    closure_criteria: 'Log in Log out time has been revised',\n    priority: 'High' }\n};\n\n// The categories the app accepts. Anything else is coerced below so a model\n// slip cannot land an unfilterable value in the tickets table.\nconst VALID_CATEGORIES = [\n  'Common Request', 'Special Request', 'Small-Scale Request',\n  'Mid-Scale Request', 'Large-Scale Request'\n];\n\n// Older prompt wording and common model slips, mapped onto the real options.\nconst CATEGORY_ALIASES = {\n  'large request': 'Large-Scale Request',\n  'large-scale': 'Large-Scale Request',\n  'mid request': 'Mid-Scale Request',\n  'medium request': 'Mid-Scale Request',\n  'mid-scale': 'Mid-Scale Request',\n  'small request': 'Small-Scale Request',\n  'small-scale': 'Small-Scale Request',\n  'common': 'Common Request',\n  'special': 'Special Request'\n};\n\nconst DAYS = { '1 day': 1, '1 Day': 1, '1 business day': 1, '2 Days': 2, '2 Working Days': 2,\n               '1-2 business days': 2, '5 Working Days': 5 };\n\nconst addWorkingDays = (n) => {\n  const d = new Date();\n  let added = 0;\n  while (added < n) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) added++; }\n  return d.toISOString().slice(0, 10);\n};\n\nconst normaliseCategory = (raw) => {\n  const value = String(raw || '').trim();\n  if (VALID_CATEGORIES.includes(value)) return value;\n  return CATEGORY_ALIASES[value.toLowerCase()] || null;\n};\n\n// The only teams a ticket may be routed to. A small model asked for one of\n// eleven names will occasionally answer with something reasonable-sounding and\n// not on the list - 'Not Applicable', 'General Support'. Left alone that lands\n// the ticket in a department no agent account can hold, which is worse than a\n// wrong department: it is a queue nobody is watching and nothing looks broken.\nconst VALID_DEPARTMENTS = [\n  'Compliance HQ', 'Operations Team and Support Team', 'TQA Team',\n  'AU Operation Team', 'IT Team', 'HR / IT', 'Reports/WFM',\n  'Technical - Web', 'Technical - Marketing', 'Technical - Salesforce/Tally',\n  'Technical - SQL'\n];\n\n// Falls back to the department the requester picked at submission - which came\n// from a fixed dropdown, so it is always routable - and flags the ticket.\nconst normaliseDepartment = (raw, fallback) => {\n  const value = String(raw || '').trim();\n  if (VALID_DEPARTMENTS.includes(value)) return { department: value, ok: true };\n\n  const hit = VALID_DEPARTMENTS.find((d) => d.toLowerCase() === value.toLowerCase());\n  if (hit) return { department: hit, ok: true };\n\n  return { department: String(fallback || '').trim() || 'IT Team', ok: false };\n};\n\n// The opening message of the ticket's chat thread. The model drafts the human\n// part; the facts around it are assembled here so they always match the row\n// that was actually saved, and so a dead model still gets a straight answer.\nconst CONFIDENCE = ['low', 'medium', 'high'];\n\n// A model that ignored the field, or invented a fourth level, is read as\n// 'medium' - the level that never on its own unlocks a suggestion.\nconst normaliseConfidence = (raw) => {\n  const value = String(raw || '').trim().toLowerCase();\n  return CONFIDENCE.includes(value) ? value : 'medium';\n};\n\nconst opening = (out, ai, modelOk) => {\n  if (!modelOk) {\n    return [\n      'Thanks - your ticket is saved and nothing has been lost.',\n      'I could not reach my classifier just now, so the details below have not been filled in yet. On a first run that usually means the local model is still downloading. Either way a person will review this.',\n      'Reply here if there is anything you want to add.'\n    ].join('\\n\\n');\n  }\n\n  const dept = String(out.responsible_department || '').trim() || 'the assigned team';\n  const parts = [];\n\n  const drafted = String(ai.requester_message || '').trim();\n  parts.push(drafted || `Thanks - I have logged this as \"${out.request_title}\" and routed it to ${dept}.`);\n\n  const facts = [];\n  if (out.expected_deliverable) facts.push(`Done looks like: ${out.expected_deliverable}`);\n  if (out.suggested_tat) facts.push(`Turnaround: ${out.suggested_tat}`);\n  if (out.requirements_needed) facts.push(`To start, we need: ${out.requirements_needed}`);\n  if (facts.length) parts.push(facts.join('\\n'));\n\n  // The gate. Steps are only ever presented as steps when the model said the\n  // request is self-serviceable AND said it was sure. Everything else gets an\n  // acknowledgement, which is honest and still routes the ticket. PHP applies\n  // the same rule again before the message is stored - see TicketAssistant.\n  if (out.suggesting === 'Yes') {\n    parts.push(out.matched_prior\n      ? 'That is what resolved it last time this came up. If it works for you too, reply \"resolved\" here and I will update the ticket.'\n      : 'If you try that and it sorts itself out, reply \"resolved\" here and I will update the ticket for you.');\n  } else {\n    parts.push(`I have not tried to solve this one myself - ${dept} owns the next step. Reply here with anything that changes and I will keep the ticket up to date.`);\n  }\n\n  return parts.join('\\n\\n');\n};\n\nconst submitted = $('Webhook').first().json.body || {};\n\nconst results = [];\nfor (const item of $input.all()) {\n  const ai = item.json.output || {};\n  // No output object at all means the extraction never ran (model cold, down,\n  // or refused). The ticket is still saved - flagged for a human.\n  const modelOk = Object.keys(ai).length > 0;\n\n  const key = String(ai.request_type || 'OTHER').trim().toUpperCase();\n  const row = CATALOG[key];\n  const out = row ? { ...ai, ...row } : { ...ai };\n\n  out.matched_catalogue_key = row ? key : 'OTHER';\n  out.needs_human_review = (row && modelOk) ? 'No' : 'Yes';\n\n  // Category drives both the dashboard filters and the escalation gate, so an\n  // off-list value has to be coerced rather than passed through.\n  const category = normaliseCategory(out.category);\n  if (category === null) {\n    out.needs_human_review = 'Yes';\n    out.category_raw = out.category || '';\n    out.category = 'Common Request';\n  } else {\n    out.category = category;\n  }\n\n  // Same treatment as category, and for the same reason: this one decides who\n  // can see the ticket at all, so an off-list value has to be coerced rather\n  // than passed through.\n  out.responsible_department = String(submitted['Submitting Department'] || '').trim();\n  out.model_department = String(ai.responsible_department || '').trim();\n\n  if (!out.requirements_needed || !String(out.requirements_needed).trim()) {\n    out.requirements_needed = 'To be confirmed with the requester - not provided in the request';\n  }\n  if (!out.request_title || !String(out.request_title).trim()) {\n    out.request_title = 'Unclassified Request';\n  }\n  if (!out.priority) out.priority = out.category === 'Large-Scale Request' ? 'High' : 'Medium';\n  out.due_date = DAYS[out.suggested_tat] ? addWorkingDays(DAYS[out.suggested_tat]) : '';\n\n  out.self_service = String(ai.self_service || '').trim().toLowerCase().startsWith('y') ? 'Yes' : 'No';\n  out.confidence = normaliseConfidence(ai.confidence);\n  out.model_ok = modelOk ? 'Yes' : 'No';\n  out.should_escalate = out.should_escalate || 'No';\n\n  // Whether this ticket gets advice or an acknowledgement.\n  //\n  // Two doors, and nothing else opens one:\n  //\n  //   (a) trivially self-serviceable, and the model is sure it is\n  //   (b) this helpdesk has resolved the same thing before, and the model\n  //       pointed at which case - so the advice is a person's answer being\n  //       repeated, not the model's opinion being invented\n  //\n  // The prior case is only honoured if it actually exists in what we sent.\n  // A model that returns \"1\" when no cases were supplied is hallucinating a\n  // memory, and that is the exact failure this whole mechanism exists to stop.\n  const priorSupplied = String(submitted.prior_context || '').trim() !== '';\n  const priorCase = String(ai.matched_prior || '').trim();\n  const usedPrior = priorSupplied && /^[1-9]$/.test(priorCase)\n    && submitted.prior_context.includes('CASE ' + priorCase + ' ');\n\n  out.matched_prior = usedPrior ? priorCase : '';\n\n  const trivial = out.self_service === 'Yes' && out.confidence === 'high';\n\n  out.suggesting = (out.needs_human_review === 'No' && (trivial || usedPrior)) ? 'Yes' : 'No';\n\n  out.requester_message = opening(out, ai, modelOk);\n\n  results.push({ json: { ...item.json, output: out } });\n}\nreturn results;"
+        "jsCode": "// Chikiting System - overlays the approved catalogue wording, verbatim, and\n// writes the first thing the requester reads back on their ticket.\n//\n// This workflow only classifies and drafts. CodeIgniter persists the result,\n// so there is one writer and one source of truth.\n//\n// Exactly one branch reaches here per request - local or escalated - so this\n// runs once either way.\n\nconst CATALOG = {\n  ADVERTISING_MATERIALS_REVIEW: {\n    request_title: 'Advertising Materials Review Request',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Marketing Team needed compliance team approval of all advertising materials that the company will be using',\n    expected_deliverable: 'Compliance team approved the advertising materials.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Marketing Team revision (if applicable)',\n    closure_criteria: 'Marketing Team received the approved advertising materials',\n    priority: 'Medium' },\n  WEBSITE_AUDIT: {\n    request_title: 'Website Audit Request',\n    category: 'Large-Scale Request',\n    responsible_department: 'Compliance HQ',\n    description: \"Website Team needed compliance approval when they make changes in the website specially if it's critical information\",\n    expected_deliverable: 'Compliance team approved the new website webpage or website revision.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Website Team revision (if applicable)',\n    closure_criteria: 'Website Team received the approval of such changes in website',\n    priority: 'High' },\n  THIRD_PARTY_ONBOARDING: {\n    request_title: 'Third Party Onboarding',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Sales team request onboarding of third parties',\n    expected_deliverable: 'Third party agreement is fully signed and welcome email has been sent.',\n    suggested_tat: '1-2 weeks depends on the complexity and/or volume',\n    requirements_needed: 'Third party information, Compliance Manager Approval, Sales Manager Approval, Chief Revenue Officer Approval, Third Party Director contract signing, Chief Revenue Officer contract signing, informing Help Desk for Creation of Account, informing Accounting for Comission Fee and Sales Manager to confirm third party to have onboarding training',\n    closure_criteria: 'Third party agreement is fully signed and welcome email has been sent.',\n    priority: 'High' },\n  COMPLIANCE_REVIEW: {\n    request_title: 'Review Request for Compliance',\n    category: 'Special Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Any team will request a review of current regulatory updates in regards with their processes and/or policy',\n    expected_deliverable: 'Compliance will answer the question with basis',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Details of the request or inquiry',\n    closure_criteria: 'Inquiry answered or comments given by Compliance Team',\n    priority: 'Medium' },\n  REPORT_DATA_COMPLETION: {\n    request_title: 'Request for Report Data Completion',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data completion for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Collection Owner provided the complete data requested',\n    suggested_tat: '5 Working Days',\n    requirements_needed: 'All required data listed in the Regulatory Report',\n    closure_criteria: 'Data Completion requested is completed',\n    priority: 'High' },\n  DATA_VALIDATION: {\n    request_title: 'Request for Data Validation',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data validation for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Responsible Person provided data validation (including comments) requested',\n    suggested_tat: '2 Working Days',\n    requirements_needed: 'Depends on the data being validated',\n    closure_criteria: 'Data Validation requested is completed',\n    priority: 'High' },\n  TRAINING_SUMMARY: {\n    request_title: 'Summary of Training Request',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request of Summary of Training to TQA Team',\n    expected_deliverable: 'TQA Team to provide the requested Training Summary',\n    suggested_tat: '2 Days',\n    requirements_needed: 'Summary of Training in a given period',\n    closure_criteria: 'Summary of Training is provided',\n    priority: 'Medium' },\n  TRAINING_LODGEMENT: {\n    request_title: 'Request to lodge a Training',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request to lodge a Training in the Training Register - Knowledge Base',\n    expected_deliverable: 'TQA Team to lodge the requested Training in the Training Register - Knowledge Base',\n    suggested_tat: '1 Day',\n    requirements_needed: 'Training Date and hour, Training Description, Trainee name',\n    closure_criteria: 'Training is logged in the Training Register',\n    priority: 'Medium' },\n  MONITORING_ASSURANCE_AUDIT: {\n    request_title: 'Compliance Monitoring Assurance Program',\n    category: 'Large-Scale Request',\n    responsible_department: 'AU Operation Team',\n    description: 'Internal Audit every quarter of different team',\n    expected_deliverable: 'Audit Report has been approved by CRC',\n    suggested_tat: 'Every 3 months',\n    requirements_needed: 'Management Review Form, Updated policy or processes if applicable, audit report',\n    closure_criteria: 'Audit report has been finalized',\n    priority: 'High' },\n  IT_EQUIPMENT: {\n    request_title: 'IT equipment',\n    category: 'Special Request',\n    responsible_department: 'IT Team',\n    description: 'Equipment replacement or trouble shooting',\n    expected_deliverable: 'IT team replaced or fix IT equipment',\n    suggested_tat: '1 day',\n    requirements_needed: 'IT equipment',\n    closure_criteria: 'Fully functional IT Equipment',\n    priority: 'High' },\n  LOGIN_LOGOUT: {\n    request_title: 'Log-in / Log - out Request',\n    category: 'Special Request',\n    responsible_department: 'HR / IT',\n    description: 'Cannot log in or log out / Log in log out do not reflect in HRIS',\n    expected_deliverable: 'HR will provide Log in/ log out time. IT will update log in log out time in HRIS',\n    suggested_tat: '1 day',\n    requirements_needed: 'Log in time guard slip',\n    closure_criteria: 'Log in Log out time has been revised',\n    priority: 'High' }\n};\n\n// The categories the app accepts. Anything else is coerced below so a model\n// slip cannot land an unfilterable value in the tickets table.\nconst VALID_CATEGORIES = [\n  'Common Request', 'Special Request', 'Small-Scale Request',\n  'Mid-Scale Request', 'Large-Scale Request'\n];\n\n// Older prompt wording and common model slips, mapped onto the real options.\nconst CATEGORY_ALIASES = {\n  'large request': 'Large-Scale Request',\n  'large-scale': 'Large-Scale Request',\n  'mid request': 'Mid-Scale Request',\n  'medium request': 'Mid-Scale Request',\n  'mid-scale': 'Mid-Scale Request',\n  'small request': 'Small-Scale Request',\n  'small-scale': 'Small-Scale Request',\n  'common': 'Common Request',\n  'special': 'Special Request'\n};\n\nconst DAYS = { '1 day': 1, '1 Day': 1, '1 business day': 1, '2 Days': 2, '2 Working Days': 2,\n               '1-2 business days': 2, '5 Working Days': 5 };\n\nconst addWorkingDays = (n) => {\n  const d = new Date();\n  let added = 0;\n  while (added < n) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) added++; }\n  return d.toISOString().slice(0, 10);\n};\n\nconst normaliseCategory = (raw) => {\n  const value = String(raw || '').trim();\n  if (VALID_CATEGORIES.includes(value)) return value;\n  return CATEGORY_ALIASES[value.toLowerCase()] || null;\n};\n\n// The only teams a ticket may be routed to. A small model asked for one of\n// eleven names will occasionally answer with something reasonable-sounding and\n// not on the list - 'Not Applicable', 'General Support'. Left alone that lands\n// the ticket in a department no agent account can hold, which is worse than a\n// wrong department: it is a queue nobody is watching and nothing looks broken.\nconst VALID_DEPARTMENTS = [\n  'Compliance HQ', 'Operations Team and Support Team', 'TQA Team',\n  'AU Operation Team', 'IT Team', 'HR / IT', 'Reports/WFM',\n  'Technical - Web', 'Technical - Marketing', 'Technical - Salesforce/Tally',\n  'Technical - SQL'\n];\n\n// Falls back to the department the requester picked at submission - which came\n// from a fixed dropdown, so it is always routable - and flags the ticket.\nconst normaliseDepartment = (raw, fallback) => {\n  const value = String(raw || '').trim();\n  if (VALID_DEPARTMENTS.includes(value)) return { department: value, ok: true };\n\n  const hit = VALID_DEPARTMENTS.find((d) => d.toLowerCase() === value.toLowerCase());\n  if (hit) return { department: hit, ok: true };\n\n  return { department: String(fallback || '').trim() || 'IT Team', ok: false };\n};\n\n// The opening message of the ticket's chat thread. The model drafts the human\n// part; the facts around it are assembled here so they always match the row\n// that was actually saved, and so a dead model still gets a straight answer.\nconst CONFIDENCE = ['low', 'medium', 'high'];\n\n// A model that ignored the field, or invented a fourth level, is read as\n// 'medium' - the level that never on its own unlocks a suggestion.\nconst normaliseConfidence = (raw) => {\n  const value = String(raw || '').trim().toLowerCase();\n  return CONFIDENCE.includes(value) ? value : 'medium';\n};\n\nconst opening = (out, ai, modelOk) => {\n  if (!modelOk) {\n    return [\n      'Thanks - your ticket is saved and nothing has been lost.',\n      'I could not reach my classifier just now, so the details below have not been filled in yet. On a first run that usually means the local model is still downloading. Either way a person will review this.',\n      'Reply here if there is anything you want to add.'\n    ].join('\\n\\n');\n  }\n\n  const dept = String(out.responsible_department || '').trim() || 'the assigned team';\n  const parts = [];\n\n  const drafted = String(ai.requester_message || '').trim();\n  parts.push(drafted || `Thanks - I have logged this as \"${out.request_title}\" and routed it to ${dept}.`);\n\n  const facts = [];\n  if (out.expected_deliverable) facts.push(`Done looks like: ${out.expected_deliverable}`);\n  if (out.requirements_needed) facts.push(`To start, we need: ${out.requirements_needed}`);\n  if (facts.length) parts.push(facts.join('\\n'));\n\n  // The gate. Steps are only ever presented as steps when the model said the\n  // request is self-serviceable AND said it was sure. Everything else gets an\n  // acknowledgement, which is honest and still routes the ticket. PHP applies\n  // the same rule again before the message is stored - see TicketAssistant.\n  if (out.suggesting === 'Yes') {\n    parts.push(out.matched_prior\n      ? 'That is what resolved it last time this came up. If it works for you too, reply \"resolved\" here and I will update the ticket.'\n      : 'If you try that and it sorts itself out, reply \"resolved\" here and I will update the ticket for you.');\n  } else {\n    parts.push(`I have not tried to solve this one myself - ${dept} owns the next step. Reply here with anything that changes and I will keep the ticket up to date.`);\n  }\n\n  return parts.join('\\n\\n');\n};\n\nconst submitted = $('Webhook').first().json.body || {};\n\nconst results = [];\nfor (const item of $input.all()) {\n  const ai = item.json.output || {};\n  // No output object at all means the extraction never ran (model cold, down,\n  // or refused). The ticket is still saved - flagged for a human.\n  const modelOk = Object.keys(ai).length > 0;\n\n  const key = String(ai.request_type || 'OTHER').trim().toUpperCase();\n  const row = CATALOG[key];\n  const out = row ? { ...ai, ...row } : { ...ai };\n\n  out.matched_catalogue_key = row ? key : 'OTHER';\n  out.needs_human_review = (row && modelOk) ? 'No' : 'Yes';\n\n  // Category drives both the dashboard filters and the escalation gate, so an\n  // off-list value has to be coerced rather than passed through.\n  const category = normaliseCategory(out.category);\n  if (category === null) {\n    out.needs_human_review = 'Yes';\n    out.category_raw = out.category || '';\n    out.category = 'Common Request';\n  } else {\n    out.category = category;\n  }\n\n  // Same treatment as category, and for the same reason: this one decides who\n  // can see the ticket at all, so an off-list value has to be coerced rather\n  // than passed through.\n  out.responsible_department = String(submitted['Submitting Department'] || '').trim();\n  out.model_department = String(ai.responsible_department || '').trim();\n\n  if (!out.requirements_needed || !String(out.requirements_needed).trim()) {\n    out.requirements_needed = 'To be confirmed with the requester - not provided in the request';\n  }\n  if (!out.request_title || !String(out.request_title).trim()) {\n    out.request_title = 'Unclassified Request';\n  }\n  if (!out.priority) out.priority = out.category === 'Large-Scale Request' ? 'High' : 'Medium';\n  out.due_date = DAYS[out.suggested_tat] ? addWorkingDays(DAYS[out.suggested_tat]) : '';\n\n  out.self_service = String(ai.self_service || '').trim().toLowerCase().startsWith('y') ? 'Yes' : 'No';\n  out.confidence = normaliseConfidence(ai.confidence);\n  out.model_ok = modelOk ? 'Yes' : 'No';\n  out.should_escalate = out.should_escalate || 'No';\n\n  // Whether this ticket gets advice or an acknowledgement.\n  //\n  // Two doors, and nothing else opens one:\n  //\n  //   (a) trivially self-serviceable, and the model is sure it is\n  //   (b) this helpdesk has resolved the same thing before, and the model\n  //       pointed at which case - so the advice is a person's answer being\n  //       repeated, not the model's opinion being invented\n  //\n  // The prior case is only honoured if it actually exists in what we sent.\n  // A model that returns \"1\" when no cases were supplied is hallucinating a\n  // memory, and that is the exact failure this whole mechanism exists to stop.\n  const priorSupplied = String(submitted.prior_context || '').trim() !== '';\n  const priorCase = String(ai.matched_prior || '').trim();\n  const usedPrior = priorSupplied && /^[1-9]$/.test(priorCase)\n    && submitted.prior_context.includes('CASE ' + priorCase + ' ');\n\n  out.matched_prior = usedPrior ? priorCase : '';\n\n  const trivial = out.self_service === 'Yes' && out.confidence === 'high';\n\n  out.suggesting = (out.needs_human_review === 'No' && (trivial || usedPrior)) ? 'Yes' : 'No';\n\n  out.requester_message = opening(out, ai, modelOk);\n\n  results.push({ json: { ...item.json, output: out } });\n}\nreturn results;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1380, 20],
+      "position": [
+        1380,
+        20
+      ],
       "id": "ea94cc97-5072-4723-b055-cc15dad8598e",
       "name": "Normalize & Enrich"
     },
@@ -294,44 +324,131 @@
       },
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
-      "position": [1600, 20],
+      "position": [
+        1600,
+        20
+      ],
       "id": "78aae9f7-4494-41fe-99fa-f5e267b46ab7",
       "name": "Respond to Webhook"
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{ "node": "Information Extractor", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Ollama Chat Model": {
-      "ai_languageModel": [[{ "node": "Information Extractor", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Information Extractor": {
-      "main": [[{ "node": "Escalation Gate", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Escalation Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Escalation Gate": {
-      "main": [[{ "node": "Escalate to Gemini?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Escalate to Gemini?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Escalate to Gemini?": {
       "main": [
-        [{ "node": "Information Extractor1", "type": "main", "index": 0 }],
-        [{ "node": "Tag Source: Local", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Information Extractor1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tag Source: Local",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Google Gemini Chat Model": {
-      "ai_languageModel": [[{ "node": "Information Extractor1", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "Information Extractor1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Information Extractor1": {
-      "main": [[{ "node": "Tag Source: Gemini", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Tag Source: Gemini",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Tag Source: Gemini": {
-      "main": [[{ "node": "Normalize & Enrich", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Normalize & Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Tag Source: Local": {
-      "main": [[{ "node": "Normalize & Enrich", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Normalize & Enrich",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Normalize & Enrich": {
-      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   }
 }

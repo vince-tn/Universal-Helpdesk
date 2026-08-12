@@ -329,11 +329,10 @@ class TicketController extends BaseController
     private function suggestedMeta(array $output): array
     {
         $priority = (string) ($output['priority'] ?? '');
-        $dueDate  = (string) ($output['due_date'] ?? '');
 
         return [
             'priority' => in_array($priority, priorities(), true) ? $priority : 'Medium',
-            'due_date' => preg_match('/^\d{4}-\d{2}-\d{2}$/', $dueDate) === 1 ? $dueDate : null,
+            'due_date' => null,
         ];
     }
 
