@@ -134,8 +134,8 @@
             <thead>
                 <tr>
                     <th><?= sortLink('title', 'Title', $sort, $baseParams) ?></th>
-                    <th>Department</th>
-                    <th>Category</th>
+                    <th>Department <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
+                    <th>Category <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
                     <th>Requester</th>
                     <th><?= sortLink('priority', 'Priority', $sort, $baseParams) ?></th>
                     <th>Status</th>

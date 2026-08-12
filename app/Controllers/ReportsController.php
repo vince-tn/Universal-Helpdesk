@@ -2,29 +2,23 @@
 
 namespace App\Controllers;
 
-use App\Models\NocoDbTicketModel;
+use App\Models\TicketModel;
 use App\Models\TicketMetaModel;
 use App\Models\UserModel;
 
 class ReportsController extends BaseController
 {
-    protected NocoDbTicketModel $ticketModel;
+    protected TicketModel $ticketModel;
     protected TicketMetaModel $metaModel;
     protected UserModel $userModel;
 
     public function __construct()
     {
-        $this->ticketModel = new NocoDbTicketModel();
+        $this->ticketModel = new TicketModel();
         $this->metaModel   = new TicketMetaModel();
         $this->userModel   = new UserModel();
     }
 
-    /**
-     * GET /reports — superadmin-only cross-department analytics.
-     * Optional query params: department, date_from, date_to (all filter the
-     * entire page — KPIs, breakdowns, and the volume chart — by ticket
-     * CreatedAt / resolved department).
-     */
     public function index()
     {
         $department = (string) ($this->request->getGet('department') ?? '');
@@ -69,7 +63,7 @@ class ReportsController extends BaseController
 
         $statusCounts     = ['New' => 0, 'In Progress' => 0, 'Resolved' => 0, 'Closed' => 0];
         $priorityCounts   = array_fill_keys(priorities(), 0);
-        // When a department filter is active, the breakdown only needs its one bar.
+
         $departmentCounts = $department !== '' ? [$department => 0] : array_fill_keys(departments(), 0);
         $categoryCounts   = [];
         $volumeByDay      = [];
@@ -78,10 +72,6 @@ class ReportsController extends BaseController
         $unassignedOpen   = 0;
         $today            = date('Y-m-d');
 
-        // Seed every day in the volume chart's range so quiet days still show
-        // a zero bar. Defaults to the last 14 days; a date filter widens (or
-        // narrows) the window to match, capped at 60 days so the chart stays
-        // readable — anything longer keeps only the most recent 60 days.
         $volumeRangeTruncated = false;
         if ($dateFrom !== '' || $dateTo !== '') {
             $rangeEnd   = $dateTo !== '' ? $dateTo : $today;

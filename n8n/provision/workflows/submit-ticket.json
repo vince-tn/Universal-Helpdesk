@@ -1,0 +1,337 @@
+{
+  "id": "HelpdeskSubmit01",
+  "name": "Helpdesk — Submit Ticket",
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "submit-ticket",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "b309534e-6407-4eed-a055-a32fc711c0ad",
+      "name": "Webhook",
+      "webhookId": "06c817a7-ed79-4f47-a7c8-6b037ac56a77"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.body.Request }}{{ $json.body.prior_context ? '\\n\\n--- PREVIOUSLY RESOLVED, SIMILAR REQUESTS (reference only - the request above is the one to classify) ---\\n' + $json.body.prior_context : '' }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "matched_prior",
+              "description": "Look at the PREVIOUSLY RESOLVED, SIMILAR REQUESTS section under the request. If one of those cases is the same problem as this request, answer with just its number: 1, 2 or 3. If there is no such section, or none of them is the same problem, answer with an empty string."
+            },
+            {
+              "name": "request_type",
+              "description": "One of: ADVERTISING_MATERIALS_REVIEW, WEBSITE_AUDIT, THIRD_PARTY_ONBOARDING, COMPLIANCE_REVIEW, REPORT_DATA_COMPLETION, DATA_VALIDATION, TRAINING_SUMMARY, TRAINING_LODGEMENT, MONITORING_ASSURANCE_AUDIT, IT_EQUIPMENT, LOGIN_LOGOUT, OTHER"
+            },
+            {
+              "name": "category",
+              "description": "Exactly one of: Common Request, Special Request, Small-Scale Request, Mid-Scale Request, Large-Scale Request"
+            },
+            {
+              "name": "responsible_department",
+              "description": "The single team that will action the request"
+            },
+            {
+              "name": "request_title",
+              "description": "Short specific title"
+            },
+            {
+              "name": "description",
+              "description": "1-2 sentence restatement of the need"
+            },
+            {
+              "name": "expected_deliverable",
+              "description": "What done produces for the requester"
+            },
+            {
+              "name": "suggested_tat",
+              "description": "Realistic turnaround time"
+            },
+            {
+              "name": "requirements_needed",
+              "description": "Comma-separated info or approvals needed to start"
+            },
+            {
+              "name": "closure_criteria",
+              "description": "Condition that lets the ticket be closed"
+            },
+            {
+              "name": "self_service",
+              "description": "Yes or No - could the requester plausibly fix this themselves from a short set of steps, with no staff action?"
+            },
+            {
+              "name": "confidence",
+              "description": "low, medium or high - how sure you are that you understood this request and that any steps you suggest are actually right for it"
+            },
+            {
+              "name": "requester_message",
+              "description": "2-3 sentences written to the requester: what you understood, and the concrete first thing to try if they can fix it themselves"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "ROLE\nYou are the intake classifier for the \"Chikiting System\". Read ONE employee request and return the structured fields. Output nothing else.\n\nSTEP 1 - CHOOSE request_type (most important field)\nADVERTISING_MATERIALS_REVIEW - advertising or marketing material, flyer, brochure, ad copy, promotional asset needs compliance approval\nWEBSITE_AUDIT - new webpage, website change or revision, landing page or critical website information needs compliance approval\nTHIRD_PARTY_ONBOARDING - onboard or accredit a new third party, broker, partner, vendor or agent\nCOMPLIANCE_REVIEW - question about a regulation or regulatory update, review of a process or policy, compliance advice\nREPORT_DATA_COMPLETION - missing or incomplete data needed for a regulatory report\nDATA_VALIDATION - validate or confirm data, figures or indicators for a regulatory report\nTRAINING_SUMMARY - summary or list of trainings conducted in a given period\nTRAINING_LODGEMENT - lodge, log or record a training in the Training Register or Knowledge Base\nMONITORING_ASSURANCE_AUDIT - compliance monitoring assurance program, quarterly internal audit of a team\nIT_EQUIPMENT - laptop, desktop, mouse, keyboard, headset, monitor or printer fault or replacement, hardware troubleshooting\nLOGIN_LOGOUT - cannot log in or log out, log in or log out not reflecting in HRIS, timekeeping correction\nOTHER - none of the above fits\n\nReturn the key exactly as written above, in capitals. Pick the closest key. Use OTHER only when nothing above plausibly applies.\n\nSTEP 2 - FILL THE REMAINING FIELDS\nWhen request_type is not OTHER, these are replaced downstream by the approved catalogue wording - but category is always used, so get it right either way. When request_type is OTHER, every field below is what the ticket ends up with. Complete all of them properly in both cases.\n\ncategory: exactly one of Common Request, Special Request, Small-Scale Request, Mid-Scale Request, Large-Scale Request.\n  Common Request = routine, standard procedure, minutes to 1 business day.\n  Special Request = non-routine but defined, needs judgment or an approval, 1-2 business days.\n  Small-Scale Request = a small piece of build or change work owned by one team, a few days.\n  Mid-Scale Request = multi-step work needing coordination between two or more teams.\n  Large-Scale Request = project level, needs a BRD, stakeholder approval and cross-functional work.\n  Copy one of those five strings exactly, including the hyphen. Never invent a sixth.\nresponsible_department: your best guess at the owning team. It is recorded but NOT used for routing - the requester chose the department at submission and their choice stands. Never name a department in requester_message.\nrequest_title: 4 to 10 words in Title Case naming the object and the action. Never output the category as the title.\ndescription: 1 to 2 sentences restating the need in the third person, using only what the requester wrote.\nexpected_deliverable: one sentence describing what \"done\" produces for the requester.\nsuggested_tat: one of 1 day, 1 business day, 1-2 business days, 2 Days, 2 Working Days, 5 Working Days, Based on project scope. Never use \"Based on project scope\" for a Common Request or Special Request.\nrequirements_needed: comma separated, never empty. List the information and approvals needed to start, and name anything missing from the request.\nclosure_criteria: one observable, verifiable sentence.\n\nSTEP 3 - ANSWER THE REQUESTER\nThese two fields are not filed against the ticket - they are the first thing the requester reads back, in a chat thread on their own ticket. Write them even when request_type matched the catalogue.\n\nself_service: Yes only when a normal employee could plausibly fix this themselves from a short set of steps - a stuck log in, an application to restart, a setting to change, a cache to clear. No for anything needing hardware, an approval, an access grant, payroll, a regulatory opinion or another person's action.\nconfidence: low, medium or high. This decides whether the employee is shown your steps as advice or is simply told the ticket has been filed, so be honest rather than agreeable.\n  high - this is a common, well understood request, you are sure what it is, and any steps you give are standard first-line fixes that cannot make things worse.\n  medium - you understood it but the request is unusual, under-specified, or your steps are a guess at which of several causes it is.\n  low - you are not sure what is being asked, the request is ambiguous, or it depends on systems, access or context you cannot see.\n  When you are choosing between two levels, choose the lower one. Unhelpful is recoverable; confidently wrong sends somebody off to do the wrong thing for an hour.\n  Choose low whenever the request depends on anything internal you cannot see: a named internal system, tool, portal, dashboard, report, form, account, process, policy, team habit, client name, or an acronym used here. You do not know how this company works. Recognising the words is not understanding the situation, and a plausible answer about an internal process you have never seen is the single worst thing you can produce. Say what you understood and let the team answer it.\nrequester_message: 2 to 3 sentences addressed to the requester in the second person. Plain text. No markdown, no bullet characters, no greeting, no sign-off. Confirm what you understood in one sentence. Give concrete steps ONLY when the conditions in STEP 4 are met; otherwise say plainly that it has been logged and routed, and what the owning team will do. Never promise a date or a person. Never guess at a fix to seem useful.\n\nSTEP 4 - MAY YOU ACTUALLY SUGGEST ANYTHING?\nYou are allowed to tell the requester to try something in exactly two situations. In every other case you acknowledge the ticket and say who owns it.\n\n  (a) IT IS TRIVIAL. A normal employee could fix it themselves in a few obvious steps that cannot make anything worse - a stuck log in, an app to restart, a cache to clear - and you are certain that is what this is. That means self_service Yes and confidence high.\n\n  (b) WE HAVE ANSWERED IT BEFORE. A block headed PREVIOUSLY RESOLVED, SIMILAR REQUESTS may appear after the request. Those are real tickets from this helpdesk and what actually resolved them, usually written by the staff member who did it. If one of them is genuinely the SAME problem, set matched_prior to its case number and base your steps on that recorded resolution - not on your own ideas about the problem. This is the only way you may advise on something you could not otherwise be sure about, because the answer came from a person here, not from you.\n\nmatched_prior: the case number, as a string, of the prior case you actually used. Empty string if no block was shown, or if none of them is really the same problem. Do NOT stretch a loose resemblance into a match - a different problem with similar words is not a match, and answering it with the wrong ticket's fix is worse than saying nothing. Same symptom on a different system is not a match either.\nWhen you set matched_prior, say in requester_message that this has come up before and what fixed it. Do not mention ticket numbers or who resolved it.\n\nRULES\nNever invent names, employee IDs, dates, ticket numbers or systems that are not in the request. Return only the structured fields."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [220, 0],
+      "id": "d6136e89-4481-4d4d-b61a-d72693ec6904",
+      "name": "Information Extractor",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "__OLLAMA_MODEL__",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [240, 200],
+      "id": "7107a44c-f672-430e-bf5a-fd810950f1d9",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "HelpdeskOllama01",
+          "name": "Helpdesk Ollama (local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chikiting System - decides whether this request is worth a cloud call,\n// before any catalogue wording is applied.\n//\n// A catalogue hit is already the approved wording, so re-running it through a\n// bigger model could only drift it. Only unmatched requests that landed in\n// Mid- or Large-Scale are worth escalating - and only when the app told us a\n// cloud model is actually configured (allow_escalation), so a missing API key\n// can never send the run down a branch that has to fail.\n\nconst CATALOG_KEYS = [\n  'ADVERTISING_MATERIALS_REVIEW', 'WEBSITE_AUDIT', 'THIRD_PARTY_ONBOARDING',\n  'COMPLIANCE_REVIEW', 'REPORT_DATA_COMPLETION', 'DATA_VALIDATION',\n  'TRAINING_SUMMARY', 'TRAINING_LODGEMENT', 'MONITORING_ASSURANCE_AUDIT',\n  'IT_EQUIPMENT', 'LOGIN_LOGOUT'\n];\n\nconst VALID_CATEGORIES = [\n  'Common Request', 'Special Request', 'Small-Scale Request',\n  'Mid-Scale Request', 'Large-Scale Request'\n];\n\nconst CATEGORY_ALIASES = {\n  'large request': 'Large-Scale Request',\n  'large-scale': 'Large-Scale Request',\n  'mid request': 'Mid-Scale Request',\n  'medium request': 'Mid-Scale Request',\n  'mid-scale': 'Mid-Scale Request',\n  'small request': 'Small-Scale Request',\n  'small-scale': 'Small-Scale Request',\n  'common': 'Common Request',\n  'special': 'Special Request'\n};\n\nconst ESCALATE_CATEGORIES = ['Mid-Scale Request', 'Large-Scale Request'];\n\nconst body = $('Webhook').first().json.body || {};\nconst cloudAvailable = String(body.allow_escalation || 'No') === 'Yes';\n\nconst results = [];\nfor (const item of $input.all()) {\n  // An extraction that failed outright arrives with no output object at all -\n  // it stays local and is flagged for review downstream.\n  const ai = item.json.output || {};\n  const key = String(ai.request_type || 'OTHER').trim().toUpperCase();\n  const raw = String(ai.category || '').trim();\n  const category = VALID_CATEGORIES.includes(raw)\n    ? raw\n    : (CATEGORY_ALIASES[raw.toLowerCase()] || 'Common Request');\n\n  const escalate = cloudAvailable\n    && !CATALOG_KEYS.includes(key)\n    && ESCALATE_CATEGORIES.includes(category);\n\n  results.push({ json: { ...item.json, output: { ...ai, should_escalate: escalate ? 'Yes' : 'No' } } });\n}\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 0],
+      "id": "5b1a77c0-9f2e-4c31-8a10-2c7d61b9f001",
+      "name": "Escalation Gate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b103b031-dd1b-4862-9380-bfb27f56abf5",
+              "leftValue": "={{ $json.output.should_escalate }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [680, 0],
+      "id": "1f17cea8-ebc5-4f96-9bab-f0859cc9921a",
+      "name": "Escalate to Gemini?"
+    },
+    {
+      "parameters": {
+        "text": "={{ $('Webhook').item.json.body.Request }}{{ $('Webhook').item.json.body.prior_context ? '\\n\\n--- PREVIOUSLY RESOLVED, SIMILAR REQUESTS (reference only - the request above is the one to classify) ---\\n' + $('Webhook').item.json.body.prior_context : '' }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "matched_prior",
+              "description": "Look at the PREVIOUSLY RESOLVED, SIMILAR REQUESTS section under the request. If one of those cases is the same problem as this request, answer with just its number: 1, 2 or 3. If there is no such section, or none of them is the same problem, answer with an empty string."
+            },
+            {
+              "name": "request_type",
+              "description": "One of: ADVERTISING_MATERIALS_REVIEW, WEBSITE_AUDIT, THIRD_PARTY_ONBOARDING, COMPLIANCE_REVIEW, REPORT_DATA_COMPLETION, DATA_VALIDATION, TRAINING_SUMMARY, TRAINING_LODGEMENT, MONITORING_ASSURANCE_AUDIT, IT_EQUIPMENT, LOGIN_LOGOUT, OTHER"
+            },
+            {
+              "name": "category",
+              "description": "Exactly one of: Common Request, Special Request, Small-Scale Request, Mid-Scale Request, Large-Scale Request"
+            },
+            {
+              "name": "responsible_department",
+              "description": "The single team that will action the request"
+            },
+            {
+              "name": "request_title",
+              "description": "Short specific title"
+            },
+            {
+              "name": "description",
+              "description": "1-2 sentence restatement of the need"
+            },
+            {
+              "name": "expected_deliverable",
+              "description": "What done produces for the requester"
+            },
+            {
+              "name": "suggested_tat",
+              "description": "Realistic turnaround time"
+            },
+            {
+              "name": "requirements_needed",
+              "description": "Comma-separated info or approvals needed to start"
+            },
+            {
+              "name": "closure_criteria",
+              "description": "Condition that lets the ticket be closed"
+            },
+            {
+              "name": "self_service",
+              "description": "Yes or No - could the requester plausibly fix this themselves from a short set of steps, with no staff action?"
+            },
+            {
+              "name": "confidence",
+              "description": "low, medium or high - how sure you are that you understood this request and that any steps you suggest are actually right for it"
+            },
+            {
+              "name": "requester_message",
+              "description": "2-3 sentences written to the requester: what you understood, and the concrete first thing to try if they can fix it themselves"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "ROLE\nYou are the intake classifier for the \"Chikiting System\". Read ONE employee request and return the structured fields. Output nothing else.\n\nSTEP 1 - CHOOSE request_type (most important field)\nADVERTISING_MATERIALS_REVIEW - advertising or marketing material, flyer, brochure, ad copy, promotional asset needs compliance approval\nWEBSITE_AUDIT - new webpage, website change or revision, landing page or critical website information needs compliance approval\nTHIRD_PARTY_ONBOARDING - onboard or accredit a new third party, broker, partner, vendor or agent\nCOMPLIANCE_REVIEW - question about a regulation or regulatory update, review of a process or policy, compliance advice\nREPORT_DATA_COMPLETION - missing or incomplete data needed for a regulatory report\nDATA_VALIDATION - validate or confirm data, figures or indicators for a regulatory report\nTRAINING_SUMMARY - summary or list of trainings conducted in a given period\nTRAINING_LODGEMENT - lodge, log or record a training in the Training Register or Knowledge Base\nMONITORING_ASSURANCE_AUDIT - compliance monitoring assurance program, quarterly internal audit of a team\nIT_EQUIPMENT - laptop, desktop, mouse, keyboard, headset, monitor or printer fault or replacement, hardware troubleshooting\nLOGIN_LOGOUT - cannot log in or log out, log in or log out not reflecting in HRIS, timekeeping correction\nOTHER - none of the above fits\n\nReturn the key exactly as written above, in capitals. Pick the closest key. Use OTHER only when nothing above plausibly applies.\n\nSTEP 2 - FILL THE REMAINING FIELDS\nWhen request_type is not OTHER, these are replaced downstream by the approved catalogue wording - but category is always used, so get it right either way. When request_type is OTHER, every field below is what the ticket ends up with. Complete all of them properly in both cases.\n\ncategory: exactly one of Common Request, Special Request, Small-Scale Request, Mid-Scale Request, Large-Scale Request.\n  Common Request = routine, standard procedure, minutes to 1 business day.\n  Special Request = non-routine but defined, needs judgment or an approval, 1-2 business days.\n  Small-Scale Request = a small piece of build or change work owned by one team, a few days.\n  Mid-Scale Request = multi-step work needing coordination between two or more teams.\n  Large-Scale Request = project level, needs a BRD, stakeholder approval and cross-functional work.\n  Copy one of those five strings exactly, including the hyphen. Never invent a sixth.\nresponsible_department: your best guess at the owning team. It is recorded but NOT used for routing - the requester chose the department at submission and their choice stands. Never name a department in requester_message.\nrequest_title: 4 to 10 words in Title Case naming the object and the action. Never output the category as the title.\ndescription: 1 to 2 sentences restating the need in the third person, using only what the requester wrote.\nexpected_deliverable: one sentence describing what \"done\" produces for the requester.\nsuggested_tat: one of 1 day, 1 business day, 1-2 business days, 2 Days, 2 Working Days, 5 Working Days, Based on project scope. Never use \"Based on project scope\" for a Common Request or Special Request.\nrequirements_needed: comma separated, never empty. List the information and approvals needed to start, and name anything missing from the request.\nclosure_criteria: one observable, verifiable sentence.\n\nSTEP 3 - ANSWER THE REQUESTER\nThese two fields are not filed against the ticket - they are the first thing the requester reads back, in a chat thread on their own ticket. Write them even when request_type matched the catalogue.\n\nself_service: Yes only when a normal employee could plausibly fix this themselves from a short set of steps - a stuck log in, an application to restart, a setting to change, a cache to clear. No for anything needing hardware, an approval, an access grant, payroll, a regulatory opinion or another person's action.\nconfidence: low, medium or high. This decides whether the employee is shown your steps as advice or is simply told the ticket has been filed, so be honest rather than agreeable.\n  high - this is a common, well understood request, you are sure what it is, and any steps you give are standard first-line fixes that cannot make things worse.\n  medium - you understood it but the request is unusual, under-specified, or your steps are a guess at which of several causes it is.\n  low - you are not sure what is being asked, the request is ambiguous, or it depends on systems, access or context you cannot see.\n  When you are choosing between two levels, choose the lower one. Unhelpful is recoverable; confidently wrong sends somebody off to do the wrong thing for an hour.\n  Choose low whenever the request depends on anything internal you cannot see: a named internal system, tool, portal, dashboard, report, form, account, process, policy, team habit, client name, or an acronym used here. You do not know how this company works. Recognising the words is not understanding the situation, and a plausible answer about an internal process you have never seen is the single worst thing you can produce. Say what you understood and let the team answer it.\nrequester_message: 2 to 3 sentences addressed to the requester in the second person. Plain text. No markdown, no bullet characters, no greeting, no sign-off. Confirm what you understood in one sentence. Give concrete steps ONLY when the conditions in STEP 4 are met; otherwise say plainly that it has been logged and routed, and what the owning team will do. Never promise a date or a person. Never guess at a fix to seem useful.\n\nSTEP 4 - MAY YOU ACTUALLY SUGGEST ANYTHING?\nYou are allowed to tell the requester to try something in exactly two situations. In every other case you acknowledge the ticket and say who owns it.\n\n  (a) IT IS TRIVIAL. A normal employee could fix it themselves in a few obvious steps that cannot make anything worse - a stuck log in, an app to restart, a cache to clear - and you are certain that is what this is. That means self_service Yes and confidence high.\n\n  (b) WE HAVE ANSWERED IT BEFORE. A block headed PREVIOUSLY RESOLVED, SIMILAR REQUESTS may appear after the request. Those are real tickets from this helpdesk and what actually resolved them, usually written by the staff member who did it. If one of them is genuinely the SAME problem, set matched_prior to its case number and base your steps on that recorded resolution - not on your own ideas about the problem. This is the only way you may advise on something you could not otherwise be sure about, because the answer came from a person here, not from you.\n\nmatched_prior: the case number, as a string, of the prior case you actually used. Empty string if no block was shown, or if none of them is really the same problem. Do NOT stretch a loose resemblance into a match - a different problem with similar words is not a match, and answering it with the wrong ticket's fix is worse than saying nothing. Same symptom on a different system is not a match either.\nWhen you set matched_prior, say in requester_message that this has come up before and what fixed it. Do not mention ticket numbers or who resolved it.\n\nRULES\nNever invent names, employee IDs, dates, ticket numbers or systems that are not in the request. Return only the structured fields."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [900, -160],
+      "id": "794b2d2c-6ac3-4ba6-be70-c8b2b18a3852",
+      "name": "Information Extractor1",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "__GEMINI_MODEL__",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [920, 40],
+      "id": "8304aae8-90dd-4433-b2e8-982ffa94266b",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HelpdeskGemini01",
+          "name": "Helpdesk Gemini (cloud)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1f0c3d2-gem0-4c1a-9e77-5b2d31f0a8c4",
+              "name": "ai_source",
+              "value": "Gemini",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1140, -160],
+      "id": "a7014c34-74c8-4f79-a7b4-4162d07a2972",
+      "name": "Tag Source: Gemini"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1f0c3d2-loc0-4c1a-9e77-5b2d31f0a8c4",
+              "name": "ai_source",
+              "value": "Local",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 180],
+      "id": "6090fafe-a481-48b9-8030-401f67ab85d9",
+      "name": "Tag Source: Local"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chikiting System - overlays the approved catalogue wording, verbatim, and\n// writes the first thing the requester reads back on their ticket.\n//\n// This workflow only classifies and drafts. CodeIgniter persists the result,\n// so there is one writer and one source of truth.\n//\n// Exactly one branch reaches here per request - local or escalated - so this\n// runs once either way.\n\nconst CATALOG = {\n  ADVERTISING_MATERIALS_REVIEW: {\n    request_title: 'Advertising Materials Review Request',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Marketing Team needed compliance team approval of all advertising materials that the company will be using',\n    expected_deliverable: 'Compliance team approved the advertising materials.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Marketing Team revision (if applicable)',\n    closure_criteria: 'Marketing Team received the approved advertising materials',\n    priority: 'Medium' },\n  WEBSITE_AUDIT: {\n    request_title: 'Website Audit Request',\n    category: 'Large-Scale Request',\n    responsible_department: 'Compliance HQ',\n    description: \"Website Team needed compliance approval when they make changes in the website specially if it's critical information\",\n    expected_deliverable: 'Compliance team approved the new website webpage or website revision.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Website Team revision (if applicable)',\n    closure_criteria: 'Website Team received the approval of such changes in website',\n    priority: 'High' },\n  THIRD_PARTY_ONBOARDING: {\n    request_title: 'Third Party Onboarding',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Sales team request onboarding of third parties',\n    expected_deliverable: 'Third party agreement is fully signed and welcome email has been sent.',\n    suggested_tat: '1-2 weeks depends on the complexity and/or volume',\n    requirements_needed: 'Third party information, Compliance Manager Approval, Sales Manager Approval, Chief Revenue Officer Approval, Third Party Director contract signing, Chief Revenue Officer contract signing, informing Help Desk for Creation of Account, informing Accounting for Comission Fee and Sales Manager to confirm third party to have onboarding training',\n    closure_criteria: 'Third party agreement is fully signed and welcome email has been sent.',\n    priority: 'High' },\n  COMPLIANCE_REVIEW: {\n    request_title: 'Review Request for Compliance',\n    category: 'Special Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Any team will request a review of current regulatory updates in regards with their processes and/or policy',\n    expected_deliverable: 'Compliance will answer the question with basis',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Details of the request or inquiry',\n    closure_criteria: 'Inquiry answered or comments given by Compliance Team',\n    priority: 'Medium' },\n  REPORT_DATA_COMPLETION: {\n    request_title: 'Request for Report Data Completion',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data completion for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Collection Owner provided the complete data requested',\n    suggested_tat: '5 Working Days',\n    requirements_needed: 'All required data listed in the Regulatory Report',\n    closure_criteria: 'Data Completion requested is completed',\n    priority: 'High' },\n  DATA_VALIDATION: {\n    request_title: 'Request for Data Validation',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data validation for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Responsible Person provided data validation (including comments) requested',\n    suggested_tat: '2 Working Days',\n    requirements_needed: 'Depends on the data being validated',\n    closure_criteria: 'Data Validation requested is completed',\n    priority: 'High' },\n  TRAINING_SUMMARY: {\n    request_title: 'Summary of Training Request',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request of Summary of Training to TQA Team',\n    expected_deliverable: 'TQA Team to provide the requested Training Summary',\n    suggested_tat: '2 Days',\n    requirements_needed: 'Summary of Training in a given period',\n    closure_criteria: 'Summary of Training is provided',\n    priority: 'Medium' },\n  TRAINING_LODGEMENT: {\n    request_title: 'Request to lodge a Training',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request to lodge a Training in the Training Register - Knowledge Base',\n    expected_deliverable: 'TQA Team to lodge the requested Training in the Training Register - Knowledge Base',\n    suggested_tat: '1 Day',\n    requirements_needed: 'Training Date and hour, Training Description, Trainee name',\n    closure_criteria: 'Training is logged in the Training Register',\n    priority: 'Medium' },\n  MONITORING_ASSURANCE_AUDIT: {\n    request_title: 'Compliance Monitoring Assurance Program',\n    category: 'Large-Scale Request',\n    responsible_department: 'AU Operation Team',\n    description: 'Internal Audit every quarter of different team',\n    expected_deliverable: 'Audit Report has been approved by CRC',\n    suggested_tat: 'Every 3 months',\n    requirements_needed: 'Management Review Form, Updated policy or processes if applicable, audit report',\n    closure_criteria: 'Audit report has been finalized',\n    priority: 'High' },\n  IT_EQUIPMENT: {\n    request_title: 'IT equipment',\n    category: 'Special Request',\n    responsible_department: 'IT Team',\n    description: 'Equipment replacement or trouble shooting',\n    expected_deliverable: 'IT team replaced or fix IT equipment',\n    suggested_tat: '1 day',\n    requirements_needed: 'IT equipment',\n    closure_criteria: 'Fully functional IT Equipment',\n    priority: 'High' },\n  LOGIN_LOGOUT: {\n    request_title: 'Log-in / Log - out Request',\n    category: 'Special Request',\n    responsible_department: 'HR / IT',\n    description: 'Cannot log in or log out / Log in log out do not reflect in HRIS',\n    expected_deliverable: 'HR will provide Log in/ log out time. IT will update log in log out time in HRIS',\n    suggested_tat: '1 day',\n    requirements_needed: 'Log in time guard slip',\n    closure_criteria: 'Log in Log out time has been revised',\n    priority: 'High' }\n};\n\n// The categories the app accepts. Anything else is coerced below so a model\n// slip cannot land an unfilterable value in the tickets table.\nconst VALID_CATEGORIES = [\n  'Common Request', 'Special Request', 'Small-Scale Request',\n  'Mid-Scale Request', 'Large-Scale Request'\n];\n\n// Older prompt wording and common model slips, mapped onto the real options.\nconst CATEGORY_ALIASES = {\n  'large request': 'Large-Scale Request',\n  'large-scale': 'Large-Scale Request',\n  'mid request': 'Mid-Scale Request',\n  'medium request': 'Mid-Scale Request',\n  'mid-scale': 'Mid-Scale Request',\n  'small request': 'Small-Scale Request',\n  'small-scale': 'Small-Scale Request',\n  'common': 'Common Request',\n  'special': 'Special Request'\n};\n\nconst DAYS = { '1 day': 1, '1 Day': 1, '1 business day': 1, '2 Days': 2, '2 Working Days': 2,\n               '1-2 business days': 2, '5 Working Days': 5 };\n\nconst addWorkingDays = (n) => {\n  const d = new Date();\n  let added = 0;\n  while (added < n) { d.setDate(d.getDate() + 1); const w = d.getDay(); if (w !== 0 && w !== 6) added++; }\n  return d.toISOString().slice(0, 10);\n};\n\nconst normaliseCategory = (raw) => {\n  const value = String(raw || '').trim();\n  if (VALID_CATEGORIES.includes(value)) return value;\n  return CATEGORY_ALIASES[value.toLowerCase()] || null;\n};\n\n// The only teams a ticket may be routed to. A small model asked for one of\n// eleven names will occasionally answer with something reasonable-sounding and\n// not on the list - 'Not Applicable', 'General Support'. Left alone that lands\n// the ticket in a department no agent account can hold, which is worse than a\n// wrong department: it is a queue nobody is watching and nothing looks broken.\nconst VALID_DEPARTMENTS = [\n  'Compliance HQ', 'Operations Team and Support Team', 'TQA Team',\n  'AU Operation Team', 'IT Team', 'HR / IT', 'Reports/WFM',\n  'Technical - Web', 'Technical - Marketing', 'Technical - Salesforce/Tally',\n  'Technical - SQL'\n];\n\n// Falls back to the department the requester picked at submission - which came\n// from a fixed dropdown, so it is always routable - and flags the ticket.\nconst normaliseDepartment = (raw, fallback) => {\n  const value = String(raw || '').trim();\n  if (VALID_DEPARTMENTS.includes(value)) return { department: value, ok: true };\n\n  const hit = VALID_DEPARTMENTS.find((d) => d.toLowerCase() === value.toLowerCase());\n  if (hit) return { department: hit, ok: true };\n\n  return { department: String(fallback || '').trim() || 'IT Team', ok: false };\n};\n\n// The opening message of the ticket's chat thread. The model drafts the human\n// part; the facts around it are assembled here so they always match the row\n// that was actually saved, and so a dead model still gets a straight answer.\nconst CONFIDENCE = ['low', 'medium', 'high'];\n\n// A model that ignored the field, or invented a fourth level, is read as\n// 'medium' - the level that never on its own unlocks a suggestion.\nconst normaliseConfidence = (raw) => {\n  const value = String(raw || '').trim().toLowerCase();\n  return CONFIDENCE.includes(value) ? value : 'medium';\n};\n\nconst opening = (out, ai, modelOk) => {\n  if (!modelOk) {\n    return [\n      'Thanks - your ticket is saved and nothing has been lost.',\n      'I could not reach my classifier just now, so the details below have not been filled in yet. On a first run that usually means the local model is still downloading. Either way a person will review this.',\n      'Reply here if there is anything you want to add.'\n    ].join('\\n\\n');\n  }\n\n  const dept = String(out.responsible_department || '').trim() || 'the assigned team';\n  const parts = [];\n\n  const drafted = String(ai.requester_message || '').trim();\n  parts.push(drafted || `Thanks - I have logged this as \"${out.request_title}\" and routed it to ${dept}.`);\n\n  const facts = [];\n  if (out.expected_deliverable) facts.push(`Done looks like: ${out.expected_deliverable}`);\n  if (out.suggested_tat) facts.push(`Turnaround: ${out.suggested_tat}`);\n  if (out.requirements_needed) facts.push(`To start, we need: ${out.requirements_needed}`);\n  if (facts.length) parts.push(facts.join('\\n'));\n\n  // The gate. Steps are only ever presented as steps when the model said the\n  // request is self-serviceable AND said it was sure. Everything else gets an\n  // acknowledgement, which is honest and still routes the ticket. PHP applies\n  // the same rule again before the message is stored - see TicketAssistant.\n  if (out.suggesting === 'Yes') {\n    parts.push(out.matched_prior\n      ? 'That is what resolved it last time this came up. If it works for you too, reply \"resolved\" here and I will update the ticket.'\n      : 'If you try that and it sorts itself out, reply \"resolved\" here and I will update the ticket for you.');\n  } else {\n    parts.push(`I have not tried to solve this one myself - ${dept} owns the next step. Reply here with anything that changes and I will keep the ticket up to date.`);\n  }\n\n  return parts.join('\\n\\n');\n};\n\nconst submitted = $('Webhook').first().json.body || {};\n\nconst results = [];\nfor (const item of $input.all()) {\n  const ai = item.json.output || {};\n  // No output object at all means the extraction never ran (model cold, down,\n  // or refused). The ticket is still saved - flagged for a human.\n  const modelOk = Object.keys(ai).length > 0;\n\n  const key = String(ai.request_type || 'OTHER').trim().toUpperCase();\n  const row = CATALOG[key];\n  const out = row ? { ...ai, ...row } : { ...ai };\n\n  out.matched_catalogue_key = row ? key : 'OTHER';\n  out.needs_human_review = (row && modelOk) ? 'No' : 'Yes';\n\n  // Category drives both the dashboard filters and the escalation gate, so an\n  // off-list value has to be coerced rather than passed through.\n  const category = normaliseCategory(out.category);\n  if (category === null) {\n    out.needs_human_review = 'Yes';\n    out.category_raw = out.category || '';\n    out.category = 'Common Request';\n  } else {\n    out.category = category;\n  }\n\n  // Same treatment as category, and for the same reason: this one decides who\n  // can see the ticket at all, so an off-list value has to be coerced rather\n  // than passed through.\n  out.responsible_department = String(submitted['Submitting Department'] || '').trim();\n  out.model_department = String(ai.responsible_department || '').trim();\n\n  if (!out.requirements_needed || !String(out.requirements_needed).trim()) {\n    out.requirements_needed = 'To be confirmed with the requester - not provided in the request';\n  }\n  if (!out.request_title || !String(out.request_title).trim()) {\n    out.request_title = 'Unclassified Request';\n  }\n  if (!out.priority) out.priority = out.category === 'Large-Scale Request' ? 'High' : 'Medium';\n  out.due_date = DAYS[out.suggested_tat] ? addWorkingDays(DAYS[out.suggested_tat]) : '';\n\n  out.self_service = String(ai.self_service || '').trim().toLowerCase().startsWith('y') ? 'Yes' : 'No';\n  out.confidence = normaliseConfidence(ai.confidence);\n  out.model_ok = modelOk ? 'Yes' : 'No';\n  out.should_escalate = out.should_escalate || 'No';\n\n  // Whether this ticket gets advice or an acknowledgement.\n  //\n  // Two doors, and nothing else opens one:\n  //\n  //   (a) trivially self-serviceable, and the model is sure it is\n  //   (b) this helpdesk has resolved the same thing before, and the model\n  //       pointed at which case - so the advice is a person's answer being\n  //       repeated, not the model's opinion being invented\n  //\n  // The prior case is only honoured if it actually exists in what we sent.\n  // A model that returns \"1\" when no cases were supplied is hallucinating a\n  // memory, and that is the exact failure this whole mechanism exists to stop.\n  const priorSupplied = String(submitted.prior_context || '').trim() !== '';\n  const priorCase = String(ai.matched_prior || '').trim();\n  const usedPrior = priorSupplied && /^[1-9]$/.test(priorCase)\n    && submitted.prior_context.includes('CASE ' + priorCase + ' ');\n\n  out.matched_prior = usedPrior ? priorCase : '';\n\n  const trivial = out.self_service === 'Yes' && out.confidence === 'high';\n\n  out.suggesting = (out.needs_human_review === 'No' && (trivial || usedPrior)) ? 'Yes' : 'No';\n\n  out.requester_message = opening(out, ai, modelOk);\n\n  results.push({ json: { ...item.json, output: out } });\n}\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1380, 20],
+      "id": "ea94cc97-5072-4723-b055-cc15dad8598e",
+      "name": "Normalize & Enrich"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1600, 20],
+      "id": "78aae9f7-4494-41fe-99fa-f5e267b46ab7",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Information Extractor", "type": "main", "index": 0 }]]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [[{ "node": "Information Extractor", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Information Extractor": {
+      "main": [[{ "node": "Escalation Gate", "type": "main", "index": 0 }]]
+    },
+    "Escalation Gate": {
+      "main": [[{ "node": "Escalate to Gemini?", "type": "main", "index": 0 }]]
+    },
+    "Escalate to Gemini?": {
+      "main": [
+        [{ "node": "Information Extractor1", "type": "main", "index": 0 }],
+        [{ "node": "Tag Source: Local", "type": "main", "index": 0 }]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "Information Extractor1", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Information Extractor1": {
+      "main": [[{ "node": "Tag Source: Gemini", "type": "main", "index": 0 }]]
+    },
+    "Tag Source: Gemini": {
+      "main": [[{ "node": "Normalize & Enrich", "type": "main", "index": 0 }]]
+    },
+    "Tag Source: Local": {
+      "main": [[{ "node": "Normalize & Enrich", "type": "main", "index": 0 }]]
+    },
+    "Normalize & Enrich": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  }
+}

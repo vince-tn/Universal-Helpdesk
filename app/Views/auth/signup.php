@@ -37,7 +37,11 @@
                         <label for="email">Work email</label>
                         <input type="email" id="email" name="email" value="<?= esc(old('email')) ?>" required autocomplete="email">
                         <div class="field-hint">
+<<<<<<< HEAD
                             <?php if (! empty($domainCheck)): ?>
+=======
+                            <?php if ($domainCheck): ?>
+>>>>>>> paul-branch/suggestion
                                 Must end in <?= esc($domainHint) ?>. We'll email a code to confirm it's yours.
                             <?php else: ?>
                                 We'll email a one-time code to confirm this address is yours.
@@ -56,7 +60,11 @@
                     <button type="submit" class="btn"><?= icon('mail', 16) ?> Send me a code</button>
                 </form>
 
+<<<<<<< HEAD
                 <?php if (! empty($domainCheck)): ?>
+=======
+                <?php if ($domainCheck): ?>
+>>>>>>> paul-branch/suggestion
                     <div class="note-strip">
                         <?= icon('shield', 15) ?>
                         <span>External contractors and anyone on a different domain are set up by IT — raise it with them rather than signing up here.</span>

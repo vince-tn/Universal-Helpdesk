@@ -13,7 +13,7 @@ class UserModel extends Model
     protected $createdField     = 'created_at';
     protected $updatedField     = 'updated_at';
     protected $allowedFields    = [
-        'name', 'email', 'password_hash', 'role', 'department', 'is_active',
+        'name', 'email', 'password_hash', 'role', 'department', 'department_role_id', 'is_active',
     ];
 
     public const ROLE_SUPERADMIN = 'superadmin';

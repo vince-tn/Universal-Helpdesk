@@ -14,9 +14,6 @@ class TicketMetaModel extends Model
     protected $updatedField  = 'updated_at';
     protected $allowedFields = ['ticket_id', 'priority', 'due_date', 'assigned_to'];
 
-    /**
-     * Fetch meta rows for a set of ticket IDs, keyed by ticket_id.
-     */
     public function forTickets(array $ticketIds): array
     {
         if (empty($ticketIds)) {

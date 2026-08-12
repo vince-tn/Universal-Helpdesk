@@ -1,27 +1,38 @@
 <?php
 
-/**
- * The goal of this file is to allow developers a location
- * where they can overwrite core procedural functions and
- * replace them with their own. This file is loaded during
- * the bootstrap process and is called during the framework's
- * execution.
- *
- * This can be looked at as a `master helper` file that is
- * loaded early on, and may also contain additional functions
- * that you'd like to use throughout your entire application
- *
- * @see: https://codeigniter.com/user_guide/extending/common.html
- */
-
 if (! function_exists('departments')) {
-    /**
-     * Canonical list of departments used for agent scoping,
-     * ticket routing, and the submission form.
-     */
+
     function departments(): array
     {
-        return ['IT', 'HR', 'TQA', 'Reports/WFM', 'Technical', 'Compliance', 'Operations'];
+        static $cached = null;
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $fallback = ['IT', 'HR', 'TQA', 'Reports/WFM', 'Technical', 'Compliance', 'Operations'];
+
+        try {
+            $names = (new \App\Models\DepartmentModel())->names();
+            $cached = $names === [] ? $fallback : $names;
+        } catch (\Throwable $e) {
+            $cached = $fallback;
+        }
+
+        return $cached;
+    }
+}
+
+if (! function_exists('ticket_categories')) {
+    function ticket_categories(): array
+    {
+        return [
+            'Common Request',
+            'Special Request',
+            'Small-Scale Request',
+            'Mid-Scale Request',
+            'Large-Scale Request',
+        ];
     }
 }
 
@@ -33,10 +44,7 @@ if (! function_exists('priorities')) {
 }
 
 if (! function_exists('ticket_department')) {
-    /**
-     * The department a ticket is routed to: the AI-classified responsible
-     * department, falling back to whatever the requester picked at submission.
-     */
+
     function ticket_department(array $fields): string
     {
         return $fields['Responsible Department'] ?? $fields['Submitting Department'] ?? '';
@@ -44,29 +52,69 @@ if (! function_exists('ticket_department')) {
 }
 
 if (! function_exists('resolve_base_department')) {
-    /**
-     * The AI classifier routes tickets to granular sub-departments
-     * ("Technical - Web", "Technical - Salesforce/Tally"), but agent
-     * accounts are scoped to one of the primary departments() buckets.
-     * Maps a ticket's raw department string back to its primary bucket
-     * so agent access/assignment isn't broken by the extra specificity.
-     */
+
     function resolve_base_department(string $ticketDepartment): string
     {
+        $raw = trim($ticketDepartment);
+
+        if ($raw === '') {
+            return '';
+        }
+
+        $aliases = [
+            'au operation team'                 => 'Operations',
+            'operations team and support team'  => 'Operations',
+            'compliance hq'                     => 'Compliance',
+            'reports/wfm'                       => 'Reports/WFM',
+            'wfm'                               => 'Reports/WFM',
+        ];
+
+        $key = strtolower($raw);
+
+        if (isset($aliases[$key])) {
+            return $aliases[$key];
+        }
+
         foreach (departments() as $dept) {
-            if (stripos($ticketDepartment, $dept) === 0) {
+            if (stripos($raw, $dept) === 0) {
                 return $dept;
             }
         }
 
-        return $ticketDepartment;
+        return $raw;
+    }
+}
+
+if (! function_exists('render_message')) {
+
+    function render_message(array $msg): string
+    {
+        ob_start();
+        include APPPATH . 'Views/tickets/_message.php';
+
+        return (string) ob_get_clean();
+    }
+}
+
+if (! function_exists('unread_notifications')) {
+    function unread_notifications(): int
+    {
+        $user = current_user();
+
+        if ($user === null) {
+            return 0;
+        }
+
+        try {
+            return (new \App\Models\NotificationModel())->unreadCount((int) $user['id']);
+        } catch (\Throwable $e) {
+            return 0;
+        }
     }
 }
 
 if (! function_exists('current_user')) {
-    /**
-     * The logged-in user's session snapshot (id, name, email, role, department), or null.
-     */
+
     function current_user(): ?array
     {
         return session()->get('isLoggedIn') ? session()->get('user') : null;
@@ -74,24 +122,27 @@ if (! function_exists('current_user')) {
 }
 
 if (! function_exists('brand_mark')) {
-    /**
-     * Universal HelpDesk logomark: a bold, hard-edged ticket stub with a
-     * perforated tear-line and a dot orbiting it (both animated via CSS) —
-     * a stamped-paper mark suited to the warm-brutalist identity.
-     */
+
     function brand_mark(int $size = 32): string
     {
         return <<<SVG
         <svg class="brand-mark" width="{$size}" height="{$size}" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
             <g class="stub">
+                <defs>
+                    <linearGradient id="uhdMark" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#8b5cf6"/>
+                        <stop offset="55%" stop-color="#c341c7"/>
+                        <stop offset="100%" stop-color="#f472b6"/>
+                    </linearGradient>
+                </defs>
                 <path d="M4 9H20V13.4A2.6 2.6 0 0 0 20 18.6V23H4V18.6A2.6 2.6 0 0 0 4 13.4V9Z"
-                    fill="#df3f1a" stroke="#17130e" stroke-width="2.2" stroke-linejoin="round"/>
-                <path d="M12.2 10.4V21.6" stroke="#fbf6ea" stroke-width="2" stroke-dasharray="2 2.6" stroke-linecap="round"/>
-                <rect x="14.6" y="12.4" width="3.4" height="2.1" rx="0.4" fill="#fbf6ea"/>
-                <rect x="14.6" y="16" width="3.4" height="2.1" rx="0.4" fill="#fbf6ea"/>
+                    fill="url(#uhdMark)" stroke="none"/>
+                <path d="M12.2 10.4V21.6" stroke="#ffffff" stroke-width="2" stroke-dasharray="2 2.6" stroke-linecap="round" opacity="0.85"/>
+                <rect x="14.6" y="12.4" width="3.4" height="2.1" rx="0.6" fill="#ffffff" opacity="0.9"/>
+                <rect x="14.6" y="16" width="3.4" height="2.1" rx="0.6" fill="#ffffff" opacity="0.9"/>
             </g>
             <g class="orbit-dot">
-                <rect x="24.4" y="5.4" width="5" height="5" rx="1" fill="#dd9309" stroke="#17130e" stroke-width="1.8"/>
+                <rect x="24.4" y="5.4" width="5" height="5" rx="1.6" fill="#f5a623" stroke="none"/>
             </g>
         </svg>
         SVG;
@@ -99,11 +150,7 @@ if (! function_exists('brand_mark')) {
 }
 
 if (! function_exists('theme_head')) {
-    /**
-     * Head snippet: font preconnects + a tiny no-flash script that applies the
-     * saved (or system-preferred) theme to <html> before first paint.
-     * Purely presentational — touches nothing on the server.
-     */
+
     function theme_head(): string
     {
         return <<<HTML
@@ -123,9 +170,7 @@ if (! function_exists('theme_head')) {
 }
 
 if (! function_exists('theme_toggle_script')) {
-    /**
-     * The click handler that flips and persists the theme. Emitted once per page.
-     */
+
     function theme_toggle_script(): string
     {
         return <<<HTML
@@ -147,9 +192,7 @@ if (! function_exists('theme_toggle_script')) {
 }
 
 if (! function_exists('theme_toggle')) {
-    /**
-     * The sun/moon toggle button. `$extra` lets a page add positioning classes.
-     */
+
     function theme_toggle(string $extra = ''): string
     {
         $cls = trim('theme-toggle ' . $extra);
@@ -166,9 +209,7 @@ if (! function_exists('theme_toggle')) {
 }
 
 if (! function_exists('icon')) {
-    /**
-     * Small hand-drawn line icons used across the UI (24x24, currentColor strokes).
-     */
+
     function icon(string $name, int $size = 18): string
     {
         $paths = [
@@ -195,6 +236,8 @@ if (! function_exists('icon')) {
             'trend' => '<path d="M3.5 16l5-5.5 4 3.5 6.5-7.5"/><path d="M14.5 6.5h4.5v4.5"/>',
             'department' => '<path d="M4 20V6.5a1.5 1.5 0 011.5-1.5h5A1.5 1.5 0 0112 6.5V20"/><path d="M12 11h6.5A1.5 1.5 0 0120 12.5V20"/><path d="M7 9h2M7 13h2M15 15h2"/>',
             'sun' => '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M4.4 4.4l1.8 1.8M17.8 17.8l1.8 1.8M2.5 12H5M19 12h2.5M4.4 19.6l1.8-1.8M17.8 6.2l1.8-1.8"/>',
+
+            'sparkle' => '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z"/><path d="M18.5 15.5l.7 1.8 1.8.7-1.8.7-.7 1.8-.7-1.8-1.8-.7 1.8-.7.7-1.8z"/>',
             'moon' => '<path d="M19 14.5A7.5 7.5 0 019.5 5a1 1 0 00-1.3-1.2A8.5 8.5 0 1020.2 15.8 1 1 0 0019 14.5z"/>',
         ];
 

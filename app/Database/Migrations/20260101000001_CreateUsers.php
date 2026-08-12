@@ -56,7 +56,6 @@ class CreateUsers extends Migration
         $this->forge->addUniqueKey('email');
         $this->forge->createTable('users');
 
-        // Seed a default superadmin so the app is usable right after migrating.
         $this->db->table('users')->insert([
             'name'          => 'Super Admin',
             'email'         => 'admin@universalhelpdesk.local',

@@ -6,19 +6,8 @@ define('DEVELOP_BRANCH', 'dev-develop');
 define('NEXT_MINOR', '^4.8-dev');
 define('GITHUB_URL', 'https://github.com/codeigniter4/codeigniter4');
 
-/*
- * --------------------------------------------------------------------
- * Stability Toggle
- * --------------------------------------------------------------------
- * Use this script to toggle the CodeIgniter dependency between the
- * latest stable release and the most recent development update.
- *
- * Usage: php builds [release|development|next]
- */
-
 $branch = $argv[1] ?? '';
 
-// Determine the requested stability
 if ($branch === '' || ! in_array($branch, ['release', 'development', 'next'], true)) {
     echo 'Usage: php builds [release|development|next]' . PHP_EOL;
 
@@ -27,7 +16,6 @@ if ($branch === '' || ! in_array($branch, ['release', 'development', 'next'], tr
 
 $modified = [];
 
-// Locate each file and update it for the requested stability
 
 $file = __DIR__ . DIRECTORY_SEPARATOR . 'composer.json';
 

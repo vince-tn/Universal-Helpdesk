@@ -1,0 +1,289 @@
+{
+  "id": "HelpdeskChat0001",
+  "name": "Helpdesk — Ticket Chat",
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ticket-chat",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "4c1d9e30-1b7a-42f8-9c55-6a0e2b7d1101",
+      "name": "Webhook",
+      "webhookId": "9f2a71c4-3d55-4c0b-8f61-2b7d4e9a0c31"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chikiting System - flattens one ticket plus its thread into the single\n// block of text the extractor reads.\n//\n// Doing this here rather than in the prompt keeps the shape stable no matter\n// which model answers, and caps the history so a long-running ticket cannot\n// grow past the local model's context window.\n\nconst HISTORY_LIMIT = 20;\n\nconst body = $('Webhook').first().json.body || {};\nconst t = body.ticket || {};\nconst history = Array.isArray(body.history) ? body.history : [];\n\nconst clean = (v, fallback) => {\n  const s = String(v === null || v === undefined ? '' : v).trim();\n  return s === '' ? fallback : s;\n};\n\nconst lines = history.slice(-HISTORY_LIMIT).map((m) => {\n  const who = clean(m.author, 'Someone');\n  const role = clean(m.role, 'user');\n  const said = String(m.body || '').replace(/\\s+/g, ' ').trim();\n  return `${who} (${role}): ${said}`;\n});\n\nconst text = [\n  'THE TICKET',\n  `Reference: #${clean(body.ticket_id, '?')}`,\n  `Title: ${clean(t.title, '(none)')}`,\n  `Status: ${clean(t.status, 'New')}`,\n  `Category: ${clean(t.category, '(none)')}`,\n  `Owning team: ${clean(t.responsible_department, clean(t.submitting_department, '(unassigned)'))}`,\n  `Priority: ${clean(t.priority, 'Medium')}`,\n  `Raised by: ${clean(t.requester, '(unknown)')}`,\n  `Current description: ${clean(t.description, '(none)')}`,\n  `Original words of the requester: ${clean(t.request_body, '(none)')}`,\n  `Expected deliverable: ${clean(t.expected_deliverable, '(none)')}`,\n  `Requirements to start: ${clean(t.requirements_needed, '(none)')}`,\n  `Closure criteria: ${clean(t.closure_criteria, '(none)')}`,\n  '',\n  'THE CONVERSATION SO FAR (oldest first)',\n  lines.length ? lines.join('\\n') : '(nothing yet)',\n  '',\n  `THE NEW MESSAGE, from ${clean(body.sender_name, 'the requester')} (${clean(body.sender_role, 'requester')})`,\n  String(body.message || '').trim()\n].join('\\n');\n\nreturn [{ json: { text, use_gemini: String(body.prefer_cloud || 'No') === 'Yes' ? 'Yes' : 'No' } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "7a3f5c81-0d64-4f2a-9b18-3c5e7d2a4402",
+      "name": "Build Context"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c7d2e910-4a6b-4f31-8c02-9e5b1d7a3303",
+              "leftValue": "={{ $json.use_gemini }}",
+              "rightValue": "Yes",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [440, 0],
+      "id": "e1b4a760-2c39-4d85-91af-7d3c6e0b5504",
+      "name": "Cloud model available?"
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "reply",
+              "description": "The message the employee will read. 2-4 sentences, second person, plain text, no markdown and no sign-off"
+            },
+            {
+              "name": "intent",
+              "description": "One of: NEW_INFO, ASK_HELP, CONFIRM_RESOLVED, CHASE_UPDATE, UNRELATED"
+            },
+            {
+              "name": "can_self_serve",
+              "description": "Yes or No - can the employee complete this themselves using the steps in your reply, with no staff action?"
+            },
+            {
+              "name": "confidence",
+              "description": "low, medium or high - how sure you are that you understood the message and that any steps you give are actually right for it"
+            },
+            {
+              "name": "resolution_state",
+              "description": "One of: OPEN, SELF_RESOLVED, NEEDS_STAFF"
+            },
+            {
+              "name": "updated_description",
+              "description": "1-3 sentences, third person, describing what this ticket is now about including anything the conversation added. Empty string if nothing new"
+            },
+            {
+              "name": "resolution_note",
+              "description": "One sentence recording what actually fixed it. Empty string unless resolution_state is SELF_RESOLVED"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "ROLE\nYou are the Chikiting System assistant. You are replying inside one support ticket, to the employee who raised it. You can see the ticket and the whole conversation. Return only the structured fields.\n\nHOW TO WRITE THE REPLY\nWrite to the employee in the second person. Plain text only - no markdown, no bullet characters, no headings, no greeting, no sign-off. Two to four sentences. Put the useful thing first.\nIf they can fix it themselves, give the concrete steps, in order, in the reply.\nIf the next step needs a person - hardware, an approval, an access grant, payroll, a regulatory opinion - say so plainly and name the team that owns it. Never promise a date, a person, or an action you cannot verify.\nIf they are chasing an update you do not have, say you do not have one and that the owning team can see this thread.\nNever invent ticket numbers, names, systems, policies or dates that are not in the ticket or the conversation.\nIf the message is not about this ticket, answer briefly and say it is probably better raised as its own ticket.\n\nFIELDS\nintent - what the new message is doing. Exactly one of NEW_INFO, ASK_HELP, CONFIRM_RESOLVED, CHASE_UPDATE, UNRELATED. Use CONFIRM_RESOLVED only when the employee says it is now working, has been done, or is no longer needed.\ncan_self_serve - Yes only when the employee can complete this themselves using the steps in your reply, with no staff action.\nconfidence - low, medium or high. This decides whether your reply is presented to the employee as advice to act on or as a plain update, so be honest rather than agreeable.\n  high - you are sure what they are asking and any steps you gave are standard first-line fixes that cannot make things worse.\n  medium - you followed the message but the situation is unusual, under-specified, or your steps are a guess between several causes.\n  low - you are not sure what is being asked, or it depends on systems, access or context you cannot see.\n  When choosing between two levels, choose the lower one. If confidence is not high, do not give steps at all - say what you understood and what happens next.\n  Choose low whenever this depends on anything internal you cannot see: a named internal system, tool, portal, dashboard, report, form, account, process, policy, team habit, client name, or an acronym used here. You do not know how this company works, and recognising the words is not understanding the situation. Do not reason about an internal process from its name. Say plainly that the owning team knows this one and that they can see the thread.\nresolution_state - exactly one of:\n  SELF_RESOLVED - the employee has said it is fixed or no longer needed.\n  NEEDS_STAFF - the next step belongs to a person on the owning team.\n  OPEN - still being worked out between you and the employee.\nupdated_description - 1 to 3 sentences, third person, describing what this ticket is now about, rewritten to include what the conversation has added: error messages, device or model numbers, dates, what has already been tried. Return an empty string if the conversation added nothing new.\nresolution_note - one sentence recording what actually fixed it. Empty string unless resolution_state is SELF_RESOLVED.\nreply - the message the employee will read."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [700, -180],
+      "id": "b6e0d341-8f27-4a19-bc63-1d4e8a2c6605",
+      "name": "Assistant (Gemini)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "modelName": "__GEMINI_MODEL__",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [720, 20],
+      "id": "f4a71c50-6b83-4e27-8d90-5c1b3f7e9906",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "HelpdeskGemini01",
+          "name": "Helpdesk Gemini (cloud)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "attributes": {
+          "attributes": [
+            {
+              "name": "reply",
+              "description": "The message the employee will read. 2-4 sentences, second person, plain text, no markdown and no sign-off"
+            },
+            {
+              "name": "intent",
+              "description": "One of: NEW_INFO, ASK_HELP, CONFIRM_RESOLVED, CHASE_UPDATE, UNRELATED"
+            },
+            {
+              "name": "can_self_serve",
+              "description": "Yes or No - can the employee complete this themselves using the steps in your reply, with no staff action?"
+            },
+            {
+              "name": "confidence",
+              "description": "low, medium or high - how sure you are that you understood the message and that any steps you give are actually right for it"
+            },
+            {
+              "name": "resolution_state",
+              "description": "One of: OPEN, SELF_RESOLVED, NEEDS_STAFF"
+            },
+            {
+              "name": "updated_description",
+              "description": "1-3 sentences, third person, describing what this ticket is now about including anything the conversation added. Empty string if nothing new"
+            },
+            {
+              "name": "resolution_note",
+              "description": "One sentence recording what actually fixed it. Empty string unless resolution_state is SELF_RESOLVED"
+            }
+          ]
+        },
+        "options": {
+          "systemPromptTemplate": "ROLE\nYou are the Chikiting System assistant. You are replying inside one support ticket, to the employee who raised it. You can see the ticket and the whole conversation. Return only the structured fields.\n\nHOW TO WRITE THE REPLY\nWrite to the employee in the second person. Plain text only - no markdown, no bullet characters, no headings, no greeting, no sign-off. Two to four sentences. Put the useful thing first.\nIf they can fix it themselves, give the concrete steps, in order, in the reply.\nIf the next step needs a person - hardware, an approval, an access grant, payroll, a regulatory opinion - say so plainly and name the team that owns it. Never promise a date, a person, or an action you cannot verify.\nIf they are chasing an update you do not have, say you do not have one and that the owning team can see this thread.\nNever invent ticket numbers, names, systems, policies or dates that are not in the ticket or the conversation.\nIf the message is not about this ticket, answer briefly and say it is probably better raised as its own ticket.\n\nFIELDS\nintent - what the new message is doing. Exactly one of NEW_INFO, ASK_HELP, CONFIRM_RESOLVED, CHASE_UPDATE, UNRELATED. Use CONFIRM_RESOLVED only when the employee says it is now working, has been done, or is no longer needed.\ncan_self_serve - Yes only when the employee can complete this themselves using the steps in your reply, with no staff action.\nconfidence - low, medium or high. This decides whether your reply is presented to the employee as advice to act on or as a plain update, so be honest rather than agreeable.\n  high - you are sure what they are asking and any steps you gave are standard first-line fixes that cannot make things worse.\n  medium - you followed the message but the situation is unusual, under-specified, or your steps are a guess between several causes.\n  low - you are not sure what is being asked, or it depends on systems, access or context you cannot see.\n  When choosing between two levels, choose the lower one. If confidence is not high, do not give steps at all - say what you understood and what happens next.\n  Choose low whenever this depends on anything internal you cannot see: a named internal system, tool, portal, dashboard, report, form, account, process, policy, team habit, client name, or an acronym used here. You do not know how this company works, and recognising the words is not understanding the situation. Do not reason about an internal process from its name. Say plainly that the owning team knows this one and that they can see the thread.\nresolution_state - exactly one of:\n  SELF_RESOLVED - the employee has said it is fixed or no longer needed.\n  NEEDS_STAFF - the next step belongs to a person on the owning team.\n  OPEN - still being worked out between you and the employee.\nupdated_description - 1 to 3 sentences, third person, describing what this ticket is now about, rewritten to include what the conversation has added: error messages, device or model numbers, dates, what has already been tried. Return an empty string if the conversation added nothing new.\nresolution_note - one sentence recording what actually fixed it. Empty string unless resolution_state is SELF_RESOLVED.\nreply - the message the employee will read."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.2,
+      "position": [700, 220],
+      "id": "a2c58e70-9d41-4b36-8f27-6e0b5d1c3307",
+      "name": "Assistant (Local)",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "model": "__OLLAMA_MODEL__",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [720, 420],
+      "id": "d8b16f20-4c57-4e91-a3d6-7f2b9c5e1408",
+      "name": "Ollama Chat Model",
+      "credentials": {
+        "ollamaApi": {
+          "id": "HelpdeskOllama01",
+          "name": "Helpdesk Ollama (local)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3d5f710-gem1-4a28-9c37-5e1b7d0a2209",
+              "name": "ai_source",
+              "value": "Gemini",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, -180],
+      "id": "c5e28a41-7b39-4d62-8e15-9f3c1b6d4410",
+      "name": "Tag Source: Gemini"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b3d5f710-loc1-4a28-9c37-5e1b7d0a2209",
+              "name": "ai_source",
+              "value": "Local",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [960, 220],
+      "id": "e7f39b52-8c41-4a73-9d26-1b5e2c7f6511",
+      "name": "Tag Source: Local"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chikiting System - turns the model's read of the conversation into a reply\n// and, at most, a short list of changes to the ticket.\n//\n// Everything the model asked for is re-checked here, and again in PHP before\n// anything is written. Resolving a ticket is the only destructive action on\n// offer, so it needs three things to agree: the model called it resolved, the\n// person who raised it sent the message, and the message actually says so.\n\nconst STATES = ['OPEN', 'SELF_RESOLVED', 'NEEDS_STAFF'];\nconst INTENTS = ['NEW_INFO', 'ASK_HELP', 'CONFIRM_RESOLVED', 'CHASE_UPDATE', 'UNRELATED'];\nconst CONFIRMS = /\\b(resolved|resolve|fixed|it works|works now|working now|sorted|solved|done now|no longer needed|not needed|all good|never mind|nevermind)\\b/i;\n\nconst body = $('Webhook').first().json.body || {};\nconst ticket = body.ticket || {};\nconst dept = String(ticket.responsible_department || ticket.submitting_department || '').trim() || 'the assigned team';\nconst status = String(ticket.status || 'New');\nconst fromRequester = String(body.sender_is_requester || 'No') === 'Yes';\nconst message = String(body.message || '');\n\nconst results = [];\nfor (const item of $input.all()) {\n  const ai = item.json.output || {};\n\n  let reply = String(ai.reply || '').trim();\n  const modelOk = reply !== '';\n\n  let state = String(ai.resolution_state || '').trim().toUpperCase().replace(/[^A-Z_]/g, '');\n  if (!STATES.includes(state)) state = 'OPEN';\n\n  let intent = String(ai.intent || '').trim().toUpperCase().replace(/[^A-Z_]/g, '');\n  if (!INTENTS.includes(intent)) intent = 'NEW_INFO';\n\n  if (!modelOk) {\n    state = 'NEEDS_STAFF';\n    reply = `I could not reach my language model just then, so I have not read your message properly - but it is saved on this ticket and ${dept} can see it. If this is urgent, contact them directly.`;\n  }\n\n  const confirmed = intent === 'CONFIRM_RESOLVED' || CONFIRMS.test(message);\n  const mayResolve = modelOk\n    && fromRequester\n    && state === 'SELF_RESOLVED'\n    && confirmed\n    && status !== 'Closed'\n    && status !== 'Resolved';\n\n  // Claimed resolved but the guards did not agree: keep it open and say nothing\n  // about it, rather than telling the requester it is closed when it is not.\n  if (state === 'SELF_RESOLVED' && !mayResolve) state = 'OPEN';\n\n  if (modelOk && state === 'NEEDS_STAFF') {\n    reply += `\\n\\nI cannot finish this one myself - ${dept} owns the next step, and they can see this whole thread on the ticket.`;\n  }\n  if (mayResolve) {\n    reply += '\\n\\nI have marked this ticket resolved and written up what fixed it. Reply here any time if it comes back.';\n  }\n\n  const description = String(ai.updated_description || '').trim();\n  const note = String(ai.resolution_note || '').trim();\n\n  results.push({ json: {\n    reply,\n    intent,\n    resolution_state: state,\n    can_self_serve: String(ai.can_self_serve || '').trim().toLowerCase().startsWith('y') ? 'Yes' : 'No',\n    // Read by TicketAssistant to decide whether this reply is labelled as a\n    // suggested fix or as a plain update. A model that skipped the field, or\n    // invented a fourth level, is treated as 'medium' - which never on its own\n    // earns the suggestion label.\n    confidence: ['low', 'medium', 'high'].includes(String(ai.confidence || '').trim().toLowerCase())\n      ? String(ai.confidence).trim().toLowerCase()\n      : 'medium',\n    model_ok: modelOk ? 'Yes' : 'No',\n    ai_source: String(item.json.ai_source || 'Local'),\n    actions: {\n      set_status: mayResolve ? 'Resolved' : '',\n      set_description: (description.length >= 20 && description.length <= 2000) ? description : '',\n      resolution_note: mayResolve ? note : ''\n    }\n  } });\n}\nreturn results;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 20],
+      "id": "f1a47c60-3e58-4b29-9c07-2d6b8e1f5612",
+      "name": "Decide & Reply"
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [1420, 20],
+      "id": "0b6d2e51-9f34-4c87-a12e-5b7d3c9f0713",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{ "node": "Build Context", "type": "main", "index": 0 }]]
+    },
+    "Build Context": {
+      "main": [[{ "node": "Cloud model available?", "type": "main", "index": 0 }]]
+    },
+    "Cloud model available?": {
+      "main": [
+        [{ "node": "Assistant (Gemini)", "type": "main", "index": 0 }],
+        [{ "node": "Assistant (Local)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [[{ "node": "Assistant (Gemini)", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Ollama Chat Model": {
+      "ai_languageModel": [[{ "node": "Assistant (Local)", "type": "ai_languageModel", "index": 0 }]]
+    },
+    "Assistant (Gemini)": {
+      "main": [[{ "node": "Tag Source: Gemini", "type": "main", "index": 0 }]]
+    },
+    "Assistant (Local)": {
+      "main": [[{ "node": "Tag Source: Local", "type": "main", "index": 0 }]]
+    },
+    "Tag Source: Gemini": {
+      "main": [[{ "node": "Decide & Reply", "type": "main", "index": 0 }]]
+    },
+    "Tag Source: Local": {
+      "main": [[{ "node": "Decide & Reply", "type": "main", "index": 0 }]]
+    },
+    "Decide & Reply": {
+      "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]]
+    }
+  }
+}

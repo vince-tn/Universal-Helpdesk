@@ -6,9 +6,6 @@ use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
-/**
- * Keeps already-authenticated users away from /login and /signup.
- */
 class GuestFilter implements FilterInterface
 {
     public function before(RequestInterface $request, $arguments = null)

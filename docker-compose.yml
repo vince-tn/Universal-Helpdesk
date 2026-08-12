@@ -1,0 +1,169 @@
+name: universal-helpdesk
+
+services:
+  db:
+    image: mysql:8
+    container_name: helpdesk-db
+    restart: unless-stopped
+    environment:
+      - MYSQL_DATABASE=helpdesk
+      - MYSQL_USER=helpdesk
+
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-helpdesk}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:-helpdesk_root}
+      - TZ=Asia/Manila
+    ports:
+
+      - "3307:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uhelpdesk -p\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+  app:
+    build: ./docker/app
+    container_name: helpdesk-app
+    restart: unless-stopped
+    ports:
+      - "8081:8080"
+    environment:
+      - CI_ENVIRONMENT=development
+
+      - app_baseURL=http://localhost:8081/
+      - app_indexPage=
+
+      - TZ=Asia/Manila
+      - app_appTimezone=Asia/Manila
+      - database_default_hostname=db
+      - database_default_database=helpdesk
+      - database_default_username=helpdesk
+      - database_default_password=${MYSQL_PASSWORD:-helpdesk}
+      - database_default_DBDriver=MySQLi
+      - database_default_port=3306
+      - N8N_BASE_URL=http://n8n:5678
+      - AI_TIMEOUT=180
+      - AI_ASSISTANT=on
+      - AI_ESCALATION=auto
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
+      - ALLOWED_EMAIL_DOMAINS=${ALLOWED_EMAIL_DOMAINS:-}
+      - ALLOWED_EMAILS=${ALLOWED_EMAILS:-}
+      - MAIL_HOST=${MAIL_HOST:-mailpit}
+      - MAIL_PORT=${MAIL_PORT:-1025}
+      - MAIL_USER=${MAIL_USER:-}
+      - MAIL_PASS=${MAIL_PASS:-}
+      - MAIL_CRYPTO=${MAIL_CRYPTO:-}
+      - MAIL_FROM=${MAIL_FROM:-helpdesk@universalhelpdesk.local}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Chikiting System}
+    volumes:
+      - .:/app
+      - app_vendor:/app/vendor
+    depends_on:
+      db:
+        condition: service_healthy
+      n8n:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: helpdesk-mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    environment:
+      - TZ=Asia/Manila
+      - MP_MAX_MESSAGES=500
+      - MP_SMTP_AUTH_ACCEPT_ANY=true
+      - MP_SMTP_AUTH_ALLOW_INSECURE=true
+
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: helpdesk-n8n
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=Asia/Manila
+      - TZ=Asia/Manila
+      - N8N_SECURE_COOKIE=false
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
+      - GEMINI_MODEL=${GEMINI_MODEL:-models/gemini-2.5-flash}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - HELPDESK_FORCE_IMPORT=${HELPDESK_FORCE_IMPORT:-false}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./n8n/provision:/provision:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - 'tr -d "\r" < /provision/entrypoint.sh > /tmp/provision.sh && exec tini -- /bin/sh /tmp/provision.sh'
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:5678/healthz | grep -q ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 20s
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: helpdesk-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
+  ollama-init:
+    image: ollama/ollama:latest
+    container_name: helpdesk-ollama-init
+    restart: "no"
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
+    volumes:
+      - ./docker/ollama:/init:ro
+    entrypoint:
+      - /bin/sh
+      - -c
+      - 'tr -d "\r" < /init/pull-model.sh > /tmp/pull-model.sh && exec /bin/sh /tmp/pull-model.sh'
+    depends_on:
+      ollama:
+        condition: service_healthy
+
+  nocodb:
+    image: nocodb/nocodb:latest
+    container_name: helpdesk-nocodb
+    restart: unless-stopped
+    ports:
+      - "8090:8080"
+    volumes:
+      - nocodb_data:/usr/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db_data:
+  app_vendor:
+  nocodb_data:
+  n8n_data:
+  ollama_data:

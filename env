@@ -29,6 +29,10 @@
 #--------------------------------------------------------------------
 # DATABASE
 #--------------------------------------------------------------------
+#
+# In Docker the app is told where MySQL is by docker-compose.yml, so this
+# block stays commented out. Uncomment it only when running the app
+# outside the containers.
 
 # database.default.hostname = localhost
 # database.default.database = ci4
@@ -48,6 +52,27 @@
 # database.tests.charset = utf8mb4
 # database.tests.DBCollat = utf8mb4_general_ci
 # database.tests.port = 3306
+
+#--------------------------------------------------------------------
+# INTEGRATIONS
+#--------------------------------------------------------------------
+#
+# THIS FILE IS NOT THE ONE YOU WANT. It is CodeIgniter's own template,
+# kept because the framework ships it. The stack is configured by
+# docker-compose.yml, and the per-deployment settings - the signup
+# allowlist, mail, the model - live in `.env` next to it.
+#
+#     cp .env.example .env
+#
+# Only uncomment things here when running the app OUTSIDE Docker.
+#
+# Inside Docker the app reaches n8n by service name; from the host it
+# would be http://localhost:5678 instead. While testing from the n8n
+# editor with "Execute workflow", swap /webhook/ for /webhook-test/.
+
+# N8N_BASE_URL = 'http://n8n:5678'
+# N8N_WEBHOOK_URL = 'http://n8n:5678/webhook/submit-ticket'
+# N8N_CHAT_WEBHOOK_URL = 'http://n8n:5678/webhook/ticket-chat'
 
 #--------------------------------------------------------------------
 # ENCRYPTION

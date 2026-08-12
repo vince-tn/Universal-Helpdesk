@@ -1,32 +1,8 @@
 <?php
 
-/**
- * This file is part of CodeIgniter 4 framework.
- *
- * (c) CodeIgniter Foundation <admin@codeigniter.com>
- *
- * For the full copyright and license information, please view
- * the LICENSE file that was distributed with this source code.
- */
-
 use CodeIgniter\Boot;
 use Config\Paths;
 
-/*
- *---------------------------------------------------------------
- * Sample file for Preloading
- *---------------------------------------------------------------
- * See https://www.php.net/manual/en/opcache.preloading.php
- *
- * How to Use:
- *   0. Copy this file to your project root folder.
- *   1. Set the $paths property of the preload class below.
- *   2. Set opcache.preload in php.ini.
- *     php.ini:
- *     opcache.preload=/path/to/preload.php
- */
-
-// Load the paths config file
 require __DIR__ . '/app/Config/Paths.php';
 
 // Path to the front controller
@@ -101,8 +77,8 @@ class preload
                 }
 
                 require_once $file[0];
-                // Uncomment only for debugging (to inspect which files are included).
-                // Never use this in production - preload scripts must not generate output.
+                // For debugging (to inspect which files are included).
+                // Preload scripts must not generate output.
                 // echo 'Loaded: ' . $file[0] . "\n";
             }
         }

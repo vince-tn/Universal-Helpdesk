@@ -119,7 +119,7 @@ $errorId = uniqid('error', true);
 
                                         <?php
                                         $params = null;
-                                        // Reflection by name is not available for closure function
+
                                         if (! str_ends_with($row['function'], '}')) {
                                             $mirror = isset($row['class']) ? new ReflectionMethod($row['class'], $row['function']) : new ReflectionFunction($row['function']);
                                             $params = $mirror->getParameters();
@@ -259,7 +259,6 @@ $errorId = uniqid('error', true);
 
                     </tbody>
                 </table>
-
 
                 <?php $empty = true; ?>
                 <?php foreach (['_GET', '_POST', '_COOKIE'] as $var) : ?>

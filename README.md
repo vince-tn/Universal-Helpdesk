@@ -1,69 +1,99 @@
-# CodeIgniter 4 Application Starter
+# Chikiting System
 
-## What is CodeIgniter?
+An internal helpdesk where the intake form is one box: *describe your problem*.
+Everything after that is automatic — the request is classified, tagged, routed to
+the owning team, and answered in a chat thread on its own ticket.
 
-CodeIgniter is a PHP full-stack web framework that is light, fast, flexible and secure.
-More information can be found at the [official site](https://codeigniter.com).
+```bash
+docker compose up -d --build
+```
 
-This repository holds a composer-installable app starter.
-It has been built from the
-[development repository](https://github.com/codeigniter4/CodeIgniter4).
+That's the whole setup. Nothing is installed on your machine — no PHP, no
+Composer, no MySQL, no mail account, no model. Then open
+**<http://localhost:8081>** and log in as
+`admin@universalhelpdesk.local` / `ChangeMe123!`.
 
-More information about the plans for version 4 can be found in [CodeIgniter 4](https://forum.codeigniter.com/forumdisplay.php?fid=28) on the forums.
+**→ [SETUP.md](SETUP.md) is the real documentation.** How it fits together, how
+the assistant decides what to say, how registration works, how to deploy it.
 
-You can read the [user guide](https://codeigniter.com/user_guide/)
-corresponding to the latest version of the framework.
+---
 
-## Installation & updates
+## What's in the box
 
-`composer create-project codeigniter4/appstarter` then `composer update` whenever
-there is a new release of the framework.
+| | |
+|---|---|
+| **One-box intake** | An employee types a paragraph. No dropdowns to guess at, no form to fill in wrong |
+| **Automatic tagging** | Team, category, priority, turnaround and due date are set at intake. No triage step |
+| **A ticket that talks back** | Each ticket is a chat thread. The assistant answers the requester, and can rewrite the description or mark it resolved when the conversation settles it |
+| **Advice only when it's earned** | Steps are presented as steps only when the model is confident *and* the request is self-serviceable. Everything else is filed with an honest "routed to X" |
+| **Always labelled** | Every machine-written message carries an `AI` badge. Nothing pretends to be a person |
+| **Verified registration** | Work-email domain allowlist plus a one-time code to the inbox. No employee list, no HRIS |
+| **Runs on your own hardware** | Ollama is local and stays local — no API key, no per-request cost, no ticket text leaving the building. Add a Gemini key and the big requests escalate to the cloud model as well |
 
-When updating, check the release notes to see if there are any changes you might need to apply
-to your `app` folder. The affected files can be copied or merged from
-`vendor/codeigniter4/framework/app`.
+## The stack
 
-## Setup
+```
+Browser ──► app          CodeIgniter 4, PHP 8.3    :8081
+              │
+              ├──POST──► n8n                       :5678   classify & draft
+              │            ├──► Ollama             :11434  local model
+              │            └──► Gemini                     cloud model, optional
+              │
+              ├────────► MySQL                     :3307   the only store
+              └────────► Mailpit                   :8025   every email, captured
+```
 
-Copy `env` to `.env` and tailor for your app, specifically the baseURL
-and any database settings.
+n8n only classifies and drafts — it never writes to the database. The app posts
+a request, n8n answers with structured fields, the app decides what to store.
+One writer, one source of truth, every column in a migration you own.
 
-## Important Change with index.php
+## Commands
 
-`index.php` is no longer in the root of the project! It has been moved inside the *public* folder,
-for better security and separation of components.
+Build and start everything, then tail the app log:
 
-This means that you should configure your web server to "point" to your project's *public* folder, and
-not to the project root. A better practice would be to configure a virtual host to point there. A poor practice would be to point your web server to the project root and expect to enter *public/...*, as the rest of your logic and the
-framework are exposed.
+```bash
+docker compose up -d --build
+```
 
-**Please** read the user guide for a better explanation of how CI4 works!
+Check it's all actually wired up — this names the fix on any failure:
 
-## Repository Management
+```bash
+docker compose exec app php spark helpdesk:doctor
+```
 
-We use GitHub issues, in our main repository, to track **BUGS** and to track approved **DEVELOPMENT** work packages.
-We use our [forum](http://forum.codeigniter.com) to provide SUPPORT and to discuss
-FEATURE REQUESTS.
+Stop, keeping your data:
 
-This repository is a "distribution" one, built by our release preparation script.
-Problems with it can be raised on our forum, or as issues in the main repository.
+```bash
+docker compose stop
+```
 
-## Server Requirements
+Delete the volumes and rebuild from scratch — **this wipes the tickets**:
 
-PHP version 8.2 or higher is required, with the following extensions installed:
+```bash
+docker compose down -v && docker compose up -d --build
+```
 
-- [intl](http://php.net/manual/en/intl.requirements.php)
-- [mbstring](http://php.net/manual/en/mbstring.installation.php)
+Same stack, hardened, for the office machine:
 
-> [!WARNING]
-> - The end of life date for PHP 7.4 was November 28, 2022.
-> - The end of life date for PHP 8.0 was November 26, 2023.
-> - The end of life date for PHP 8.1 was December 31, 2025.
-> - If you are still using below PHP 8.2, you should upgrade immediately.
-> - The end of life date for PHP 8.2 will be December 31, 2026.
+```bash
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+```
 
-Additionally, make sure that the following extensions are enabled in your PHP:
+## Layout
 
-- json (enabled by default - don't turn it off)
-- [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
-- [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+```
+app/
+  Commands/          spark helpdesk:doctor, helpdesk:import-sqlite
+  Config/            Access.php (who may register), N8n.php, Email.php
+  Controllers/       TicketController, AuthController, AdminUserController
+  Database/          migrations — the schema lives here and nowhere else
+  Libraries/         TicketAssistant (what the AI may say and do), EmailVerifier
+  Models/            TicketModel, N8nService, UserModel, ...
+  Views/             layout, tickets, auth, admin
+docker/              the app image and its startup
+n8n/provision/       workflows + credentials, seeded automatically at boot
+public/css/style.css the whole design system, one file
+```
+
+Built on [CodeIgniter 4](https://codeigniter.com). MIT licensed — see
+[LICENSE](LICENSE).

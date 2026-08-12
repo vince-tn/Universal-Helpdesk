@@ -47,7 +47,20 @@
                     <td><span class="pill <?= rolePillClass($u['role']) ?>"><?= esc($u['role']) ?></span></td>
                     <td class="cell-muted"><?= esc($u['department'] ?? '—') ?></td>
                     <td><?= (int) $u['is_active'] === 1 ? '<span class="pill pill-status-resolved">Active</span>' : '<span class="pill pill-status-closed">Disabled</span>' ?></td>
-                    <td><a href="/admin/users/<?= $u['id'] ?>/edit" class="btn btn-secondary btn-sm"><?= icon('edit', 14) ?> Edit</a></td>
+                    <td>
+                        <div class="row-actions">
+                            <a href="/admin/users/<?= $u['id'] ?>/edit" class="btn btn-secondary btn-sm"><?= icon('edit', 14) ?> Edit</a>
+                            <form action="/admin/users/<?= $u['id'] ?>/toggle" method="post">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn-link"><?= (int) $u['is_active'] === 1 ? 'Disable' : 'Enable' ?></button>
+                            </form>
+                            <form action="/admin/users/<?= $u['id'] ?>/delete" method="post"
+                                  onsubmit="return confirm('Permanently delete <?= esc($u['name'], 'js') ?>? Their tickets stay, but they will be unassigned.');">
+                                <?= csrf_field() ?>
+                                <button type="submit" class="btn-link is-danger">Delete</button>
+                            </form>
+                        </div>
+                    </td>
                 </tr>
             <?php endforeach ?>
         </tbody>

@@ -1,0 +1,107 @@
+# Chikiting System - the production overlay, for the office machine.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Same stack, same containers, same command as development - this box is a
+# computer in the office, not a cloud tier, so nothing has to be taken out to
+# make it fit. Ollama comes too and the whole thing keeps running with no
+# internet if it has to.
+#
+# What actually changes:
+#
+# 1. IT ANSWERS THE OFFICE, NOT JUST ITSELF. app_baseURL becomes the machine's
+#    LAN address, and the app publishes on port 80 so people type a hostname
+#    and nothing else. Everything else - MySQL, n8n, Mailpit, Ollama - drops to
+#    loopback, reachable only from the machine itself. n8n's editor in
+#    particular has no login in this setup; it must not answer the office.
+#
+# 2. REAL MAIL. Mailpit still runs, but only as a local trap. Signup codes have
+#    to reach actual inboxes, so MAIL_* must point at a relay - Brevo (300/day)
+#    and Resend (3k/month) are both free and both take five minutes.
+#
+# 3. REGISTRATION IS LOCKED TO YOUR DOMAINS. ALLOWED_EMAIL_DOMAINS becomes
+#    required. An empty allowlist means every person who can reach the box may
+#    create an account.
+#
+# 4. PRODUCTION ERROR HANDLING. No debug toolbar, no stack traces on screen,
+#    and the seed migration stops creating the demo agent and requester.
+#
+# 5. IT COMES BACK BY ITSELF. restart: always on everything, so a power cut or
+#    a Tuesday reboot does not need somebody to log in and start it.
+#
+# THE MODEL
+#   Ollama is the default and needs roughly 4-6GB of RAM free for qwen2.5:3b.
+#   If the box has it, you are done - no API key, no per-request cost, and no
+#   ticket text leaving the building, which is the real argument for it.
+#   Set GEMINI_API_KEY as well and anything big escalates to the cloud; leave it
+#   empty and the stack is entirely self-contained. Either way this file does
+#   not force the choice.
+#
+# BEFORE THE FIRST DEPLOY
+#   Copy .env.example to .env on the office machine and fill in the required
+#   values below - compose refuses to start without them, which is the point.
+#   Then change the seeded superadmin password from ChangeMe123!.
+#
+# ONE THING THIS DOES NOT DO
+#   The app is served by PHP's built-in server (8 workers). That is fine for an
+#   internal tool this size on a trusted LAN. It is not fine facing the public
+#   internet - if you ever port-forward this, put Caddy in front of it for TLS
+#   first.
+
+services:
+  app:
+    restart: always
+    ports:
+      # !override replaces the development list instead of adding to it -
+      # compose MERGES `ports` by default. Needs Compose v2.24+ (Jan 2024); an
+      # older one fails loudly here rather than quietly publishing everything.
+      # Port 80 so the office types http://helpdesk and nothing else.
+      - "80:8080"
+    environment:
+      - CI_ENVIRONMENT=production
+
+      - app_baseURL=${APP_URL:?set APP_URL to this machine's address, e.g. http://helpdesk.local/}
+
+      - ALLOWED_EMAIL_DOMAINS=${ALLOWED_EMAIL_DOMAINS:?set ALLOWED_EMAIL_DOMAINS - an empty allowlist lets anyone sign up}
+      - ALLOWED_EMAILS=${ALLOWED_EMAILS:-}
+      - MAIL_HOST=${MAIL_HOST:?set MAIL_HOST - signup codes have to actually arrive}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USER=${MAIL_USER:-}
+      - MAIL_PASS=${MAIL_PASS:-}
+      - MAIL_CRYPTO=${MAIL_CRYPTO:-tls}
+      - MAIL_FROM=${MAIL_FROM:?set MAIL_FROM - relays reject unknown senders}
+      - MAIL_FROM_NAME=${MAIL_FROM_NAME:-Chikiting System}
+
+  db:
+    restart: always
+    environment:
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set MYSQL_PASSWORD - do not ship the default}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
+
+    ports: !override
+      - "127.0.0.1:3307:3306"
+
+  n8n:
+    restart: always
+    environment:
+      - N8N_SECURE_COOKIE=false
+      - WEBHOOK_URL=http://localhost:5678/
+
+    ports: !override
+      - "127.0.0.1:5678:5678"
+
+  ollama:
+    restart: always
+
+    ports: !override
+      - "127.0.0.1:11434:11434"
+
+  mailpit:
+    restart: always
+
+    ports: !override
+      - "127.0.0.1:8025:8025"
+      - "127.0.0.1:1025:1025"
+
+  nocodb:
+    profiles: ["disabled"]
