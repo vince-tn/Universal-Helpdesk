@@ -33,7 +33,11 @@ else
     log "GEMINI_API_KEY is empty - running local-only, on Ollama"
 fi
 
-existing=$(n8n list:workflow --onlyId 2>/dev/null || true)
+list_ids() {
+    timeout 60 n8n list:workflow --onlyId 2>/dev/null || true
+}
+
+existing=$(list_ids)
 
 import_workflow() {
     file="$1"
@@ -57,9 +61,11 @@ import_workflow() {
 import_workflow "$PROVISION_DIR/workflows/submit-ticket.json" "$SUBMIT_ID" "Submit Ticket"
 import_workflow "$PROVISION_DIR/workflows/ticket-chat.json" "$CHAT_ID" "Ticket Chat"
 
+present=$(list_ids)
+
 free_the_path() {
     log "a published workflow is holding one of our webhook paths - standing it down"
-    for other in $(n8n list:workflow --onlyId 2>/dev/null || true); do
+    for other in $present; do
         [ "$other" = "$SUBMIT_ID" ] && continue
         [ "$other" = "$CHAT_ID" ] && continue
         n8n unpublish:workflow --id="$other" >/dev/null 2>&1 \
@@ -68,7 +74,7 @@ free_the_path() {
 }
 
 exists() {
-    n8n list:workflow --onlyId 2>/dev/null | grep -q "^${1}$"
+    echo "$present" | grep -q "^${1}$"
 }
 
 publish() {
