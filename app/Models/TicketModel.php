@@ -281,8 +281,6 @@ class TicketModel extends Model
         $row['needs_human_review'] = ($output === [] || ($output['needs_human_review'] ?? 'Yes') === 'Yes') ? 1 : 0;
         $row['classified_at'] = date('Y-m-d H:i:s');
 
-        // A fresh classification starts again from what the requester picked;
-        // RoutingDirectory::reroute() moves it afterwards if it should.
         $row['responsible_role'] = null;
         $row['routing_note']     = null;
 

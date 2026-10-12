@@ -1782,7 +1782,6 @@ input:focus, select:focus, textarea:focus {
 .save-note.is-dirty { color: var(--amber-tx); font-weight: 700; }
 .hidden-form { display: none; }
 
-/* Knowledge page: guardrail chips are forms, so their remove control is a button. */
 .role-chip > span { font-size: 13px; padding: 4px 0; }
 button.chip-x { border: none; background: none; padding: 0; cursor: pointer; line-height: 1; }
 .role-row .role-handles { flex: 1; min-width: 240px; }

@@ -64,12 +64,6 @@ class KnowledgeBase
         return $builder->orderBy('id', 'ASC')->limit($limit)->get()->getResultArray();
     }
 
-    /**
-     * Full-text search counts a single shared common word as a match, at a
-     * score near zero. Sending those costs tokens and tells the model the
-     * department "covered" a request it never wrote about, so anything far
-     * below the best match is dropped.
-     */
     private function strongest(array $rows, int $limit): array
     {
         if ($rows === []) {

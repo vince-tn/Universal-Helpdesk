@@ -15,7 +15,6 @@ log() { echo "[provision] $*"; }
 
 mkdir -p "$WORK" "$STATE_DIR"
 
-# ---------------------------------------------------------------- credentials
 if [ ! -f "$MARKER" ]; then
     log "seeding the Ollama credential (http://ollama:11434)"
     n8n import:credentials --input="$PROVISION_DIR/credentials/ollama.json" \

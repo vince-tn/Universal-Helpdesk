@@ -5,20 +5,8 @@ namespace App\Libraries;
 use App\Models\SignupAllowlistModel;
 use Config\Access;
 
-/**
- * Who may create their own account.
- *
- * The company's domains come from .env (ALLOWED_EMAIL_DOMAINS, ALLOWED_EMAILS)
- * and are fixed per deployment. On top of those a super admin can let in a
- * partner agency - its whole domain, or one person's address - from the app.
- * Those extras only ever add to the list; they never switch the check off.
- */
 class SignupPolicy
 {
-    /**
-     * Free mail services. Allowing one of these as a domain would let anyone
-     * in the world sign up, so they can only be added one address at a time.
-     */
     private const PUBLIC_PROVIDERS = [
         'gmail.com', 'googlemail.com', 'yahoo.com', 'ymail.com', 'outlook.com', 'hotmail.com', 'live.com',
         'msn.com', 'icloud.com', 'me.com', 'aol.com', 'proton.me', 'protonmail.com', 'gmx.com', 'mail.com',
@@ -47,21 +35,15 @@ class SignupPolicy
                 $partners->values(SignupAllowlistModel::KIND_EMAIL)
             );
         } catch (\Throwable $e) {
-            // Before the migration has run there is no list - only .env counts.
             return false;
         }
     }
 
-    /** The company's own domains, from .env. */
     public function companyDomains(): array
     {
         return $this->access->allowedDomains;
     }
 
-    /**
-     * Whether an address is covered by a list of domains (subdomains count, as
-     * in .env) or individual addresses. Pure, so it is tested without a database.
-     */
     public static function matches(string $email, array $domains, array $emails): bool
     {
         $email = strtolower(trim($email));
@@ -88,10 +70,6 @@ class SignupPolicy
         return false;
     }
 
-    /**
-     * What an admin typed, as a list entry: ['domain', 'agency.com.au'] or
-     * ['email', 'name@agency.com'], or null if it is neither.
-     */
     public static function parse(string $raw): ?array
     {
         $value = strtolower(trim($raw));

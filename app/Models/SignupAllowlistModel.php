@@ -22,7 +22,6 @@ class SignupAllowlistModel extends Model
         return $this->orderBy('kind', 'ASC')->orderBy('value', 'ASC')->findAll();
     }
 
-    /** Every listed value of one kind, lower-cased. */
     public function values(string $kind): array
     {
         return array_map(

@@ -342,8 +342,6 @@ class TicketController extends BaseController
             return $this->response->setJSON(['ok' => true, 'changed' => false, 'message' => null]);
         }
 
-        // Cloudflare drops a request after 100 seconds and a cold local model
-        // can take longer. Finish anyway: the page checks back for the result.
         ignore_user_abort(true);
 
         $session = session();
@@ -482,8 +480,6 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'That due date is not a real date.');
         }
 
-        // Whoever already holds the ticket may stay on it even if they have
-        // since moved team; anyone new has to be able to take this team's tickets.
         $current = (int) ($this->metaModel->firstOrCreate($id)['assigned_to'] ?? 0);
 
         if ($assignedTo > 0 && $assignedTo !== $current
@@ -673,11 +669,6 @@ class TicketController extends BaseController
         ]);
     }
 
-    /**
-     * Messages added to a ticket after a given one. The page uses it to pick
-     * up an assistant reply whose original request was cut off on the way -
-     * Cloudflare drops anything that runs past 100 seconds.
-     */
     public function updates(string $id)
     {
         $ticket = $this->ticketModel->getTicket($id);

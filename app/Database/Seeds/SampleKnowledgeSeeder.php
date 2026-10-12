@@ -4,18 +4,6 @@ namespace App\Database\Seeds;
 
 use CodeIgniter\Database\Seeder;
 
-/**
- * Sample knowledge articles, guardrails and "what each team handles" lines, so
- * the assistant has something to answer and route from in a demo. They are
- * placeholders: replace them with each department's real procedures before
- * going live.
- *
- *   php spark db:seed SampleKnowledgeSeeder
- *
- * Safe to run again - anything already present (same department and title, or
- * same department, kind and value) is skipped. Departments that do not exist
- * are skipped too.
- */
 class SampleKnowledgeSeeder extends Seeder
 {
     private const ARTICLES = [
@@ -108,7 +96,6 @@ class SampleKnowledgeSeeder extends Seeder
         ],
     ];
 
-    /** What each team handles - used to check a ticket reached the right team. Only fills blanks. */
     private const HANDLES = [
         'Admin' => [
             'handles' => 'IT support: computers, accounts, passwords, email, VPN, printers, network',
@@ -158,7 +145,6 @@ class SampleKnowledgeSeeder extends Seeder
         ],
     ];
 
-    /** Keyed by department name; '' applies to every department. */
     private const GUARDRAILS = [
         '' => [
             'instruction' => [

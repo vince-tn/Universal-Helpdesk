@@ -1,8 +1,4 @@
 #!/usr/bin/env bash
-# Prints the current public address of the free quick tunnel
-# (docker-compose.tunnel.yml). It changes whenever the tunnel restarts.
-#
-#   bash deploy/public-url.sh
 
 set -euo pipefail
 

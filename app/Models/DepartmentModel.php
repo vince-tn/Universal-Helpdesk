@@ -67,7 +67,6 @@ class DepartmentModel extends Model
         return $departments;
     }
 
-    /** Agents, team leaders and supervisors whose own department this is. */
     public function staffCount(string $name): int
     {
         return (new UserModel())

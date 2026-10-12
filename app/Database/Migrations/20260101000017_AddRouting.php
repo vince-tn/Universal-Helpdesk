@@ -13,9 +13,6 @@ class AddRouting extends Migration
         $this->forge->addColumn('departments', ['handles' => $handles]);
         $this->forge->addColumn('department_roles', ['handles' => $handles]);
 
-        // submitting_department / submitting_role stay exactly what the requester
-        // picked. The ticket is owned by responsible_department / responsible_role,
-        // and routing_note records who moved it, if anyone did.
         $this->forge->addColumn('tickets', [
             'responsible_role' => [
                 'type'       => 'VARCHAR',

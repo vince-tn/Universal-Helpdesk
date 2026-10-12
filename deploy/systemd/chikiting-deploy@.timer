@@ -1,6 +1,3 @@
-# Chikiting System - check GitHub for a new tested release of the %i copy
-# every minute. See deploy/README.md.
-
 [Unit]
 Description=Chikiting System - check for a new %i release every minute
 

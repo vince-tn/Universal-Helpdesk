@@ -3,9 +3,6 @@
 use App\Libraries\SignupPolicy;
 use CodeIgniter\Test\CIUnitTestCase;
 
-/**
- * @internal
- */
 final class SignupPolicyTest extends CIUnitTestCase
 {
     public function testAPartnerDomainLetsItsPeopleAndSubdomainsIn(): void

@@ -292,12 +292,6 @@ class AdminDepartmentController extends BaseController
         }
     }
 
-    /**
-     * Tickets the department owns - the same rule as ticket_department(): the
-     * team it was routed to, or the team it was raised with until it is routed.
-     * Old names like "Compliance HQ" count for "Compliance", as in
-     * renameEverywhere().
-     */
     private function ticketsOwnedBy(string $name): int
     {
         $named = static fn ($builder, string $column) => $builder
@@ -335,8 +329,6 @@ class AdminDepartmentController extends BaseController
             );
         }
 
-        // Deleting it would leave these tickets owned by a team that no longer
-        // exists, which only super admins (and each requester) can still see.
         $tickets = $this->ticketsOwnedBy($name);
 
         if ($tickets > 0) {

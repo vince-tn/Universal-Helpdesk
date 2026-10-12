@@ -5,17 +5,6 @@ namespace App\Libraries;
 use App\Models\DepartmentModel;
 use App\Models\GuardrailModel;
 
-/**
- * Department rules for the assistant, in three strengths:
- *
- *  instruction - sent to the model as a rule. It usually obeys; nothing checks.
- *  handoff     - a topic. If the requester's text mentions it, the assistant
- *                gives no advice at all, whatever the model said. Enforced here.
- *  block       - a phrase. If the model's reply contains it, the reply is
- *                replaced before anyone sees it. Enforced here.
- *
- * Rules with no department apply to every department.
- */
 class Guardrails
 {
     private const INSTRUCTION_CHARS = 1500;
@@ -79,10 +68,6 @@ class Guardrails
         return self::firstMatch($this->rules($department)[GuardrailModel::KIND_BLOCK], $text);
     }
 
-    /**
-     * Whole words or phrases, case-insensitive: "pay" does not match "payroll".
-     * A trailing * matches any ending: "pay*" matches pay, payroll and payslip.
-     */
     public static function firstMatch(array $terms, string $text): ?string
     {
         if (trim($text) === '') {

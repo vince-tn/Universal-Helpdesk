@@ -73,10 +73,6 @@ class TicketAssistant
         $topic      = $this->guardrails->handoffTopic($department, $requestText);
         $notice     = $route === null ? '' : $this->routeNotice($route) . "\n\n";
 
-        // The articles were looked up for the department the requester picked.
-        // After a move to a different department they belong to the wrong team,
-        // so the opening only explains the move; the new team's own articles
-        // take over from the next reply.
         $movedDepartment = $route !== null && strcasecmp($route['department'], $route['from_department']) !== 0;
 
         if ($topic !== null) {
@@ -109,13 +105,6 @@ class TicketAssistant
         return $this->say($ticketId, $notice . $body, $kind, $this->confidenceOf($output));
     }
 
-    /**
-     * The model did not vouch for a fix. If the search still found a guide for
-     * this request, the closest one is offered as "might help" - the app picks
-     * it and quotes it word for word, so nothing in it is the model's own. It
-     * can be near rather than exact, which is why it is labelled softly and the
-     * ticket stays with the team either way.
-     */
     private function noFirmFix(string $ticketId, string $notice, array $output, string $department, array $articles): ?array
     {
         $guide = array_values($articles)[0] ?? null;
@@ -151,12 +140,6 @@ class TicketAssistant
         return 'This looks like a matter for ' . $route['to'] . ' rather than ' . $route['from'] . ', so I have moved your ticket there.';
     }
 
-    /**
-     * Advice is only ever shown alongside the words it came from: the recorded
-     * fix of a resolved ticket, or the department's own article, verbatim. A
-     * small model restating someone's steps can drop one or invent one; the
-     * original underneath it cannot.
-     */
     private function withSources(string $body, string $department, string $priorFix, ?array $article): string
     {
         $parts = trim($body) === '' ? [] : [trim($body)];

@@ -3,9 +3,6 @@
 use App\Libraries\RoutingDirectory;
 use CodeIgniter\Test\CIUnitTestCase;
 
-/**
- * @internal
- */
 final class RoutingDirectoryTest extends CIUnitTestCase
 {
     private function entries(): array
@@ -77,7 +74,6 @@ final class RoutingDirectoryTest extends CIUnitTestCase
 
     public function testAWrongModelAnswerIsOverruledByTheWords(): void
     {
-        // A real mistake from testing: qwen2.5:3b sent a vacation request to Payroll.
         $request = 'I would like to file vacation leave from October 22 to 25';
         $options = RoutingDirectory::rank($this->entries(), $request, 'HR', 'Employee Relations');
 

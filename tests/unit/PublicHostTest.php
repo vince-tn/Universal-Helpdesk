@@ -3,9 +3,6 @@
 use CodeIgniter\Test\CIUnitTestCase;
 use Config\App;
 
-/**
- * @internal
- */
 final class PublicHostTest extends CIUnitTestCase
 {
     private array $saved = [];

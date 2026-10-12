@@ -5,10 +5,6 @@ namespace App\Controllers;
 use App\Libraries\SignupPolicy;
 use App\Models\SignupAllowlistModel;
 
-/**
- * Sign-up access for partner agencies. The company's own domains are set in
- * .env and only shown here; a super admin adds and removes the extras.
- */
 class AdminAccessController extends BaseController
 {
     protected SignupAllowlistModel $list;

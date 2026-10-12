@@ -5,15 +5,6 @@ namespace App\Libraries;
 use App\Models\DepartmentModel;
 use App\Models\TicketModel;
 
-/**
- * Who handles what - for checking that a ticket landed with the right team.
- *
- * The model is never shown the whole organisation. The app scores every active
- * department and role against the request's own words (no AI, no tokens),
- * keeps the requester's pick plus the few best alternatives, and the model only
- * has to say which of those numbered options owns the request. The app then
- * checks that answer and makes the move itself.
- */
 class RoutingDirectory
 {
     public const LIMIT = 4;
@@ -57,11 +48,6 @@ class RoutingDirectory
         return self::rank($this->entries(), $text, $department, $role);
     }
 
-    /**
-     * The requester's pick first, then up to LIMIT - 1 alternatives that share
-     * the most (and the rarest) words with the request. Pure, so it is tested
-     * without a database.
-     */
     public static function rank(array $entries, string $text, string $department, string $role, int $limit = self::LIMIT): array
     {
         $chosen = null;
@@ -116,12 +102,6 @@ class RoutingDirectory
         return $options;
     }
 
-    /**
-     * One small, focused question for the local model - a few hundred tokens,
-     * a couple of seconds. The teams are listed alphabetically and the
-     * requester's pick is not marked, so the model judges the request rather
-     * than agreeing with whoever picked first.
-     */
     public function prompt(string $request, array $options): string
     {
         $teams = array_values($options);
@@ -143,18 +123,6 @@ class RoutingDirectory
         ]);
     }
 
-    /**
-     * A move needs two independent signals to agree:
-     *
-     *  1. the model named one of the teams actually offered, and not the
-     *     requester's own pick, and
-     *  2. that team's own "handles" wording covers more of the request than
-     *     the requester's pick does.
-     *
-     * Anything less keeps the requester's choice. The model alone can be wrong
-     * (a 3B model sent a vacation request to Payroll in testing); the words
-     * alone are blunt. Together they only move what plainly belongs elsewhere.
-     */
     public function decide(array $options, array $output, string $request): ?array
     {
         $options = array_values($options);
@@ -199,11 +167,6 @@ class RoutingDirectory
         return $route;
     }
 
-    /**
-     * The team that owns a ticket now. Until something moves it, that is the
-     * requester's own pick; after a move, the department and role it was
-     * moved to.
-     */
     public static function owner(array $fields): array
     {
         $moved = trim((string) ($fields['Routing Note'] ?? '')) !== '';
@@ -230,13 +193,6 @@ class RoutingDirectory
         return $option['role'] === '' ? $option['department'] : $option['department'] . ' / ' . $option['role'];
     }
 
-    /**
-     * Maps the model's free-text answer back to exactly one offered team, by
-     * whole words: its full label ("HR / Payroll") or its role name alone
-     * ("Payroll"). A role beats its own department, so "Employee Relations
-     * (HR)" means the role. Two different teams named means the answer is
-     * unclear, and nothing moves.
-     */
     public static function named(string $answer, array $options): ?array
     {
         if (trim($answer) === '') {
@@ -272,7 +228,6 @@ class RoutingDirectory
         return count($hits) === 1 ? array_values($hits)[0] : null;
     }
 
-    /** How many of the request's words a team's own description covers. */
     public static function evidence(array $option, string $request): int
     {
         $own   = $option['role'] === '' ? $option['department'] . ' ' . $option['department_handles'] : $option['role'] . ' ' . self::what($option);

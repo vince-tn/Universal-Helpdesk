@@ -4,11 +4,6 @@ namespace App\Database\Migrations;
 
 use CodeIgniter\Database\Migration;
 
-/**
- * Extra sign-up access a super admin grants from the app: a partner agency's
- * whole domain, or one address. Adds to ALLOWED_EMAIL_DOMAINS / ALLOWED_EMAILS
- * in .env, which stay the company's own list.
- */
 class CreateSignupAllowlist extends Migration
 {
     public function up()

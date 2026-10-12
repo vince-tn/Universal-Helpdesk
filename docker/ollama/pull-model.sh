@@ -21,17 +21,12 @@ else
     echo "[ollama-init] $MODEL is ready"
 fi
 
-# Load it into memory now, so the first ticket does not wait 1-3 minutes for
-# it. How long it then stays is the server's OLLAMA_KEEP_ALIVE: for good in
-# production, the 5 minute default elsewhere.
 if ollama run "$MODEL" "" >/dev/null 2>&1; then
     echo "[ollama-init] $MODEL loaded into memory"
 else
     echo "[ollama-init] could not preload $MODEL - the first ticket will load it"
 fi
 
-# Production restarts this container with the box, so the model is loaded
-# again after every reboot. Between reboots it just waits here.
 if [ "${OLLAMA_INIT_STAY:-no}" = "yes" ]; then
     exec sleep infinity
 fi

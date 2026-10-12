@@ -2,9 +2,6 @@
 
 use CodeIgniter\Test\CIUnitTestCase;
 
-/**
- * @internal
- */
 final class DateHelperTest extends CIUnitTestCase
 {
     public function testAcceptsRealDates(): void

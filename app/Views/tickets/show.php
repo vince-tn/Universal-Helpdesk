@@ -341,9 +341,6 @@
         return ids.length ? Math.max.apply(null, ids) : 0;
     }
 
-    // Cloudflare closes any request that runs past 100 seconds, but the server
-    // finishes regardless and saves the assistant's reply. When the wait is cut
-    // off, check back for that reply instead of giving up on it.
     function awaitReply(after, onReply, onGiveUp) {
         var tries = 0;
         (function poll() {

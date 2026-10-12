@@ -1,7 +1,3 @@
-# Chikiting System - one run of deploy/deploy.sh for one copy of the app.
-# %i is the copy's folder name under /opt/chikiting: production or staging.
-# Started every minute by chikiting-deploy@.timer; see deploy/README.md.
-
 [Unit]
 Description=Chikiting System - update the %i copy to its newest tested release
 After=docker.service network-online.target
@@ -12,5 +8,4 @@ Requires=docker.service
 Type=oneshot
 WorkingDirectory=/opt/chikiting/%i
 ExecStart=/bin/bash /opt/chikiting/%i/deploy/deploy.sh
-# A rebuild can take a while; never let a run hang forever.
 TimeoutStartSec=30min

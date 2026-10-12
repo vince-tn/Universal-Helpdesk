@@ -66,7 +66,6 @@ if (! function_exists('priorities')) {
 }
 
 if (! function_exists('is_ymd_date')) {
-    /** A real calendar date written as YYYY-MM-DD - what a date input sends. */
     function is_ymd_date(string $value): bool
     {
         return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) === 1
@@ -281,11 +280,6 @@ if (! function_exists('icon')) {
 }
 
 if (! function_exists('asset')) {
-    /**
-     * A public file's URL stamped with when it last changed. Cloudflare and
-     * browsers keep copies of stylesheets; a new stamp after a deploy makes
-     * them fetch the new file instead of serving the old one for hours.
-     */
     function asset(string $path): string
     {
         $path = ltrim($path, '/');

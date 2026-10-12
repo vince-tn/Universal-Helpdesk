@@ -4,9 +4,6 @@ use App\Libraries\Guardrails;
 use App\Libraries\KnowledgeBase;
 use CodeIgniter\Test\CIUnitTestCase;
 
-/**
- * @internal
- */
 final class GuardrailsTest extends CIUnitTestCase
 {
     public function testMatchesWholeWordsOnly(): void

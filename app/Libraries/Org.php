@@ -119,10 +119,6 @@ class Org
             || strcasecmp((string) ($fields['Requester Email'] ?? ''), (string) ($user['email'] ?? '')) === 0;
     }
 
-    /**
-     * The department that owns a ticket (lower-cased) and the ids of its team
-     * leader and supervisor, 0 where none is set.
-     */
     private static function departmentLeads(array $fields): array
     {
         $department = strtolower(resolve_base_department(ticket_department($fields)));
@@ -138,11 +134,6 @@ class Org
         return [$department, 0, 0];
     }
 
-    /**
-     * Who a ticket can be assigned to: the active agents, team leaders and
-     * supervisors of the department that owns it, plus that department's
-     * named team leader and supervisor if their own department is another.
-     */
     public static function assignableStaff(array $fields): array
     {
         [$department, $leaderId, $supervisorId] = self::departmentLeads($fields);
