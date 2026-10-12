@@ -1785,3 +1785,81 @@ input:focus, select:focus, textarea:focus {
 .role-chip > span { font-size: 13px; padding: 4px 0; }
 button.chip-x { border: none; background: none; padding: 0; cursor: pointer; line-height: 1; }
 .role-row .role-handles { flex: 1; min-width: 240px; }
+
+@media (max-width: 760px) {
+  .app-shell { flex-direction: column; }
+
+  .sidebar {
+    width: auto;
+    height: auto;
+    position: static;
+    padding: 12px 14px 10px;
+    border-right: none;
+    border-bottom: 1px solid var(--sidebar-line);
+  }
+  .sidebar .brand { font-size: 16px; margin: 0 0 10px; padding: 0; }
+  .sidebar .brand .brand-mark { width: 26px; height: 26px; }
+  .sidebar .tagline,
+  .sidebar .nav-section-label,
+  .sidebar-spacer { display: none; }
+
+  .sidebar nav {
+    flex-direction: row;
+    gap: 6px;
+    overflow-x: auto;
+    margin: 0 -14px;
+    padding: 0 14px 4px;
+    scrollbar-width: none;
+  }
+  .sidebar nav::-webkit-scrollbar { display: none; }
+  .sidebar nav a { flex-shrink: 0; white-space: nowrap; padding: 8px 11px; gap: 7px; font-size: 13px; }
+  .sidebar nav a:hover { transform: none; }
+
+  .sidebar .user-card {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 10px;
+  }
+  .user-card .who { flex: 1; min-width: 0; padding: 0; }
+  .user-card .who > div:last-child { min-width: 0; }
+  .who .name, .who .role { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-avatar { width: 30px; height: 30px; font-size: 13px; }
+  .theme-toggle { width: auto; margin: 0; padding: 8px 10px; }
+  .theme-toggle .lbl { display: none; }
+  .logout-form { padding: 0; }
+  .logout-btn { width: auto; padding: 8px 10px; }
+
+  .main { width: 100%; max-width: 100%; min-width: 0; padding: 20px 14px 56px; }
+  .page-header { margin-bottom: 20px; gap: 12px; }
+  .page-header h1 { font-size: 26px; }
+
+  .stat-cards { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px; }
+  .card { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .card table { min-width: 640px; }
+  th, td { padding: 11px 12px; }
+
+  .toolbar { padding: 10px; }
+  .toolbar .search-field { flex-basis: 100%; }
+  .toolbar select { flex: 1 1 140px; min-width: 0; }
+
+  .form-card, .auth-card { padding: 18px 16px; }
+  .form-grid, .detail-grid { grid-template-columns: 1fr; }
+  .form-grid .span-2 { grid-column: auto; }
+
+  .barlist-row { grid-template-columns: 100px 1fr 40px; gap: 10px; }
+
+  .row-form input[type="text"],
+  .role-row input[type="text"],
+  .role-row .role-handles,
+  .dept-name { min-width: 0; flex: 1 1 100%; }
+  .dept-card { padding: 14px; }
+  .dept-grid { grid-template-columns: 1fr; gap: 0; }
+
+  .mention-pop { min-width: 0; max-width: calc(100vw - 28px); }
+  .pagination { flex-wrap: wrap; }
+}
+
+.main { min-width: 0; }
+.card { overflow-x: auto; }
