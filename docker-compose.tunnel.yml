@@ -1,0 +1,26 @@
+# Chikiting System - a free Cloudflare quick tunnel, so people outside the
+# office can reach the app. No domain, no Cloudflare account, no open ports:
+# cloudflared connects out to Cloudflare and gets a random public address.
+#
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml:docker-compose.tunnel.yml
+#   PUBLIC_HOST_SUFFIXES=.trycloudflare.com
+#
+# (both lines go in the production copy's .env)
+#
+# The address is printed in the tunnel's log and changes every time the tunnel
+# restarts - a reboot, or recreating this container. To see the current one:
+#
+#   bash deploy/public-url.sh
+#
+# Cloudflare treats quick tunnels as a free testing service with no uptime
+# guarantee. For a permanent address, add a domain to Cloudflare and switch to
+# a named tunnel (deploy/README.md, section 6) - this file then goes.
+
+services:
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: helpdesk-tunnel
+    restart: always
+    command: ["tunnel", "--no-autoupdate", "--url", "http://app:8080"]
+    depends_on:
+      - app

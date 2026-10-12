@@ -1,0 +1,60 @@
+# Chikiting System - the staging overlay: a second, private copy of the app on
+# the same box, following the `staging` branch. Goes on top of the prod file:
+#
+#   COMPOSE_FILE=docker-compose.yml:docker-compose.prod.yml:docker-compose.staging.yml
+#   COMPOSE_PROJECT_NAME=chikiting-staging
+#
+# (both lines go in the staging copy's .env - see deploy/README.md)
+#
+# Two copies of the stack cannot share container names or ports, so this
+# renames every container and moves every port. The project name keeps the
+# volumes apart: staging has its own database, its own n8n and its own model
+# store, and testing on it never touches a real ticket.
+#
+# Nothing here answers the office network. The app listens on 127.0.0.1:8082,
+# where the Cloudflare tunnel picks it up behind Cloudflare Access; the rest
+# is reachable only from the box itself (an SSH tunnel, for n8n or Mailpit).
+#
+# Mail never leaves the box: every message, sign-up codes included, lands in
+# staging's own Mailpit (ssh -L 8026:localhost:8026, then http://localhost:8026).
+
+services:
+  app:
+    container_name: helpdesk-staging-app
+    ports: !override
+      - "127.0.0.1:8082:8080"
+    environment:
+      - MAIL_HOST=mailpit
+      - MAIL_PORT=1025
+      - MAIL_USER=
+      - MAIL_PASS=
+      - MAIL_CRYPTO=
+      - MAIL_FROM=staging@chikiting.local
+      - MAIL_FROM_NAME=Chikiting System (staging)
+
+  db:
+    container_name: helpdesk-staging-db
+    ports: !override
+      - "127.0.0.1:3308:3306"
+
+  n8n:
+    container_name: helpdesk-staging-n8n
+    ports: !override
+      - "127.0.0.1:5679:5678"
+
+  ollama:
+    container_name: helpdesk-staging-ollama
+    ports: !override
+      - "127.0.0.1:11435:11434"
+
+  ollama-init:
+    container_name: helpdesk-staging-ollama-init
+
+  mailpit:
+    container_name: helpdesk-staging-mailpit
+    ports: !override
+      - "127.0.0.1:8026:8025"
+      - "127.0.0.1:1026:1025"
+
+  nocodb:
+    container_name: helpdesk-staging-nocodb

@@ -1,0 +1,58 @@
+# Chikiting System - test every push to main or staging on GitHub's own
+# machines, and only then mark that commit as ready for the office box.
+#
+#   push to staging  ->  tests pass  ->  release/staging moves to that commit
+#   push to main     ->  tests pass  ->  release/main moves to that commit
+#
+# The box never takes orders from GitHub. It checks the release/* branch every
+# minute and updates itself (deploy/deploy.sh). So nothing here can reach the
+# server, a failing test simply means the box keeps running the last good
+# commit, and a pull request from a stranger's fork runs nothing at all - this
+# only fires on pushes to the repo's own branches.
+
+name: Test and release
+
+on:
+  push:
+    branches: [main, staging]
+
+permissions:
+  contents: write
+
+concurrency:
+  # A newer push to the same branch replaces an older run still in progress,
+  # so an old commit can never be released after a newer one.
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, mbstring, mysqli, zip
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Check every PHP file parses
+        run: find app tests -name '*.php' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      # --no-coverage: phpunit.dist.xml asks for a coverage report and fails on
+      # warnings, so without a coverage driver every run would "fail".
+      - name: Unit tests
+        run: vendor/bin/phpunit --no-coverage tests/unit
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mark this commit as ready for the box
+        run: git push --force origin "HEAD:refs/heads/release/${{ github.ref_name }}"
