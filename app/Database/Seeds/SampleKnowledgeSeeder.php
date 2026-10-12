@@ -7,7 +7,7 @@ use CodeIgniter\Database\Seeder;
 class SampleKnowledgeSeeder extends Seeder
 {
     private const ARTICLES = [
-        'Admin' => [
+        'IT' => [
             [
                 'title'    => 'Locked out of Windows after too many password attempts',
                 'keywords' => 'locked out, account locked, cannot log in, cannot sign in, password expired, login',
@@ -97,12 +97,22 @@ class SampleKnowledgeSeeder extends Seeder
     ];
 
     private const HANDLES = [
-        'Admin' => [
+        'IT' => [
             'handles' => 'IT support: computers, accounts, passwords, email, VPN, printers, network',
             'roles'   => [
+                'Helpdesk'        => 'laptops, computers, passwords, locked accounts, email, printers, software installs',
+                'Network'         => 'VPN, internet, Wi-Fi, network drives, remote access',
+                'Systems'         => 'servers, system access, user accounts, internal systems',
                 'IT Staff'        => 'laptops, computers, passwords, locked accounts, email, VPN, printers, software installs',
                 'Reports Analyst' => 'internal reports, dashboards, data extracts',
                 'Webmaster'       => 'intranet pages, internal web tools, broken internal links',
+            ],
+        ],
+        'Reports/WFM' => [
+            'handles' => 'reports, dashboards, data extracts, schedules and workforce planning',
+            'roles'   => [
+                'Reporting'          => 'reports, dashboards, data extracts, report errors',
+                'Workforce Planning' => 'work schedules, rosters, shift swaps, headcount forecasts',
             ],
         ],
         'HR' => [
@@ -154,7 +164,7 @@ class SampleKnowledgeSeeder extends Seeder
             'handoff' => ['harass*', 'discriminat*', 'bully*', 'legal action'],
             'block'   => ['fuck*', 'shit*', 'bitch*', 'bastard*', 'asshole*', 'I promise', 'guarantee*'],
         ],
-        'Admin' => [
+        'IT' => [
             'handoff' => ['phishing', 'hacked', 'virus', 'malware', 'data breach'],
             'block'   => ['format your', 'reinstall windows', 'registry'],
         ],
@@ -173,6 +183,10 @@ class SampleKnowledgeSeeder extends Seeder
         $now         = date('Y-m-d H:i:s');
         $departments = array_column($this->db->table('departments')->get()->getResultArray(), 'id', 'name');
         $added       = ['articles' => 0, 'guardrails' => 0];
+
+        if (! isset($departments['IT']) && isset($departments['Admin'])) {
+            $departments['IT'] = $departments['Admin'];
+        }
 
         foreach (self::ARTICLES as $department => $articles) {
             if (! isset($departments[$department])) {
