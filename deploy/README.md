@@ -157,11 +157,12 @@ there's nothing new.
 
 ## Backups
 
-Every night at 02:30 the database and the uploaded screenshots are saved to
-`~/chikiting-backups/<date>`, and backups older than 14 days are deleted:
+Every night at 02:30 Manila time the database and the uploaded screenshots are saved to
+`~/chikiting-backups/<date>`, and backups older than 14 days are deleted. The box's
+clock runs on UTC, so the schedule says 18:30:
 
 ```bash
-(crontab -l 2>/dev/null; echo '30 2 * * * /bin/bash /opt/chikiting/production/deploy/backup.sh >> $HOME/chikiting-backup.log 2>&1') | crontab -
+(crontab -l 2>/dev/null; echo '30 18 * * * /bin/bash /opt/chikiting/production/deploy/backup.sh >> $HOME/chikiting-backup.log 2>&1') | crontab -
 ```
 
 To take one now, run `bash deploy/backup.sh`. These copies sit on the same disk
