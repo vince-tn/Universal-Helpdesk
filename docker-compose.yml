@@ -123,6 +123,11 @@ services:
     restart: unless-stopped
     ports:
       - "11434:11434"
+    environment:
+      # The context size the workflows ask for. Ollama reloads a model whenever
+      # a request asks for a different size, so the warm-up load in
+      # docker/ollama/pull-model.sh has to use this same one to be reused.
+      - OLLAMA_CONTEXT_LENGTH=8192
     volumes:
       - ollama_data:/root/.ollama
     healthcheck:

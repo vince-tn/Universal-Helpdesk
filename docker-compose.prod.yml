@@ -93,8 +93,21 @@ services:
   ollama:
     restart: always
 
+    # Keep the model in memory for good. Unloaded after 5 idle minutes (the
+    # default), the next ticket waits 1-3 minutes for it to load again on CPU.
+    # qwen2.5:3b holds about 3 GB.
+    environment:
+      - OLLAMA_KEEP_ALIVE=-1
+
     ports: !override
       - "127.0.0.1:11434:11434"
+
+  ollama-init:
+    # Runs again whenever the box starts, so the model is loaded before the
+    # first ticket instead of by it, then waits without using any CPU.
+    restart: always
+    environment:
+      - OLLAMA_INIT_STAY=yes
 
   mailpit:
     restart: always

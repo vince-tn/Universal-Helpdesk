@@ -44,6 +44,10 @@ services:
 
   ollama:
     container_name: helpdesk-staging-ollama
+    # Unlike production, let staging's model go after 5 idle minutes - it is
+    # only used while someone is testing, and production needs the memory.
+    environment:
+      - OLLAMA_KEEP_ALIVE=5m
     ports: !override
       - "127.0.0.1:11435:11434"
 
