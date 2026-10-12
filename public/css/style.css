@@ -1051,6 +1051,7 @@ input:disabled, input[readonly] { background: var(--paper-tint); color: var(--in
 }
 .msg.kind-suggestion .msg-text { border-left-color: var(--pine); background: var(--pine-bg); }
 .msg.kind-handoff    .msg-text { border-left-color: var(--vermilion); }
+.msg.kind-guide      .msg-text { border-left-color: var(--steel); }
 
 .msg-foot {
   margin-top: 7px;
@@ -1092,6 +1093,7 @@ input:disabled, input[readonly] { background: var(--paper-tint); color: var(--in
 }
 .badge-kind-suggestion  { background: var(--pine-bg); color: var(--pine-tx); }
 .badge-kind-acknowledge { background: var(--steel-bg); color: var(--steel-tx); }
+.badge-kind-guide       { background: var(--amber-bg); color: var(--amber-tx); }
 .badge-kind-handoff     { background: var(--vermilion-bg); color: var(--vermilion-tx); }
 
 .msg-thinking .msg-text.typing {
@@ -1448,6 +1450,7 @@ input:disabled, input[readonly] { background: var(--paper-tint); color: var(--in
 .msg.role-ai .msg-text { border-left: 4px solid var(--plum); }
 .msg.kind-suggestion .msg-text { border-left-color: var(--pine); }
 .msg.kind-handoff .msg-text { border-left-color: var(--amber); }
+.msg.kind-guide .msg-text { border-left-color: var(--steel); }
 
 .code-box:focus { background: var(--plum-bg); }
 .rt-toolbar button:hover { background: var(--plum-bg); color: var(--plum-tx); }
@@ -1657,3 +1660,129 @@ input:focus, select:focus, textarea:focus {
 .solution-toggle { border-radius: var(--radius); font-family: var(--font-body); letter-spacing: 0; }
 .alert { border-radius: var(--radius); border-width: 1px; box-shadow: none; }
 .thread-empty, .note-strip { border-radius: var(--radius); border: 1px solid var(--line-soft); }
+
+.dept-brain { width: 100%; margin-top: 12px; }
+.dept-brain summary {
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--plum-tx);
+  padding: 6px 0;
+  list-style: none;
+}
+.dept-brain summary::-webkit-details-marker { display: none; }
+.dept-brain summary::before { content: '▸ '; color: var(--ink-3); }
+.dept-brain[open] summary::before { content: '▾ '; }
+.dept-brain label {
+  display: block;
+  margin-top: 10px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--ink-2);
+}
+.dept-brain textarea { width: 100%; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+
+.badge-lead {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--amber-bg);
+  color: var(--amber-tx);
+  border: 1px solid var(--amber);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.pill-role-supervisor { background: var(--plum-bg); color: var(--plum-tx); }
+.pill-role-team_leader { background: var(--amber-bg); color: var(--amber-tx); }
+
+.dept-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.dept-name { flex: 1; min-width: 220px; }
+.dept-name input { font-size: 17px; font-weight: 700; margin: 0; }
+.dept-stats { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+.dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+.field { display: flex; flex-direction: column; margin-bottom: 16px; }
+.field > label,
+.dept-name > label,
+.dept-roles > label {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.field select, .field input, .field textarea { margin: 0; }
+.field textarea { font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+
+.dept-roles { padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.role-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.role-chip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--paper-tint);
+  border: 1px solid var(--line-soft);
+  border-radius: 999px;
+  padding: 2px 4px 2px 12px;
+}
+.role-chip input {
+  border: none; background: none; box-shadow: none; margin: 0;
+  width: auto; min-width: 90px; max-width: 190px;
+  font-size: 13px; padding: 4px 0;
+}
+.role-chip input:focus { outline: none; box-shadow: none; }
+.chip-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; margin-left: 4px;
+  border-radius: 50%; color: var(--ink-3); text-decoration: none; font-size: 15px;
+}
+.chip-x:hover { background: var(--vermilion-bg); color: var(--vermilion-tx); }
+.role-new {
+  width: auto; min-width: 130px; margin: 0;
+  border: 1px dashed var(--line-soft); border-radius: 999px;
+  padding: 6px 14px; font-size: 13px; background: transparent;
+}
+
+.save-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding: 14px 18px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  box-shadow: 0 -4px 16px var(--shadow-col);
+}
+.save-note { font-size: 13px; color: var(--ink-3); }
+.save-note.is-dirty { color: var(--amber-tx); font-weight: 700; }
+.hidden-form { display: none; }
+
+/* Knowledge page: guardrail chips are forms, so their remove control is a button. */
+.role-chip > span { font-size: 13px; padding: 4px 0; }
+button.chip-x { border: none; background: none; padding: 0; cursor: pointer; line-height: 1; }
+.role-row .role-handles { flex: 1; min-width: 240px; }

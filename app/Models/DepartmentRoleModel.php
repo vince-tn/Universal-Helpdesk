@@ -10,7 +10,7 @@ class DepartmentRoleModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['department_id', 'name'];
+    protected $allowedFields = ['department_id', 'name', 'handles'];
 
     public function forDepartment(int $departmentId): array
     {

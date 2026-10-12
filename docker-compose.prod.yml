@@ -51,7 +51,7 @@
 services:
   app:
     restart: always
-    ports:
+    ports: !override
       # !override replaces the development list instead of adding to it -
       # compose MERGES `ports` by default. Needs Compose v2.24+ (Jan 2024); an
       # older one fails loudly here rather than quietly publishing everything.

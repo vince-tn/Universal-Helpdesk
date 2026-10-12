@@ -19,11 +19,18 @@ class ReportsController extends BaseController
         $this->userModel   = new UserModel();
     }
 
+    private function dateParam(string $name): string
+    {
+        $value = trim((string) ($this->request->getGet($name) ?? ''));
+
+        return is_ymd_date($value) ? $value : '';
+    }
+
     public function index()
     {
         $department = (string) ($this->request->getGet('department') ?? '');
-        $dateFrom   = (string) ($this->request->getGet('date_from') ?? '');
-        $dateTo     = (string) ($this->request->getGet('date_to') ?? '');
+        $dateFrom   = $this->dateParam('date_from');
+        $dateTo     = $this->dateParam('date_to');
 
         if ($dateFrom !== '' && $dateTo !== '' && $dateFrom > $dateTo) {
             [$dateFrom, $dateTo] = [$dateTo, $dateFrom];
@@ -55,7 +62,9 @@ class ReportsController extends BaseController
         $ticketIds = array_map(fn ($t) => (string) ($t['id'] ?? ''), $tickets);
         $metaById  = $this->metaModel->forTickets($ticketIds);
 
-        $agents = $this->userModel->where('role', UserModel::ROLE_AGENT)->findAll();
+        $agents = $this->userModel
+            ->whereIn('role', [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR])
+            ->findAll();
         $agentsById = [];
         foreach ($agents as $agent) {
             $agentsById[$agent['id']] = $agent;

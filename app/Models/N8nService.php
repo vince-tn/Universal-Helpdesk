@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Libraries\Guardrails;
+use App\Libraries\KnowledgeBase;
+use App\Libraries\RoutingDirectory;
 use Config\N8n;
 
 class N8nService
@@ -18,10 +21,21 @@ class N8nService
 
     public function classify(array $submission, string $priorContext = ''): ?array
     {
+        $department = (string) ($submission['Submitting Department'] ?? '');
+        $request    = (string) ($submission['Request'] ?? '');
+        $knowledge  = new KnowledgeBase();
+        $articles   = $knowledge->relevant($department, $request);
+        $routing    = new RoutingDirectory();
+        $options    = $routing->shortlist($request, $department, (string) ($submission['Submitting Role'] ?? ''));
+        $options    = count($options) > 1 ? $options : [];
+
         $item = $this->post($this->config->webhookUrl, $submission + [
 
             'allow_escalation' => $this->config->cloudEnabled() ? 'Yes' : 'No',
             'prior_context'    => $priorContext,
+            'dept_context'     => $knowledge->context($articles),
+            'dept_guardrails'  => (new Guardrails())->instructions($department),
+            'routing_prompt'   => $options === [] ? '' : $routing->prompt($request, $options),
         ]);
 
         if ($item === null) {
@@ -37,12 +51,24 @@ class N8nService
         return [
             'output'    => $item['output'],
             'ai_source' => (string) ($item['ai_source'] ?? 'Local'),
+            'articles'  => $articles,
+            'routing'   => $options,
         ];
     }
 
     public function chat(array $payload): ?array
     {
         $payload['prefer_cloud'] = $this->config->cloudEnabled() ? 'Yes' : 'No';
+
+        $ticket     = $payload['ticket'] ?? [];
+        $department = (string) (($ticket['responsible_department'] ?? '') ?: ($ticket['submitting_department'] ?? ''));
+        $knowledge  = new KnowledgeBase();
+        $question   = trim(($ticket['request_body'] ?? '') . ' ' . ($payload['message'] ?? ''));
+
+        $articles = $knowledge->relevant($department, $question);
+
+        $payload['dept_context']    = $knowledge->context($articles);
+        $payload['dept_guardrails'] = (new Guardrails())->instructions($department);
 
         $item = $this->post($this->config->chatWebhookUrl, $payload);
 
@@ -67,6 +93,9 @@ class N8nService
             'confidence'       => (string) ($item['confidence'] ?? 'medium'),
             'ai_source'        => (string) ($item['ai_source'] ?? 'Local'),
             'actions'          => is_array($item['actions'] ?? null) ? $item['actions'] : [],
+            'matched_article'  => (string) ($item['matched_article'] ?? ''),
+            'matched_prior'    => (string) ($item['matched_prior'] ?? ''),
+            'articles'         => $articles,
         ];
     }
 

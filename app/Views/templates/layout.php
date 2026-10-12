@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Chikiting System</title>
     <?= theme_head() ?>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
 </head>
 <body>
     <?php $user = current_user(); ?>
@@ -44,9 +44,19 @@
                         <?= icon('users') ?>
                         Manage Staff
                     </a>
+                    <a href="/admin/access" class="<?= str_starts_with(uri_string(), 'admin/access') ? 'active' : '' ?>">
+                        <?= icon('lock') ?>
+                        Sign-up Access
+                    </a>
                     <a href="/admin/departments" class="<?= str_starts_with(uri_string(), 'admin/departments') ? 'active' : '' ?>">
                         <?= icon('department') ?>
                         Departments
+                    </a>
+                <?php elseif (\App\Libraries\Org::canOpenAdmin($user)): ?>
+                    <div class="nav-section-label">Your departments</div>
+                    <a href="/admin/departments" class="<?= str_starts_with(uri_string(), 'admin/departments') ? 'active' : '' ?>">
+                        <?= icon('department') ?>
+                        Departments &amp; AI knowledge
                     </a>
                 <?php endif ?>
             </nav>

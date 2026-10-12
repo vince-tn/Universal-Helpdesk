@@ -44,6 +44,16 @@ class EmailVerificationModel extends Model
             ->update();
     }
 
+    public function invalidateOthers(string $email, int $keepId, string $purpose = 'signup'): void
+    {
+        $this->db->table($this->table)
+            ->where('email', strtolower(trim($email)))
+            ->where('purpose', $purpose)
+            ->where('id !=', $keepId)
+            ->where('consumed_at', null)
+            ->update(['consumed_at' => date('Y-m-d H:i:s')]);
+    }
+
     public function sendsSince(string $email, string $since, string $purpose = 'signup'): int
     {
         return $this->where('email', strtolower(trim($email)))

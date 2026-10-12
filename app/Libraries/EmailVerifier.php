@@ -37,8 +37,6 @@ class EmailVerifier
 
         $code = $this->mintCode();
 
-        $this->codes->invalidateFor($email, $purpose);
-
         $id = $this->codes->insert([
             'email'      => $email,
             'purpose'    => $purpose,
@@ -85,6 +83,7 @@ class EmailVerifier
             ];
         }
 
+        $this->codes->invalidateOthers($email, (int) $id, $purpose);
         $this->codes->prune();
 
         return ['sent' => true, 'reason' => '', 'retry_after' => 0];

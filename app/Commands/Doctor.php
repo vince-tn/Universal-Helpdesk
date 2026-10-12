@@ -34,6 +34,7 @@ class Doctor extends BaseCommand
         $this->mail();
         $this->registration();
         $this->routing();
+        $this->knowledge();
         $this->clock();
 
         CLI::newLine();
@@ -141,7 +142,7 @@ class Doctor extends BaseCommand
     private function cloud(N8n $config): void
     {
         if ($config->cloudEnabled()) {
-            $this->ok('cloud model enabled - big requests and chat use Gemini');
+            $this->ok('cloud model enabled - Gemini answers first, Ollama takes over if it fails');
 
             return;
         }
@@ -199,6 +200,16 @@ class Doctor extends BaseCommand
             ? ''
             : sprintf(' (+%d individual address%s)', count($access->allowedEmails), count($access->allowedEmails) === 1 ? '' : 'es');
 
+        try {
+            $partners = (new \App\Models\SignupAllowlistModel())->countAllResults();
+        } catch (\Throwable $e) {
+            $partners = 0;
+        }
+
+        if ($partners > 0) {
+            $extra .= sprintf(' (+%d partner entr%s added in the app)', $partners, $partners === 1 ? 'y' : 'ies');
+        }
+
         $this->ok(sprintf(
             'signup      %d domain(s) allowed: %s%s',
             count($access->allowedDomains),
@@ -242,6 +253,30 @@ class Doctor extends BaseCommand
             'routing     no agent can be scoped to: ' . implode(', ', $orphans),
             'add an alias in resolve_base_department() in app/Common.php'
         );
+    }
+
+    private function knowledge(): void
+    {
+        try {
+            $counts = (new \App\Models\KnowledgeArticleModel())->countsByDepartment();
+            $empty  = [];
+
+            foreach ((new \App\Models\DepartmentModel())->active() as $department) {
+                if (($counts[(int) $department['id']] ?? 0) === 0) {
+                    $empty[] = $department['name'];
+                }
+            }
+        } catch (\Throwable $e) {
+            $this->fail('knowledge   ' . $e->getMessage(), 'php spark migrate');
+
+            return;
+        }
+
+        $this->ok(sprintf('knowledge   %d article(s) in use', array_sum($counts)));
+
+        if ($empty !== []) {
+            CLI::write('  --   no articles yet, so no AI advice for: ' . implode(', ', $empty), 'dark_gray');
+        }
     }
 
     private function clock(): void

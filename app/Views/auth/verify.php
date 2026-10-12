@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Verify your email — Chikiting System</title>
     <?= theme_head() ?>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
 </head>
 <body>
     <div class="auth-shell">

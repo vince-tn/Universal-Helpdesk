@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Libraries\EmailVerifier;
+use App\Libraries\SignupPolicy;
 use App\Models\UserModel;
 use Config\Access;
 
@@ -10,6 +11,9 @@ class AuthController extends BaseController
 {
 
     private const PENDING_KEY = 'pending_signup_email';
+
+    private const LOGIN_MAX_FAILURES = 5;
+    private const LOGIN_LOCK_SECONDS = 900;
 
     protected UserModel $userModel;
     protected EmailVerifier $verifier;
@@ -32,15 +36,32 @@ class AuthController extends BaseController
         $email    = trim((string) $this->request->getPost('email'));
         $password = (string) $this->request->getPost('password');
 
+        $lockKey  = 'login_fail_' . md5(strtolower($email));
+        $failures = (int) (cache($lockKey) ?? 0);
+
+        if ($failures >= self::LOGIN_MAX_FAILURES) {
+            return redirect()->back()->withInput()->with(
+                'error',
+                'Too many failed attempts for that account. Wait ' . intdiv(self::LOGIN_LOCK_SECONDS, 60)
+                    . ' minutes and try again.'
+            );
+        }
+
         $user = $this->userModel->findByEmail($email);
 
         if ($user === null || ! $this->userModel->verifyPassword($user, $password)) {
+            cache()->save($lockKey, $failures + 1, self::LOGIN_LOCK_SECONDS);
+
             return redirect()->back()->withInput()->with('error', 'Invalid email or password.');
         }
 
         if ((int) $user['is_active'] !== 1) {
             return redirect()->back()->withInput()->with('error', 'This account has been deactivated. Contact your administrator.');
         }
+
+        cache()->delete($lockKey);
+
+        session()->regenerate(true);
 
         session()->set([
             'isLoggedIn' => true,
@@ -207,9 +228,9 @@ class AuthController extends BaseController
                 => 'Please fill in all fields.',
             ! filter_var($email, FILTER_VALIDATE_EMAIL)
                 => 'Please enter a valid email address.',
-            ! $this->access->allows($email)
+            ! (new SignupPolicy($this->access))->allows($email)
                 => 'Use your work email. Self-service signup is limited to ' . $this->access->domainHint()
-                    . '. If you are an external contractor, ask IT to create the account for you.',
+                    . '. If you are with a partner agency or an external contractor, ask IT to give your address access.',
             strlen($password) < 8
                 => 'Password must be at least 8 characters.',
             $password !== $confirm

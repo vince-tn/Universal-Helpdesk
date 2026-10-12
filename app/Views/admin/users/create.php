@@ -36,11 +36,24 @@
         </div>
 
         <div class="form-group">
+            <label for="company">Company</label>
+            <select id="company" name="company">
+                <option value="">Not set</option>
+                <?php foreach (companies() as $co): ?>
+                    <option value="<?= esc($co) ?>" <?= (old('company')) === $co ? 'selected' : '' ?>><?= esc($co) ?></option>
+                <?php endforeach ?>
+            </select>
+        </div>
+
+
+        <div class="form-group">
             <label for="role">Role</label>
-            <select id="role" name="role" onchange="document.getElementById('dept-group').style.display = this.value === 'agent' ? 'block' : 'none'">
-                <option value="requester">Requester</option>
-                <option value="agent">Agent (department-scoped)</option>
-                <option value="superadmin">Superadmin (sees everything)</option>
+            <select id="role" name="role" onchange="document.getElementById('dept-group').style.display = ['agent','team_leader','supervisor'].indexOf(this.value) !== -1 ? 'block' : 'none'">
+                <option value="requester" <?= old('role') === 'requester' ? 'selected' : '' ?>><?= role_label('requester') ?></option>
+                <option value="agent" <?= old('role') === 'agent' ? 'selected' : '' ?>><?= role_label('agent') ?></option>
+                <option value="team_leader" <?= old('role') === 'team_leader' ? 'selected' : '' ?>><?= role_label('team_leader') ?></option>
+                <option value="supervisor" <?= old('role') === 'supervisor' ? 'selected' : '' ?>><?= role_label('supervisor') ?></option>
+                <option value="superadmin" <?= old('role') === 'superadmin' ? 'selected' : '' ?>><?= role_label('superadmin') ?></option>
             </select>
         </div>
 

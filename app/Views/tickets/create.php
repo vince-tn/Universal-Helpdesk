@@ -28,14 +28,22 @@
                 <input type="email" id="requester_email" value="<?= esc($user['email']) ?>" disabled>
             </div>
 
-            <div class="form-group span-2">
+            <div class="form-group">
                 <label for="submitting_department">Submitting Department</label>
                 <select id="submitting_department" name="submitting_department" required>
                     <option value="">Select a department...</option>
-                    <?php foreach (departments() as $dept): ?>
-                        <option value="<?= esc($dept) ?>" <?= old('submitting_department') === $dept ? 'selected' : '' ?>><?= esc($dept) ?></option>
+                    <?php foreach ($roles as $d): ?>
+                        <option value="<?= esc($d['name']) ?>" <?= old('submitting_department') === $d['name'] ? 'selected' : '' ?>><?= esc($d['name']) ?></option>
                     <?php endforeach ?>
                 </select>
+            </div>
+
+            <div class="form-group">
+                <label for="submitting_role">Role</label>
+                <select id="submitting_role" name="submitting_role" data-selected="<?= esc(old('submitting_role')) ?>">
+                    <option value="">Select a department first...</option>
+                </select>
+                <div class="field-hint" id="role-hint">Optional. Not sure? Pick your best guess — the assistant double-checks and moves the ticket if it belongs elsewhere.</div>
             </div>
 
             <div class="form-group span-2">
@@ -76,6 +84,49 @@
         <button type="submit" class="btn" id="ticket-submit"><?= icon('send', 16) ?> Submit Ticket</button>
     </form>
 </div>
+
+<script>window.UHD_ROLES = <?= json_encode(array_column($roles, 'roles', 'name'), JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
+<script>
+(function () {
+    var dept = document.getElementById('submitting_department');
+    var role = document.getElementById('submitting_role');
+    var hint = document.getElementById('role-hint');
+    if (!dept || !role) return;
+
+    var defaultHint = hint ? hint.textContent : '';
+
+    function showHandles() {
+        if (!hint) return;
+        var picked = role.options[role.selectedIndex];
+        var handles = picked ? (picked.getAttribute('data-handles') || '') : '';
+        hint.textContent = handles ? 'Handles ' + handles + '.' : defaultHint;
+    }
+
+    function fill() {
+        var list = (window.UHD_ROLES || {})[dept.value] || [];
+        var want = role.getAttribute('data-selected') || '';
+        role.innerHTML = '';
+        var blank = document.createElement('option');
+        blank.value = '';
+        blank.textContent = list.length ? 'No specific role' : 'Select a department first...';
+        role.appendChild(blank);
+        list.forEach(function (r) {
+            var o = document.createElement('option');
+            o.value = r.name;
+            o.textContent = r.name;
+            o.setAttribute('data-handles', r.handles || '');
+            if (r.name === want) o.selected = true;
+            role.appendChild(o);
+        });
+        role.disabled = list.length === 0;
+        showHandles();
+    }
+
+    dept.addEventListener('change', function () { role.setAttribute('data-selected', ''); fill(); });
+    role.addEventListener('change', showHandles);
+    fill();
+})();
+</script>
 
 <script>
 (function () {

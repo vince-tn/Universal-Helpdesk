@@ -13,8 +13,8 @@ class TicketModel extends Model
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
     protected $allowedFields = [
-        'requester', 'requester_email', 'submitting_department', 'request_body', 'request_html',
-        'request_title', 'category', 'responsible_department', 'description',
+        'requester', 'requester_email', 'submitting_department', 'submitting_role', 'classified_at', 'request_body', 'request_html',
+        'request_title', 'category', 'responsible_department', 'responsible_role', 'routing_note', 'description',
         'expected_deliverable', 'suggested_tat', 'requirements_needed',
         'closure_criteria', 'ai_source', 'matched_catalogue_key',
         'needs_human_review', 'status', 'ai_updated_at', 'ai_resolution_note',
@@ -28,23 +28,30 @@ class TicketModel extends Model
         'requester'              => 'Requester',
         'requester_email'        => 'Requester Email',
         'submitting_department'  => 'Submitting Department',
+        'submitting_role'        => 'Submitting Role',
+        'classified_at'          => 'Classified At',
         'request_body'           => 'Request',
         'request_html'           => 'Request HTML',
         'request_title'          => 'Request Title',
         'category'               => 'Category',
         'responsible_department' => 'Responsible Department',
+        'responsible_role'       => 'Responsible Role',
+        'routing_note'           => 'Routing Note',
         'description'            => 'Description',
         'expected_deliverable'   => 'Expected Deliverable',
         'suggested_tat'          => 'Suggested TAT',
         'requirements_needed'    => 'Requirements Needed',
         'closure_criteria'       => 'Closure Criteria',
         'ai_source'              => 'AI Source',
+        'matched_catalogue_key'  => 'Catalogue Key',
         'status'                 => 'Status',
         'created_at'             => 'CreatedAt',
         'ai_updated_at'          => 'AI Updated At',
         'ai_resolution_note'     => 'AI Resolution Note',
         'needs_human_review'     => 'Needs Human Review',
     ];
+
+    private const CLAIM_TTL = 600;
 
     private const CLASSIFIER_MAP = [
         'request_title'          => 'request_title',
@@ -156,7 +163,7 @@ class TicketModel extends Model
         $rows = $this->db->table('ticket_messages')
             ->select('ticket_id, body')
             ->whereIn('ticket_id', $ticketIds)
-            ->whereIn('author_role', ['agent', 'superadmin'])
+            ->whereIn('author_role', UserModel::STAFF_ROLES)
             ->where('is_solution', 1)
             ->orderBy('id', 'ASC')
             ->get()
@@ -224,6 +231,41 @@ class TicketModel extends Model
         return $this->update((int) $id, $clean);
     }
 
+    private function claimTtl(): int
+    {
+        return max(self::CLAIM_TTL, config(\Config\N8n::class)->timeout + 60);
+    }
+
+    public function awaitsClassification(array $fields): bool
+    {
+        $at = trim((string) ($fields['Classified At'] ?? ''));
+
+        if ($at === '') {
+            return true;
+        }
+
+        return trim((string) ($fields['Catalogue Key'] ?? '')) === ''
+            && ($fields['Status'] ?? 'New') === 'New'
+            && strtotime($at) < time() - $this->claimTtl();
+    }
+
+    public function claimForClassification(string $id): bool
+    {
+        $this->db->table($this->table)
+            ->where('id', (int) $id)
+            ->groupStart()
+                ->where('classified_at IS NULL', null, false)
+                ->orGroupStart()
+                    ->where('matched_catalogue_key IS NULL', null, false)
+                    ->where('status', 'New')
+                    ->where('classified_at <', date('Y-m-d H:i:s', time() - $this->claimTtl()))
+                ->groupEnd()
+            ->groupEnd()
+            ->update(['classified_at' => date('Y-m-d H:i:s')]);
+
+        return $this->db->affectedRows() === 1;
+    }
+
     public function replaceClassification(string $id, array $output, string $aiSource = 'Local'): bool
     {
         $row = ['ai_source' => in_array($aiSource, ['Local', 'Gemini'], true) ? $aiSource : 'Local'];
@@ -237,6 +279,12 @@ class TicketModel extends Model
         }
 
         $row['needs_human_review'] = ($output === [] || ($output['needs_human_review'] ?? 'Yes') === 'Yes') ? 1 : 0;
+        $row['classified_at'] = date('Y-m-d H:i:s');
+
+        // A fresh classification starts again from what the requester picked;
+        // RoutingDirectory::reroute() moves it afterwards if it should.
+        $row['responsible_role'] = null;
+        $row['routing_note']     = null;
 
         if (($row['request_title'] ?? '') === '') {
             unset($row['request_title']);
@@ -245,12 +293,22 @@ class TicketModel extends Model
         return $this->update((int) $id, $row);
     }
 
+    public function applyRoute(string $id, string $department, string $role, ?string $note): bool
+    {
+        return $this->update((int) $id, [
+            'responsible_department' => $department,
+            'responsible_role'       => $role === '' ? null : $role,
+            'routing_note'           => $note,
+        ]);
+    }
+
     public function createFromClassification(array $submission, array $output, string $aiSource = 'Local'): ?string
     {
         $row = [
             'requester'             => $submission['Requester Name'] ?? '',
             'requester_email'       => $submission['Requester Email'] ?? '',
             'submitting_department' => $submission['Submitting Department'] ?? null,
+            'submitting_role'       => $submission['Submitting Role'] ?? null,
             'request_body'          => $submission['Request'] ?? null,
 
             'request_html'          => ($submission['Request HTML'] ?? '') !== '' ? $submission['Request HTML'] : null,

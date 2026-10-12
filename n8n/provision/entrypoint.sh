@@ -9,7 +9,7 @@ SUBMIT_ID=HelpdeskSubmit01
 CHAT_ID=HelpdeskChat0001
 
 OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:3b}"
-GEMINI_MODEL="${GEMINI_MODEL:-models/gemini-2.5-flash}"
+GEMINI_MODEL="${GEMINI_MODEL:-models/gemini-3.6-flash}"
 
 log() { echo "[provision] $*"; }
 

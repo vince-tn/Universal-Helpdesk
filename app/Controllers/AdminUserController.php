@@ -15,8 +15,20 @@ class AdminUserController extends BaseController
 
     public function index()
     {
+        $leads = db_connect()->table('departments')
+            ->select('team_leader_id, name')
+            ->where('team_leader_id IS NOT NULL')
+            ->get()->getResultArray();
+
+        $leadsOf = [];
+        foreach ($leads as $l) {
+            $leadsOf[(int) $l['team_leader_id']] = $l['name'];
+        }
+
         return view('admin/users/index', [
-            'users' => $this->userModel->orderBy('role', 'ASC')->orderBy('name', 'ASC')->findAll(),
+            'users'     => $this->userModel->orderBy('role', 'ASC')->orderBy('name', 'ASC')->findAll(),
+            'leadsOf'   => $leadsOf,
+            'leaderIds' => array_keys($leadsOf),
         ]);
     }
 
@@ -33,21 +45,31 @@ class AdminUserController extends BaseController
         $role       = (string) $this->request->getPost('role');
         $department = $this->request->getPost('department') ?: null;
 
-        $allowedRoles = [UserModel::ROLE_SUPERADMIN, UserModel::ROLE_AGENT, UserModel::ROLE_REQUESTER];
+        $allowedRoles = UserModel::ROLES;
 
         if ($name === '' || $email === '' || strlen($password) < 8 || ! in_array($role, $allowedRoles, true)) {
             return redirect()->back()->withInput()->with('error', 'Please fill in all fields correctly (password min. 8 characters).');
         }
 
-        if ($role === UserModel::ROLE_AGENT && ! in_array($department, departments(), true)) {
-            return redirect()->back()->withInput()->with('error', 'Please choose a department for this agent.');
+        if (in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true) && ! in_array($department, departments(), true)) {
+            return redirect()->back()->withInput()->with('error', 'Please choose a department for this role.');
         }
 
         if ($this->userModel->findByEmail($email) !== null) {
             return redirect()->back()->withInput()->with('error', 'An account with that email already exists.');
         }
 
-        $this->userModel->createAccount($name, $email, $password, $role, $role === UserModel::ROLE_AGENT ? $department : null);
+        $scoped = in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true);
+
+        $this->userModel->insert([
+            'name'          => $name,
+            'email'         => strtolower($email),
+            'company'       => trim((string) $this->request->getPost('company')) ?: null,
+            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'role'          => $role,
+            'department'    => $scoped ? $department : null,
+            'is_active'     => 1,
+        ]);
 
         return redirect()->to('/admin/users')->with('success', "Account for {$name} created.");
     }
@@ -60,7 +82,17 @@ class AdminUserController extends BaseController
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
-        return view('admin/users/edit', ['editUser' => $user]);
+        $roles = db_connect()->table('department_roles r')
+            ->select('r.id, r.name, d.name AS dept')
+            ->join('departments d', 'd.id = r.department_id')
+            ->orderBy('r.name', 'ASC')->get()->getResultArray();
+
+        $byDept = [];
+        foreach ($roles as $r) {
+            $byDept[$r['dept']][] = ['id' => (int) $r['id'], 'name' => $r['name']];
+        }
+
+        return view('admin/users/edit', ['editUser' => $user, 'deptRoles' => $byDept]);
     }
 
     public function update(int $id)
@@ -77,20 +109,34 @@ class AdminUserController extends BaseController
         $isActive   = $this->request->getPost('is_active') ? 1 : 0;
         $password   = (string) $this->request->getPost('password');
 
-        $allowedRoles = [UserModel::ROLE_SUPERADMIN, UserModel::ROLE_AGENT, UserModel::ROLE_REQUESTER];
+        $allowedRoles = UserModel::ROLES;
 
         if ($name === '' || ! in_array($role, $allowedRoles, true)) {
             return redirect()->back()->withInput()->with('error', 'Please fill in all fields correctly.');
         }
 
-        if ($role === UserModel::ROLE_AGENT && ! in_array($department, departments(), true)) {
+        if (in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true) && ! in_array($department, departments(), true)) {
             return redirect()->back()->withInput()->with('error', 'Please choose a department for this agent.');
+        }
+
+        $losesSuperadmin = $user['role'] === UserModel::ROLE_SUPERADMIN
+            && (int) $user['is_active'] === 1
+            && ($role !== UserModel::ROLE_SUPERADMIN || $isActive === 0);
+
+        if ($losesSuperadmin && (int) current_user()['id'] === $id) {
+            return redirect()->back()->withInput()->with('error', 'You cannot remove your own super admin access or deactivate yourself. Ask another super admin.');
+        }
+
+        if ($losesSuperadmin
+            && $this->userModel->where('role', UserModel::ROLE_SUPERADMIN)->where('is_active', 1)->countAllResults() <= 1) {
+            return redirect()->back()->withInput()->with('error', 'That is the last active super admin. Promote somebody else first.');
         }
 
         $data = [
             'name'       => $name,
             'role'       => $role,
-            'department' => $role === UserModel::ROLE_AGENT ? $department : null,
+            'department' => in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true) ? $department : null,
+            'company'    => trim((string) $this->request->getPost('company')) ?: null,
             'is_active'  => $isActive,
         ];
 
@@ -101,12 +147,30 @@ class AdminUserController extends BaseController
             $data['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
         }
 
-        $roleId = $this->request->getPost('department_role_id');
-        $data['department_role_id'] = ($role === UserModel::ROLE_AGENT && $roleId) ? (int) $roleId : null;
+        $data['department_role_id'] = in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER], true)
+            ? $this->departmentRoleIn((int) $this->request->getPost('department_role_id'), (string) $department)
+            : null;
 
         $this->userModel->update($id, $data);
 
         return redirect()->to('/admin/users')->with('success', "Account for {$name} updated.");
+    }
+
+    private function departmentRoleIn(int $roleId, string $department): ?int
+    {
+        if ($roleId <= 0 || $department === '') {
+            return null;
+        }
+
+        $match = db_connect()->table('department_roles r')
+            ->select('r.id')
+            ->join('departments d', 'd.id = r.department_id')
+            ->where('r.id', $roleId)
+            ->where('d.name', $department)
+            ->get()
+            ->getRowArray();
+
+        return $match === null ? null : $roleId;
     }
 
     public function delete(int $id)

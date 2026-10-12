@@ -25,7 +25,11 @@
         default       => 'pill-status-new',
     };
 
-    $needsReview = (string) ($f['Needs Human Review'] ?? '0') === '1';
+    $needsReview   = (string) ($f['Needs Human Review'] ?? '0') === '1';
+
+    $owner      = \App\Libraries\RoutingDirectory::owner($f);
+    $ownerLabel = $owner['department'] === '' ? '—' : \App\Libraries\RoutingDirectory::label($owner);
+    $ownerNote  = trim((string) ($f['Routing Note'] ?? '')) ?: 'chosen by requester';
 ?>
 
 <a href="/tickets" class="back-link"><?= icon('chevron-left', 14) ?> Back to <?= $user['role'] === 'requester' ? 'my tickets' : 'dashboard' ?></a>
@@ -65,12 +69,12 @@
                 <?php endif ?>
             </div>
             <div class="ai-tags-grid">
-                <div><span class="k">Routed to</span><span class="v"><?= esc($f['Responsible Department'] ?? '—') ?> <span class="by-user">chosen by requester</span></span></div>
+                <div><span class="k">Routed to</span><span class="v"><?= esc($ownerLabel) ?> <span class="by-user"><?= esc($ownerNote) ?></span></span></div>
                 <div><span class="k">Category</span><span class="v"><?= esc($f['Category'] ?? '—') ?></span></div>
-                <div><span class="k">Turnaround</span><span class="v"><?= esc($f['Suggested TAT'] ?? '—') ?></span></div>
-                <div><span class="k">Due</span><span class="v"><?= $meta['due_date'] ? esc(date('M j, Y', strtotime($meta['due_date']))) : '—' ?></span></div>
+                <div><span class="k">Turnaround</span><span class="v"><?= esc($f['Suggested TAT'] ?? '—') ?> <span class="by-user">set by staff</span></span></div>
+                <div><span class="k">Due</span><span class="v"><?= $meta['due_date'] ? esc(date('M j, Y', strtotime($meta['due_date']))) : '—' ?> <span class="by-user">set by staff</span></span></div>
                 <div><span class="k">Assigned</span><span class="v"><?= $assignedTo ? esc($assignedTo['name']) : 'Unassigned' ?></span></div>
-                <div><span class="k">Raised from</span><span class="v"><?= esc($f['Submitting Department'] ?? '—') ?></span></div>
+                <div><span class="k">Raised from</span><span class="v"><?= esc($f['Submitting Department'] ?? '—') ?><?= ! empty($f['Submitting Role']) ? ' · ' . esc($f['Submitting Role']) : '' ?></span></div>
             </div>
         </div>
 
@@ -203,18 +207,42 @@
                     <label for="suggested_tat">Turnaround</label>
                     <input type="text" id="suggested_tat" name="suggested_tat" maxlength="100" value="<?= esc($f['Suggested TAT'] ?? '') ?>">
 
+                    <label for="owning_team">Owning team</label>
+                    <select id="owning_team" name="owning_team">
+                        <?php
+                            $ownerListed = array_filter($teams, static fn ($t) => strcasecmp($t['department'], $owner['department']) === 0
+                                && strcasecmp($t['role'], $owner['role']) === 0) !== [];
+                        ?>
+                        <?php if (! $ownerListed): ?>
+                            <option value="<?= esc($owner['department'] . '||' . $owner['role']) ?>" selected><?= esc($ownerLabel) ?> (current)</option>
+                        <?php endif ?>
+                        <?php foreach ($teams as $team): ?>
+                            <?php $isOwner = strcasecmp($team['department'], $owner['department']) === 0 && strcasecmp($team['role'], $owner['role']) === 0; ?>
+                            <option value="<?= esc($team['department'] . '||' . $team['role']) ?>" <?= $isOwner ? 'selected' : '' ?>><?= esc(\App\Libraries\RoutingDirectory::label($team)) ?></option>
+                        <?php endforeach ?>
+                    </select>
+
                     <label for="assigned_to">Assign to</label>
+                    <?php
+                        $holderId     = (int) ($meta['assigned_to'] ?? 0);
+                        $holderListed = in_array($holderId, array_map('intval', array_column($staff, 'id')), true);
+                    ?>
                     <select id="assigned_to" name="assigned_to">
                         <option value="">Unassigned</option>
-                        <?php foreach ($agents as $agent): ?>
-                            <option value="<?= $agent['id'] ?>" <?= (int) ($meta['assigned_to'] ?? 0) === (int) $agent['id'] ? 'selected' : '' ?>><?= esc($agent['name']) ?></option>
+                        <?php if ($holderId > 0 && ! $holderListed && $assignedTo): ?>
+                            <option value="<?= $holderId ?>" selected><?= esc($assignedTo['name']) ?> (current)</option>
+                        <?php endif ?>
+                        <?php foreach ($staff as $person): ?>
+                            <option value="<?= (int) $person['id'] ?>" <?= $holderId === (int) $person['id'] ? 'selected' : '' ?>>
+                                <?= esc($person['name']) ?><?= $person['role'] !== 'agent' ? ' (' . esc(role_label((string) $person['role'])) . ')' : '' ?>
+                            </option>
                         <?php endforeach ?>
                     </select>
 
                     <button type="submit" class="btn btn-secondary"><?= icon('check', 15) ?> Save</button>
                 </form>
-                <?php if (empty($agents)): ?>
-                    <div class="field-hint">No agents are scoped to <strong><?= esc(resolve_base_department(ticket_department($f))) ?></strong> yet.</div>
+                <?php if (empty($staff)): ?>
+                    <div class="field-hint">No staff are set up in <strong><?= esc(resolve_base_department(ticket_department($f))) ?></strong> yet.</div>
                 <?php endif ?>
             </div>
         <?php else: ?>
@@ -223,7 +251,7 @@
                 <div class="stand-list">
                     <div><span class="k">Status</span><span class="v"><?= esc($f['Status'] ?? 'New') ?></span></div>
                     <div><span class="k">Priority</span><span class="v"><?= esc($meta['priority'] ?? 'Medium') ?></span></div>
-                    <div><span class="k">Owning team</span><span class="v"><?= esc($f['Responsible Department'] ?? '—') ?></span></div>
+                    <div><span class="k">Owning team</span><span class="v"><?= esc($ownerLabel) ?></span></div>
                     <div><span class="k">Target date</span><span class="v"><?= $meta['due_date'] ? esc(date('M j, Y', strtotime($meta['due_date']))) : '—' ?></span></div>
                 </div>
                 <div class="field-hint">Anything you add in the conversation is visible to the team handling this.</div>
@@ -286,7 +314,8 @@
             anchor = box.selectionStart - m[0].length;
             clearTimeout(timer);
             timer = setTimeout(function () {
-                fetch('/notifications/mentionable?q=' + encodeURIComponent(m[1]), { credentials: 'same-origin' })
+                fetch('/notifications/mentionable?ticket=' + encodeURIComponent(thread.getAttribute('data-ticket'))
+                    + '&q=' + encodeURIComponent(m[1]), { credentials: 'same-origin' })
                     .then(function (r) { return r.json(); })
                     .then(function (data) { items = Array.isArray(data) ? data : []; active = items.length ? 0 : -1; draw(); })
                     .catch(hide);
@@ -303,11 +332,83 @@
             else if (e.key === 'Escape') { hide(); }
         });
     }
+    var ticket = thread.getAttribute('data-ticket');
+
+    function lastMessageId() {
+        var ids = Array.prototype.map.call(thread.querySelectorAll('[data-message-id]'), function (el) {
+            return parseInt(el.getAttribute('data-message-id'), 10) || 0;
+        });
+        return ids.length ? Math.max.apply(null, ids) : 0;
+    }
+
+    // Cloudflare closes any request that runs past 100 seconds, but the server
+    // finishes regardless and saves the assistant's reply. When the wait is cut
+    // off, check back for that reply instead of giving up on it.
+    function awaitReply(after, onReply, onGiveUp) {
+        var tries = 0;
+        (function poll() {
+            fetch('/tickets/' + encodeURIComponent(ticket) + '/updates?after=' + after, {
+                credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var replies = ((data && data.messages) || []).filter(function (m) { return m.role === 'ai'; });
+                    if (replies.length) { onReply(replies); return; }
+                    if (++tries < 72) { setTimeout(poll, 5000); } else { onGiveUp(); }
+                })
+                .catch(function () {
+                    if (++tries < 72) { setTimeout(poll, 5000); } else { onGiveUp(); }
+                });
+        })();
+    }
+
+    var awaitingAi = <?= ! empty($awaitingAi) ? 'true' : 'false' ?>;
+    if (awaitingAi && thinking) {
+        thinking.hidden = false;
+        var cLabel = thinking.querySelector('.typing-label');
+        if (cLabel) cLabel.textContent = 'Reading your ticket…';
+        var cStages = [
+            [12000, 'Classifying and routing…'],
+            [40000, 'Still going — the local model may be warming up.'],
+            [120000, 'Taking a while — the first ticket after a quiet spell can take a few minutes. Your ticket is saved either way.']
+        ];
+        var cTimers = cStages.map(function (st) {
+            return setTimeout(function () { if (cLabel) cLabel.textContent = st[1]; }, st[0]);
+        });
+
+        var cForm = new FormData();
+        cForm.append(<?= json_encode(csrf_token()) ?>, <?= json_encode(csrf_hash()) ?>);
+        var cBefore = lastMessageId();
+
+        fetch('/tickets/' + encodeURIComponent(ticket) + '/classify', {
+            method: 'POST', body: cForm, credentials: 'same-origin',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                cTimers.forEach(clearTimeout);
+                thinking.remove();
+                if (data && data.changed) { window.location.reload(); return; }
+                if (data && data.message) {
+                    var placeholder = thread.querySelector('.thread-empty');
+                    if (placeholder) placeholder.remove();
+                    thread.insertAdjacentHTML('beforeend', data.message);
+                }
+            })
+            .catch(function () {
+                cTimers.forEach(clearTimeout);
+                if (cLabel) cLabel.textContent = 'Still working — the first ticket after a quiet spell can take a few minutes. Your ticket is saved either way.';
+                awaitReply(cBefore, function () { window.location.reload(); }, function () {
+                    thinking.remove();
+                    thread.insertAdjacentHTML('beforeend',
+                        '<div class="thread-empty">The assistant could not be reached. Your ticket is saved and the team can see it.</div>');
+                });
+            });
+    }
 
     var pending = <?= $assistMessageId > 0 ? $assistMessageId : 'null' ?>;
     if (!pending || !thinking) return;
 
-    var ticket = thread.getAttribute('data-ticket');
     var empty  = thread.querySelector('.thread-empty');
     if (empty) empty.remove();
 
@@ -326,6 +427,7 @@
 
     function done() { timers.forEach(clearTimeout); thinking.remove(); }
 
+    var before = lastMessageId();
     var form = new FormData();
     form.append('message_id', pending);
 
@@ -351,10 +453,19 @@
             }
         })
         .catch(function () {
-            done();
+            timers.forEach(clearTimeout);
+            if (label) label.textContent = 'Still working — this one is taking a while. Your message is saved either way.';
 
-            thread.insertAdjacentHTML('beforeend',
-                '<div class="thread-empty">The assistant could not be reached. Your message is saved and the team can see it.</div>');
+            awaitReply(before, function (replies) {
+                done();
+                replies.forEach(function (m) { thread.insertAdjacentHTML('beforeend', m.html); });
+                var added = thread.lastElementChild;
+                if (added) added.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+            }, function () {
+                done();
+                thread.insertAdjacentHTML('beforeend',
+                    '<div class="thread-empty">The assistant could not be reached. Your message is saved and the team can see it.</div>');
+            });
         });
 })();
 </script>

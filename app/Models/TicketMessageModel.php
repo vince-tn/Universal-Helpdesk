@@ -19,6 +19,7 @@ class TicketMessageModel extends Model
     public const KIND_SUGGESTION  = 'suggestion';
     public const KIND_ACKNOWLEDGE = 'acknowledge';
     public const KIND_HANDOFF     = 'handoff';
+    public const KIND_GUIDE       = 'guide';
 
     public function forTicket(string $ticketId): array
     {
@@ -31,6 +32,13 @@ class TicketMessageModel extends Model
     public function latestForTicket(string $ticketId): ?array
     {
         return $this->where('ticket_id', $ticketId)->orderBy('id', 'DESC')->first();
+    }
+
+    public function hasAssistantMessage(string $ticketId): bool
+    {
+        return $this->where('ticket_id', $ticketId)
+            ->where('author_role', 'ai')
+            ->countAllResults() > 0;
     }
 
     public function post(

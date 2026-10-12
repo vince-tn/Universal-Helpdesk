@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Sign up — Chikiting System</title>
     <?= theme_head() ?>
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
 </head>
 <body>
     <div class="auth-shell">
@@ -38,7 +38,7 @@
                         <input type="email" id="email" name="email" value="<?= esc(old('email')) ?>" required autocomplete="email">
                         <div class="field-hint">
                             <?php if (! empty($domainCheck)): ?>
-                                Must end in <?= esc($domainHint ?? '') ?>. We'll email a code to confirm it's yours.
+                                Your company address (<?= esc($domainHint ?? '') ?>), or a partner agency address IT has approved. We'll email a code to confirm it's yours.
                             <?php else: ?>
                                 We'll email a one-time code to confirm this address is yours.
                             <?php endif ?>
@@ -59,7 +59,7 @@
                 <?php if (! empty($domainCheck)): ?>
                     <div class="note-strip">
                         <?= icon('shield', 15) ?>
-                        <span>External contractors and anyone on a different domain are set up by IT — raise it with them rather than signing up here.</span>
+                        <span>With a partner agency or another domain? Ask IT to give your address or agency access first, then sign up here.</span>
                     </div>
                 <?php endif ?>
 

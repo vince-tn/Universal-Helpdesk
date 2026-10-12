@@ -30,6 +30,8 @@ $routes->group('tickets', ['filter' => 'auth'], static function (RouteCollection
     $routes->post('(:segment)/messages', 'TicketController::postMessage/$1');
 
     $routes->post('(:segment)/assist', 'TicketController::assist/$1');
+    $routes->post('(:segment)/classify', 'TicketController::classify/$1');
+    $routes->get('(:segment)/updates', 'TicketController::updates/$1');
     $routes->get('(:segment)', 'TicketController::show/$1');
 });
 
@@ -51,12 +53,26 @@ $routes->group('admin/users', ['filter' => 'auth:superadmin'], static function (
     $routes->post('(:num)/toggle', 'AdminUserController::deactivate/$1');
 });
 
-$routes->group('admin/departments', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
+$routes->group('admin/access', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
+    $routes->get('/', 'AdminAccessController::index');
+    $routes->post('/', 'AdminAccessController::store');
+    $routes->post('(:num)/delete', 'AdminAccessController::delete/$1');
+});
+
+$routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,team_leader'], static function (RouteCollection $routes) {
     $routes->get('/', 'AdminDepartmentController::index');
     $routes->post('/', 'AdminDepartmentController::store');
     $routes->post('(:num)', 'AdminDepartmentController::update/$1');
     $routes->post('(:num)/delete', 'AdminDepartmentController::delete/$1');
+    $routes->post('bulk', 'AdminDepartmentController::bulk');
     $routes->post('(:num)/roles', 'AdminDepartmentController::storeRole/$1');
     $routes->post('roles/(:num)', 'AdminDepartmentController::updateRole/$1');
     $routes->post('roles/(:num)/delete', 'AdminDepartmentController::deleteRole/$1');
+
+    $routes->get('(:num)/knowledge', 'AdminKnowledgeController::index/$1');
+    $routes->post('(:num)/knowledge', 'AdminKnowledgeController::storeArticle/$1');
+    $routes->post('knowledge/(:num)', 'AdminKnowledgeController::updateArticle/$1');
+    $routes->post('knowledge/(:num)/delete', 'AdminKnowledgeController::deleteArticle/$1');
+    $routes->post('(:num)/guardrails', 'AdminKnowledgeController::storeGuardrail/$1');
+    $routes->post('guardrails/(:num)/delete', 'AdminKnowledgeController::deleteGuardrail/$1');
 });

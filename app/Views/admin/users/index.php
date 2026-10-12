@@ -33,6 +33,7 @@
             <tr>
                 <th>Name</th>
                 <th>Email</th>
+                <th>Company</th>
                 <th>Role</th>
                 <th>Department</th>
                 <th>Status</th>
@@ -44,7 +45,13 @@
                 <tr>
                     <td><strong><?= esc($u['name']) ?></strong></td>
                     <td class="cell-muted"><?= esc($u['email']) ?></td>
-                    <td><span class="pill <?= rolePillClass($u['role']) ?>"><?= esc($u['role']) ?></span></td>
+                    <td class="cell-muted"><?= esc($u['company'] ?? '—') ?></td>
+                    <td>
+                        <span class="pill <?= rolePillClass($u['role']) ?>"><?= esc(role_label($u['role'])) ?></span>
+                        <?php if (in_array((int) $u['id'], $leaderIds, true)): ?>
+                            <span class="badge-lead"><?= icon('shield', 10) ?> Leads <?= esc($leadsOf[(int) $u['id']] ?? '') ?></span>
+                        <?php endif ?>
+                    </td>
                     <td class="cell-muted"><?= esc($u['department'] ?? '—') ?></td>
                     <td><?= (int) $u['is_active'] === 1 ? '<span class="pill pill-status-resolved">Active</span>' : '<span class="pill pill-status-closed">Disabled</span>' ?></td>
                     <td>

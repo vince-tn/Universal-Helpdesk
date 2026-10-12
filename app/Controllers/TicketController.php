@@ -4,7 +4,9 @@ namespace App\Controllers;
 
 use App\Libraries\Html;
 use App\Libraries\Mentions;
+use App\Libraries\Org;
 use App\Libraries\PriorCases;
+use App\Libraries\RoutingDirectory;
 use App\Libraries\TicketAssistant;
 use App\Models\N8nService;
 use App\Models\TicketModel;
@@ -33,14 +35,14 @@ class TicketController extends BaseController
         $this->priorCases   = new PriorCases();
     }
 
+    private function canManage(array $fields, array $user): bool
+    {
+        return Org::canManageTicket($user, $fields);
+    }
+
     private function canAccess(array $fields, array $user): bool
     {
-        return match ($user['role']) {
-            UserModel::ROLE_SUPERADMIN => true,
-            UserModel::ROLE_AGENT      => strcasecmp(resolve_base_department(ticket_department($fields)), (string) $user['department']) === 0,
-            UserModel::ROLE_REQUESTER  => strcasecmp($fields['Requester Email'] ?? '', $user['email']) === 0,
-            default                    => false,
-        };
+        return Org::canViewTicket($user, $fields);
     }
 
     private function scopedTickets(array $tickets, array $user): array
@@ -138,6 +140,8 @@ class TicketController extends BaseController
                 return ($order[$b['meta']['priority'] ?? 'Medium'] ?? 0) <=> ($order[$a['meta']['priority'] ?? 'Medium'] ?? 0);
             },
         ];
+        $sorters['title_desc']   = fn ($a, $b) => $sorters['title_asc']($b, $a);
+        $sorters['priority_asc'] = fn ($a, $b) => $sorters['priority_desc']($b, $a);
         usort($tickets, $sorters[$sort] ?? $sorters['created_desc']);
 
         $perPage     = 8;
@@ -218,7 +222,7 @@ class TicketController extends BaseController
         if (! empty($rows)) {
             fputcsv($out, array_keys($rows[0]));
             foreach ($rows as $row) {
-                fputcsv($out, $row);
+                fputcsv($out, array_map(fn ($v) => $this->spreadsheetSafe($v), $row));
             }
         }
 
@@ -232,6 +236,13 @@ class TicketController extends BaseController
             ->setBody($csv);
     }
 
+    private function spreadsheetSafe($value): string
+    {
+        $value = (string) $value;
+
+        return preg_match('/^[=+\-@\t\r]/', $value) === 1 ? "'" . $value : $value;
+    }
+
     private function exportXls(array $rows, string $filename)
     {
         $columns = empty($rows) ? [] : array_keys($rows[0]);
@@ -239,7 +250,7 @@ class TicketController extends BaseController
         $html = '<html><head><meta charset="UTF-8"></head><body><table border="1">';
         $html .= '<tr>' . implode('', array_map(fn ($c) => '<th>' . esc($c) . '</th>', $columns)) . '</tr>';
         foreach ($rows as $row) {
-            $html .= '<tr>' . implode('', array_map(fn ($v) => '<td>' . esc((string) $v) . '</td>', $row)) . '</tr>';
+            $html .= '<tr>' . implode('', array_map(fn ($v) => '<td>' . esc($this->spreadsheetSafe($v)) . '</td>', $row)) . '</tr>';
         }
         $html .= '</table></body></html>';
 
@@ -251,7 +262,15 @@ class TicketController extends BaseController
 
     public function create()
     {
-        return view('tickets/create', ['user' => current_user()]);
+        $active = array_filter(
+            (new \App\Models\DepartmentModel())->withRoles(),
+            static fn ($d) => (int) $d['is_active'] === 1
+        );
+
+        return view('tickets/create', [
+            'user'  => current_user(),
+            'roles' => array_values($active),
+        ]);
     }
 
     public function store()
@@ -267,6 +286,7 @@ class TicketController extends BaseController
         }
 
         $department = (string) $this->request->getPost('submitting_department');
+        $role       = trim((string) $this->request->getPost('submitting_role'));
 
         $error = match (true) {
             ! in_array($department, departments(), true)
@@ -286,23 +306,12 @@ class TicketController extends BaseController
             'Requester Name'        => $user['name'],
             'Requester Email'       => $user['email'],
             'Submitting Department' => $department,
+            'Submitting Role'       => $role,
             'Request'               => $text,
             'Request HTML'          => $html,
         ];
 
-        $prior = $this->ticketModel->similarResolved($text);
-
-        $result = $this->n8nService->classify(
-            array_diff_key($submission, ['Request HTML' => null]),
-            $this->priorCases->context($prior)
-        );
-        $output = $result['output'] ?? [];
-
-        $id = $this->ticketModel->createFromClassification(
-            $submission,
-            $output,
-            $result['ai_source'] ?? 'Local'
-        );
+        $id = $this->ticketModel->createFromClassification($submission, [], 'Local');
 
         if ($id === null) {
             log_message('error', 'Ticket insert failed for {email}', ['email' => $user['email']]);
@@ -311,29 +320,85 @@ class TicketController extends BaseController
                 ->with('error', 'Something went wrong saving your ticket. Please try again.');
         }
 
-        $this->metaModel->updateForTicket($id, $this->suggestedMeta($output));
-
-        $this->assistant->opening($id, $output, $this->priorCases->resolutionFor($prior, $output));
-
-        $modelAnswered = $result !== null && ($output['model_ok'] ?? 'Yes') === 'Yes';
-
-        $message = match (true) {
-            $result === null => 'Ticket submitted, but the assistant could not be reached — it has been flagged for manual review.',
-            ! $modelAnswered => 'Ticket submitted, but the classifier did not answer — it has been flagged for manual review.',
-            default          => 'Ticket submitted. The assistant has already replied on your ticket.',
-        };
-
-        return redirect()->to("/tickets/{$id}")->with('success', $message);
+        return redirect()->to("/tickets/{$id}")->with('success', 'Ticket submitted.');
     }
 
-    private function suggestedMeta(array $output): array
+    public function classify(string $id)
     {
-        $priority = (string) ($output['priority'] ?? '');
+        $ticket = $this->ticketModel->getTicket($id);
 
-        return [
-            'priority' => in_array($priority, priorities(), true) ? $priority : 'Medium',
-            'due_date' => null,
-        ];
+        if ($ticket === null) {
+            return $this->assistError('Ticket not found.', 404);
+        }
+
+        $user   = current_user();
+        $fields = $ticket['fields'] ?? $ticket;
+
+        if (! $this->canAccess($fields, $user)) {
+            return $this->assistError('Ticket not found.', 404);
+        }
+
+        if (! $this->ticketModel->awaitsClassification($fields) || ! $this->ticketModel->claimForClassification($id)) {
+            return $this->response->setJSON(['ok' => true, 'changed' => false, 'message' => null]);
+        }
+
+        // Cloudflare drops a request after 100 seconds and a cold local model
+        // can take longer. Finish anyway: the page checks back for the result.
+        ignore_user_abort(true);
+
+        $session = session();
+        if (method_exists($session, 'close')) {
+            $session->close();
+        }
+
+        $text  = (string) ($fields['Request'] ?? '');
+        $prior = $this->ticketModel->similarResolved($text, $id);
+
+        $result = $this->n8nService->classify([
+            'Requester Name'        => $fields['Requester'] ?? '',
+            'Requester Email'       => $fields['Requester Email'] ?? '',
+            'Submitting Department' => $fields['Submitting Department'] ?? '',
+            'Submitting Role'       => $fields['Submitting Role'] ?? '',
+            'Request'               => $text,
+        ], $this->priorCases->context($prior));
+
+        if ($result === null) {
+            $stored = $this->messageModel->hasAssistantMessage($id)
+                ? null
+                : $this->assistant->opening($id, [], '');
+
+            return $this->response->setJSON([
+                'ok'      => true,
+                'changed' => false,
+                'message' => $stored === null ? null : $this->renderMessage($stored),
+            ]);
+        }
+
+        $output = $result['output'] ?? [];
+
+        $this->ticketModel->replaceClassification($id, $output, $result['ai_source'] ?? 'Local');
+        $this->metaModel->updateForTicket($id, TicketMetaModel::fromClassification($output));
+
+        $route = (new RoutingDirectory())->reroute($id, $result['routing'] ?? [], $output, $text);
+
+        if ($route !== null) {
+            $output['responsible_department'] = $route['department'];
+        }
+
+        $stored = $this->assistant->opening(
+            $id,
+            $output,
+            $this->priorCases->resolutionFor($prior, $output),
+            $text,
+            $result['articles'] ?? [],
+            $route
+        );
+
+        return $this->response->setJSON([
+            'ok'      => true,
+            'changed' => true,
+            'message' => $stored === null ? null : $this->renderMessage($stored),
+        ]);
     }
 
     public function show(string $id)
@@ -353,9 +418,7 @@ class TicketController extends BaseController
 
         $meta = $this->metaModel->firstOrCreate($id);
 
-        $department  = ticket_department($fields);
-        $agents      = $department !== '' ? $this->userModel->agentsInDepartment(resolve_base_department($department)) : [];
-        $assignedTo  = null;
+        $assignedTo = null;
         if (! empty($meta['assigned_to'])) {
             $assignedTo = $this->userModel->find($meta['assigned_to']);
         }
@@ -363,10 +426,12 @@ class TicketController extends BaseController
         return view('tickets/show', [
             'ticket'     => $ticket,
             'meta'       => $meta,
-            'agents'     => $agents,
+            'staff'      => Org::assignableStaff($fields),
             'assignedTo' => $assignedTo,
             'messages'   => $this->messageModel->forTicket($id),
-            'canManage'  => in_array($user['role'], [UserModel::ROLE_SUPERADMIN, UserModel::ROLE_AGENT], true),
+            'canManage'  => $this->canManage($fields, $user),
+            'awaitingAi' => $this->ticketModel->awaitsClassification($fields),
+            'teams'      => $this->canManage($fields, $user) ? (new RoutingDirectory())->entries() : [],
         ]);
     }
 
@@ -380,7 +445,7 @@ class TicketController extends BaseController
         $user   = current_user();
         $fields = $ticket['fields'] ?? $ticket;
 
-        if (! $this->canAccess($fields, $user) || $user['role'] === UserModel::ROLE_REQUESTER) {
+        if (! $this->canManage($fields, $user)) {
             throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
         }
 
@@ -403,20 +468,33 @@ class TicketController extends BaseController
 
     public function updateMeta(string $id)
     {
-        $this->requireManageAccess($id);
+        $fields = $this->requireManageAccess($id);
 
         $priority   = (string) $this->request->getPost('priority');
-        $dueDate    = (string) $this->request->getPost('due_date');
-        $assignedTo = $this->request->getPost('assigned_to');
+        $dueDate    = trim((string) $this->request->getPost('due_date'));
+        $assignedTo = (int) $this->request->getPost('assigned_to');
 
         if (! in_array($priority, priorities(), true)) {
             return redirect()->back()->with('error', 'Invalid priority.');
         }
 
+        if ($dueDate !== '' && ! is_ymd_date($dueDate)) {
+            return redirect()->back()->with('error', 'That due date is not a real date.');
+        }
+
+        // Whoever already holds the ticket may stay on it even if they have
+        // since moved team; anyone new has to be able to take this team's tickets.
+        $current = (int) ($this->metaModel->firstOrCreate($id)['assigned_to'] ?? 0);
+
+        if ($assignedTo > 0 && $assignedTo !== $current
+            && ! in_array($assignedTo, array_map('intval', array_column(Org::assignableStaff($fields), 'id')), true)) {
+            return redirect()->back()->with('error', 'That person does not handle this team\'s tickets.');
+        }
+
         $this->metaModel->updateForTicket($id, [
             'priority'    => $priority,
             'due_date'    => $dueDate !== '' ? $dueDate : null,
-            'assigned_to' => $assignedTo !== '' ? (int) $assignedTo : null,
+            'assigned_to' => $assignedTo > 0 ? $assignedTo : null,
         ]);
 
         $category = trim((string) $this->request->getPost('category'));
@@ -434,7 +512,47 @@ class TicketController extends BaseController
             $this->ticketModel->update((int) $id, $tags);
         }
 
+        $moved = $this->moveToTeam($id, $fields, (string) $this->request->getPost('owning_team'));
+
+        if ($moved !== null) {
+            $after = $this->ticketModel->getTicket($id)['fields'] ?? [];
+
+            if (! $this->canAccess($after, current_user())) {
+                return redirect()->to('/tickets')->with('success', "Ticket #{$id} moved to {$moved}. It is with that team now.");
+            }
+
+            return redirect()->to("/tickets/{$id}")->with('success', "Ticket details updated and moved to {$moved}.");
+        }
+
         return redirect()->to("/tickets/{$id}")->with('success', 'Ticket details updated.');
+    }
+
+    private function moveToTeam(string $id, array $fields, string $posted): ?string
+    {
+        if ($posted === '') {
+            return null;
+        }
+
+        [$department, $role] = array_pad(explode('||', $posted, 2), 2, '');
+
+        if ($department === '') {
+            return null;
+        }
+
+        $routing = new RoutingDirectory();
+        $current = RoutingDirectory::owner($fields);
+        $target  = ['department' => $department, 'role' => $role];
+
+        $unchanged = strcasecmp($department, $current['department']) === 0 && strcasecmp($role, $current['role']) === 0;
+
+        if ($unchanged || ! $routing->isTeam($department, $role)) {
+            return null;
+        }
+
+        $user = current_user();
+        $this->ticketModel->applyRoute($id, $department, $role, 'moved by ' . $user['name'] . ' from ' . RoutingDirectory::label($current));
+
+        return RoutingDirectory::label($target);
     }
 
     public function postMessage(string $id)
@@ -456,8 +574,7 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'Message cannot be empty.');
         }
 
-        $isStaff    = in_array($user['role'], [UserModel::ROLE_SUPERADMIN, UserModel::ROLE_AGENT], true);
-        $isSolution = $isStaff
+        $isSolution = $this->canManage($fields, $user)
             && $this->request->getPost('is_solution') !== null
             && mb_strlen($body) >= 25;
 
@@ -480,7 +597,8 @@ class TicketController extends BaseController
             $body,
             $user,
             $id,
-            (string) ($fields['Request Title'] ?? $fields['Title'] ?? 'a ticket')
+            (string) ($fields['Request Title'] ?? $fields['Title'] ?? 'a ticket'),
+            Org::ticketAudience($fields)
         );
 
         $redirect = redirect()->to("/tickets/{$id}#conversation");
@@ -533,6 +651,8 @@ class TicketController extends BaseController
             return $this->assistNoop();
         }
 
+        ignore_user_abort(true);
+
         $session = session();
         if (method_exists($session, 'close')) {
             $session->close();
@@ -550,6 +670,41 @@ class TicketController extends BaseController
 
             'changed' => array_keys($result['changes']),
             'state'   => $result['state'],
+        ]);
+    }
+
+    /**
+     * Messages added to a ticket after a given one. The page uses it to pick
+     * up an assistant reply whose original request was cut off on the way -
+     * Cloudflare drops anything that runs past 100 seconds.
+     */
+    public function updates(string $id)
+    {
+        $ticket = $this->ticketModel->getTicket($id);
+        if ($ticket === null) {
+            return $this->assistError('Ticket not found.', 404);
+        }
+
+        $fields = $ticket['fields'] ?? $ticket;
+
+        if (! $this->canAccess($fields, current_user())) {
+            return $this->assistError('Ticket not found.', 404);
+        }
+
+        $after = max(0, (int) $this->request->getGet('after'));
+
+        $newer = array_filter(
+            $this->messageModel->forTicket($id),
+            static fn ($m) => (int) $m['id'] > $after
+        );
+
+        return $this->response->setJSON([
+            'ok'       => true,
+            'messages' => array_values(array_map(fn ($m) => [
+                'id'   => (int) $m['id'],
+                'role' => (string) $m['author_role'],
+                'html' => $this->renderMessage($m),
+            ], $newer)),
         ]);
     }
 

@@ -36,10 +36,41 @@ if (! function_exists('ticket_categories')) {
     }
 }
 
+if (! function_exists('companies')) {
+    function companies(): array
+    {
+        $raw = (string) (env('COMPANIES') ?: 'Nais Corp,Kinect,TPC Consolidated');
+
+        return array_values(array_filter(array_map('trim', explode(',', $raw))));
+    }
+}
+
+if (! function_exists('role_label')) {
+    function role_label(string $role): string
+    {
+        return match ($role) {
+            'superadmin'  => 'Super Admin',
+            'supervisor'  => 'Supervisor',
+            'team_leader' => 'Team Leader',
+            'agent'       => 'Agent',
+            default        => 'Requester',
+        };
+    }
+}
+
 if (! function_exists('priorities')) {
     function priorities(): array
     {
         return ['Low', 'Medium', 'High', 'Urgent'];
+    }
+}
+
+if (! function_exists('is_ymd_date')) {
+    /** A real calendar date written as YYYY-MM-DD - what a date input sends. */
+    function is_ymd_date(string $value): bool
+    {
+        return preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $value, $m) === 1
+            && checkdate((int) $m[2], (int) $m[3], (int) $m[1]);
     }
 }
 
@@ -246,5 +277,20 @@ if (! function_exists('icon')) {
         return <<<SVG
         <svg width="{$size}" height="{$size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" xmlns="http://www.w3.org/2000/svg">{$body}</svg>
         SVG;
+    }
+}
+
+if (! function_exists('asset')) {
+    /**
+     * A public file's URL stamped with when it last changed. Cloudflare and
+     * browsers keep copies of stylesheets; a new stamp after a deploy makes
+     * them fetch the new file instead of serving the old one for hours.
+     */
+    function asset(string $path): string
+    {
+        $path = ltrim($path, '/');
+        $file = FCPATH . $path;
+
+        return '/' . $path . (is_file($file) ? '?v=' . filemtime($file) : '');
     }
 }

@@ -10,7 +10,9 @@ class DepartmentModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'is_active', 'sort_order'];
+    protected $allowedFields = ['name', 'handles', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order'];
+
+    public const HANDLES_MAX = 150;
 
     public function active(): array
     {
@@ -25,6 +27,14 @@ class DepartmentModel extends Model
     public function names(): array
     {
         return array_column($this->active(), 'name');
+    }
+
+    public function idFor(string $ticketDepartment): ?int
+    {
+        $name = resolve_base_department($ticketDepartment);
+        $row  = $name === '' ? null : $this->findByName($name);
+
+        return $row === null ? null : (int) $row['id'];
     }
 
     public function findByName(string $name): ?array
@@ -57,11 +67,12 @@ class DepartmentModel extends Model
         return $departments;
     }
 
-    public function agentCount(string $name): int
+    /** Agents, team leaders and supervisors whose own department this is. */
+    public function staffCount(string $name): int
     {
         return (new UserModel())
             ->where('department', $name)
-            ->where('role', UserModel::ROLE_AGENT)
+            ->whereIn('role', [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR])
             ->countAllResults();
     }
 }

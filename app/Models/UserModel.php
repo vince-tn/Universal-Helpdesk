@@ -13,12 +13,43 @@ class UserModel extends Model
     protected $createdField     = 'created_at';
     protected $updatedField     = 'updated_at';
     protected $allowedFields    = [
-        'name', 'email', 'password_hash', 'role', 'department', 'department_role_id', 'is_active',
+        'name', 'email', 'company', 'password_hash', 'role', 'department', 'department_role_id', 'is_active',
     ];
 
     public const ROLE_SUPERADMIN = 'superadmin';
     public const ROLE_AGENT      = 'agent';
-    public const ROLE_REQUESTER  = 'requester';
+    public const ROLE_SUPERVISOR  = 'supervisor';
+    public const ROLE_TEAM_LEADER = 'team_leader';
+    public const ROLE_REQUESTER   = 'requester';
+
+    public const ROLES = [
+        self::ROLE_SUPERADMIN,
+        self::ROLE_SUPERVISOR,
+        self::ROLE_TEAM_LEADER,
+        self::ROLE_AGENT,
+        self::ROLE_REQUESTER,
+    ];
+
+    public const STAFF_ROLES = [
+        self::ROLE_SUPERADMIN,
+        self::ROLE_SUPERVISOR,
+        self::ROLE_TEAM_LEADER,
+        self::ROLE_AGENT,
+    ];
+
+    public function supervisors(): array
+    {
+        return $this->where('role', self::ROLE_SUPERVISOR)->where('is_active', 1)->orderBy('name', 'ASC')->findAll();
+    }
+
+    public function leadCandidates(string $department): array
+    {
+        return $this->whereIn('role', [self::ROLE_TEAM_LEADER, self::ROLE_AGENT])
+            ->where('department', $department)
+            ->where('is_active', 1)
+            ->orderBy('name', 'ASC')
+            ->findAll();
+    }
 
     public function findByEmail(string $email): ?array
     {
@@ -40,14 +71,5 @@ class UserModel extends Model
     public function verifyPassword(array $user, string $password): bool
     {
         return password_verify($password, $user['password_hash']);
-    }
-
-    public function agentsInDepartment(string $department): array
-    {
-        return $this->where('role', self::ROLE_AGENT)
-            ->where('department', $department)
-            ->where('is_active', 1)
-            ->orderBy('name', 'ASC')
-            ->findAll();
     }
 }

@@ -158,9 +158,9 @@
 </div>
 
 <div class="side-panel">
-    <h3><?= icon('users', 15) ?> Agent Workload (open tickets)</h3>
+    <h3><?= icon('users', 15) ?> Staff Workload (open tickets)</h3>
     <?php if (empty($agentWorkload)): ?>
-        <div class="thread-empty">No tickets are assigned to an agent yet.</div>
+        <div class="thread-empty">No tickets are assigned to anyone yet.</div>
     <?php else: ?>
         <div class="barlist">
             <?php foreach ($agentWorkload as $a): ?>

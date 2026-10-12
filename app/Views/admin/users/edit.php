@@ -36,15 +36,28 @@
         </div>
 
         <div class="form-group">
-            <label for="role">Role</label>
-            <select id="role" name="role" onchange="document.getElementById('dept-group').style.display = this.value === 'agent' ? 'block' : 'none'">
-                <?php foreach (['requester' => 'Requester', 'agent' => 'Agent (department-scoped)', 'superadmin' => 'Superadmin (sees everything)'] as $val => $label): ?>
-                    <option value="<?= $val ?>" <?= $editUser['role'] === $val ? 'selected' : '' ?>><?= $label ?></option>
+            <label for="company">Company</label>
+            <select id="company" name="company">
+                <option value="">Not set</option>
+                <?php foreach (companies() as $co): ?>
+                    <option value="<?= esc($co) ?>" <?= ($editUser['company'] ?? '') === $co ? 'selected' : '' ?>><?= esc($co) ?></option>
                 <?php endforeach ?>
             </select>
         </div>
 
-        <div class="form-group" id="dept-group" style="display:<?= $editUser['role'] === 'agent' ? 'block' : 'none' ?>">
+
+        <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" name="role" onchange="document.getElementById('dept-group').style.display = ['agent','team_leader','supervisor'].indexOf(this.value) !== -1 ? 'block' : 'none'">
+                <option value="requester" <?= ($editUser['role'] ?? '') === 'requester' ? 'selected' : '' ?>><?= role_label('requester') ?></option>
+                <option value="agent" <?= ($editUser['role'] ?? '') === 'agent' ? 'selected' : '' ?>><?= role_label('agent') ?></option>
+                <option value="team_leader" <?= ($editUser['role'] ?? '') === 'team_leader' ? 'selected' : '' ?>><?= role_label('team_leader') ?></option>
+                <option value="supervisor" <?= ($editUser['role'] ?? '') === 'supervisor' ? 'selected' : '' ?>><?= role_label('supervisor') ?></option>
+                <option value="superadmin" <?= ($editUser['role'] ?? '') === 'superadmin' ? 'selected' : '' ?>><?= role_label('superadmin') ?></option>
+            </select>
+        </div>
+
+        <div class="form-group" id="dept-group" style="display:<?= in_array($editUser['role'], ['agent','team_leader','supervisor'], true) ? 'block' : 'none' ?>">
             <label for="department">Department</label>
             <select id="department" name="department">
                 <option value="">Select a department...</option>
@@ -54,6 +67,14 @@
             </select>
         </div>
 
+        <div class="form-group" id="role-group" style="display:<?= in_array($editUser['role'], ['agent','team_leader'], true) ? 'block' : 'none' ?>">
+            <label for="department_role_id">Role in department</label>
+            <select id="department_role_id" name="department_role_id" data-selected="<?= (int) ($editUser['department_role_id'] ?? 0) ?>">
+                <option value="">No specific role</option>
+            </select>
+            <div class="field-hint">Optional. The job title within that department.</div>
+        </div>
+
         <div class="form-group checkbox-row">
             <input type="checkbox" id="is_active" name="is_active" value="1" <?= (int) $editUser['is_active'] === 1 ? 'checked' : '' ?>>
             <label for="is_active">Account active</label>
@@ -61,6 +82,34 @@
 
         <button type="submit" class="btn"><?= icon('check', 16) ?> Save changes</button>
     </form>
+
+<script>
+window.UHD_DEPT_ROLES = <?= json_encode($deptRoles ?? [], JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+(function () {
+    var dept = document.getElementById('department');
+    var role = document.getElementById('department_role_id');
+    var kind = document.getElementById('role');
+    var group = document.getElementById('role-group');
+    if (!dept || !role) return;
+
+    function fill() {
+        var want = role.getAttribute('data-selected') || '';
+        var list = (window.UHD_DEPT_ROLES || {})[dept.value] || [];
+        role.innerHTML = '<option value="">No specific role</option>';
+        list.forEach(function (r) {
+            var o = document.createElement('option');
+            o.value = r.id; o.textContent = r.name;
+            if (String(r.id) === String(want)) o.selected = true;
+            role.appendChild(o);
+        });
+        if (group) group.style.display = ['agent','team_leader'].indexOf(kind.value) !== -1 ? 'block' : 'none';
+    }
+
+    dept.addEventListener('change', function () { role.setAttribute('data-selected', ''); fill(); });
+    kind.addEventListener('change', fill);
+    fill();
+})();
+</script>
 </div>
 
 <?= $this->endSection() ?>

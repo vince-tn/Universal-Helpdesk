@@ -2,8 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Org;
 use App\Models\NotificationModel;
-use App\Models\UserModel;
+use App\Models\TicketModel;
 
 class NotificationController extends BaseController
 {
@@ -39,24 +40,27 @@ class NotificationController extends BaseController
 
     public function mentionable()
     {
-        $query = trim((string) $this->request->getGet('q'));
-        $users = new UserModel();
+        $user   = current_user();
+        $query  = mb_strtolower(trim((string) $this->request->getGet('q')));
+        $ticket = (new TicketModel())->getTicket((string) (int) $this->request->getGet('ticket'));
+        $fields = $ticket['fields'] ?? null;
 
-        $builder = $users->where('is_active', 1);
-
-        if ($query !== '') {
-            $builder = $builder->groupStart()
-                ->like('name', $query)
-                ->orLike('email', $query)
-                ->groupEnd();
+        if ($fields === null || ! Org::canViewTicket($user, $fields)) {
+            return $this->response->setJSON([]);
         }
 
-        $rows = $builder->orderBy('name', 'ASC')->limit(8)->findAll();
+        $rows = array_filter(
+            Org::ticketAudience($fields),
+            static fn ($u) => (int) $u['id'] !== (int) $user['id']
+                && ($query === ''
+                    || str_contains(mb_strtolower((string) $u['name']), $query)
+                    || str_contains(mb_strtolower((string) $u['email']), $query))
+        );
 
         return $this->response->setJSON(array_map(static fn ($u) => [
             'name'       => $u['name'],
-            'role'       => $u['role'],
+            'role'       => role_label((string) $u['role']),
             'department' => $u['department'],
-        ], $rows));
+        ], array_slice(array_values($rows), 0, 8)));
     }
 }

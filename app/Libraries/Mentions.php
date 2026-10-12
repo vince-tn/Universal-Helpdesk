@@ -7,7 +7,7 @@ use App\Models\UserModel;
 
 class Mentions
 {
-    public function parse(string $body, int $excludeUserId = 0): array
+    public function parse(string $body, int $excludeUserId = 0, ?array $users = null): array
     {
         if (! str_contains($body, '@')) {
             return [];
@@ -21,8 +21,8 @@ class Mentions
             return [];
         }
 
-        $users = (new UserModel())->where('is_active', 1)->findAll();
-        $hits  = [];
+        $users ??= (new UserModel())->where('is_active', 1)->findAll();
+        $hits    = [];
 
         foreach ($candidates as $candidate) {
             $best = null;
@@ -45,6 +45,8 @@ class Mentions
                 }
             }
 
+            $best ??= $this->byFirstName($candidate, $users, $excludeUserId);
+
             if ($best !== null) {
                 $hits[(int) $best['id']] = $best;
             }
@@ -53,9 +55,22 @@ class Mentions
         return array_values($hits);
     }
 
-    public function notify(string $body, array $sender, string $ticketId, string $ticketTitle): array
+    private function byFirstName(string $candidate, array $users, int $excludeUserId): ?array
     {
-        $mentioned = $this->parse($body, (int) ($sender['id'] ?? 0));
+        $first = explode(' ', $candidate)[0];
+
+        $matches = array_values(array_filter(
+            $users,
+            static fn ($u) => (int) $u['id'] !== $excludeUserId
+                && strcasecmp(explode(' ', trim((string) $u['name']))[0], $first) === 0
+        ));
+
+        return count($matches) === 1 ? $matches[0] : null;
+    }
+
+    public function notify(string $body, array $sender, string $ticketId, string $ticketTitle, ?array $audience = null): array
+    {
+        $mentioned = $this->parse($body, (int) ($sender['id'] ?? 0), $audience);
 
         if ($mentioned === []) {
             return [];

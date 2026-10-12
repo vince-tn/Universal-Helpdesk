@@ -3,6 +3,7 @@
 namespace App\Commands;
 
 use App\Libraries\PriorCases;
+use App\Libraries\RoutingDirectory;
 use App\Libraries\TicketAssistant;
 use App\Models\N8nService;
 use App\Models\TicketMetaModel;
@@ -68,6 +69,7 @@ class Reclassify extends BaseCommand
                 'Requester Name'        => $row['requester'] ?? '',
                 'Requester Email'       => $row['requester_email'] ?? '',
                 'Submitting Department' => $row['submitting_department'] ?? '',
+                'Submitting Role'       => $row['submitting_role'] ?? '',
                 'Request'               => $body,
             ], $cases->context($prior));
 
@@ -83,14 +85,15 @@ class Reclassify extends BaseCommand
 
             $tickets->replaceClassification($id, $output, $result['ai_source'] ?? 'Local');
 
-            $meta->updateForTicket($id, [
-                'priority' => in_array((string) ($output['priority'] ?? ''), priorities(), true)
-                    ? $output['priority'] : 'Medium',
-                'due_date' => preg_match('/^\d{4}-\d{2}-\d{2}$/', (string) ($output['due_date'] ?? '')) === 1
-                    ? $output['due_date'] : null,
-            ]);
+            $meta->updateForTicket($id, TicketMetaModel::fromClassification($output));
 
-            $assistant->opening($id, $output, $cases->resolutionFor($prior, $output));
+            $route = (new RoutingDirectory())->reroute($id, $result['routing'] ?? [], $output, $body);
+
+            if ($route !== null) {
+                $output['responsible_department'] = $route['department'];
+            }
+
+            $assistant->opening($id, $output, $cases->resolutionFor($prior, $output), $body, $result['articles'] ?? [], $route);
 
             CLI::write(sprintf(
                 '     -> %s | %s | %s',

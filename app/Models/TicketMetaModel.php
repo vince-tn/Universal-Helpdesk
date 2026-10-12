@@ -14,6 +14,15 @@ class TicketMetaModel extends Model
     protected $updatedField  = 'updated_at';
     protected $allowedFields = ['ticket_id', 'priority', 'due_date', 'assigned_to'];
 
+    public static function fromClassification(array $output): array
+    {
+        $priority = (string) ($output['priority'] ?? '');
+
+        return [
+            'priority' => in_array($priority, priorities(), true) ? $priority : 'Medium',
+        ];
+    }
+
     public function forTickets(array $ticketIds): array
     {
         if (empty($ticketIds)) {

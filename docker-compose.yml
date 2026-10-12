@@ -46,7 +46,7 @@ services:
       - database_default_DBDriver=MySQLi
       - database_default_port=3306
       - N8N_BASE_URL=http://n8n:5678
-      - AI_TIMEOUT=180
+      - AI_TIMEOUT=300
       - AI_ASSISTANT=on
       - AI_ESCALATION=auto
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -100,7 +100,7 @@ services:
       - TZ=Asia/Manila
       - N8N_SECURE_COOKIE=false
       - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen2.5:3b}
-      - GEMINI_MODEL=${GEMINI_MODEL:-models/gemini-2.5-flash}
+      - GEMINI_MODEL=${GEMINI_MODEL:-models/gemini-3.6-flash}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - HELPDESK_FORCE_IMPORT=${HELPDESK_FORCE_IMPORT:-false}
     volumes:

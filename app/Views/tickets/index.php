@@ -110,7 +110,7 @@
         <select name="department">
             <option value="">All departments</option>
             <?php foreach (departments() as $opt): ?>
-                <option value="<?= $opt ?>" <?= $department === $opt ? 'selected' : '' ?>><?= $opt ?></option>
+                <option value="<?= esc($opt) ?>" <?= $department === $opt ? 'selected' : '' ?>><?= esc($opt) ?></option>
             <?php endforeach ?>
         </select>
     <?php endif ?>

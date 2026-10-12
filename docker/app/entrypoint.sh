@@ -9,10 +9,13 @@ if [ "${database_default_DBDriver}" = "MySQLi" ]; then
     host="${database_default_hostname:-db}"
     echo "[app] waiting for the database at ${host}"
     tries=0
+    # --skip-ssl: the client is MariaDB's, which insists on verifying MySQL's
+    # self-signed certificate and so never connected - every start waited the
+    # full two minutes. This only asks "is it up", over the compose network.
     until mysqladmin ping \
         -h "$host" \
         -u"${database_default_username}" \
-        -p"${database_default_password}" --silent >/dev/null 2>&1; do
+        -p"${database_default_password}" --skip-ssl --silent >/dev/null 2>&1; do
         tries=$((tries + 1))
         if [ "$tries" -gt 60 ]; then
             echo "[app] the database never answered - carrying on so the error is visible in the app"
