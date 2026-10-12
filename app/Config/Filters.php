@@ -51,7 +51,7 @@ class Filters extends BaseFilters
 
         ],
         'after' => [
-
+            'secureheaders',
         ],
     ];
 

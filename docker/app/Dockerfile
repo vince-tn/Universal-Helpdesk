@@ -14,7 +14,8 @@ RUN apt-get update \
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-RUN echo "variables_order=EGPCS" > /usr/local/etc/php/conf.d/zz-env.ini
+RUN echo "variables_order=EGPCS" > /usr/local/etc/php/conf.d/zz-env.ini \
+    && echo "expose_php=Off" > /usr/local/etc/php/conf.d/zz-hardening.ini
 
 ENV PHP_CLI_SERVER_WORKERS=8
 

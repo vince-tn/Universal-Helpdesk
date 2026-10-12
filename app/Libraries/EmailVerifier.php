@@ -28,8 +28,9 @@ class EmailVerifier
     public function issue(string $email, array $payload = [], string $purpose = 'signup'): array
     {
         $email = strtolower(trim($email));
+        $ip    = $this->callerIp();
 
-        $throttle = $this->throttle($email, $purpose);
+        $throttle = $this->throttle($email, $purpose, $ip);
 
         if ($throttle !== null) {
             return $throttle;
@@ -44,7 +45,7 @@ class EmailVerifier
             'payload'    => $payload === [] ? null : json_encode($payload),
             'attempts'   => 0,
             'expires_at' => date('Y-m-d H:i:s', time() + ($this->config->codeTtlMinutes * 60)),
-            'ip_address' => $this->callerIp(),
+            'ip_address' => $ip,
         ], true);
 
         if ($id === false) {
@@ -193,7 +194,7 @@ class EmailVerifier
         return $this->mailer->isConfigured();
     }
 
-    private function throttle(string $email, string $purpose): ?array
+    private function throttle(string $email, string $purpose, string $ip = ''): ?array
     {
         $wait = $this->cooldownRemaining($email, $purpose);
 
@@ -211,6 +212,17 @@ class EmailVerifier
             return [
                 'sent'        => false,
                 'reason'      => 'That address has been sent too many codes in the last hour. Try again later, or ask IT to set the account up.',
+                'retry_after' => 3600,
+            ];
+        }
+
+        if ($ip !== '' && $ip !== '0.0.0.0'
+            && $this->codes->sendsFromIpSince($ip, date('Y-m-d H:i:s', time() - 3600), $purpose) >= $this->config->maxSendsPerIpPerHour) {
+            log_message('warning', 'Sign-up codes held back for {ip}: hourly limit reached', ['ip' => $ip]);
+
+            return [
+                'sent'        => false,
+                'reason'      => 'Too many sign-up codes have been requested from your network in the last hour. Try again later, or ask IT to set the account up.',
                 'retry_after' => 3600,
             ];
         }

@@ -21,6 +21,8 @@ class Access extends BaseConfig
 
     public int $maxSendsPerHour = 5;
 
+    public int $maxSendsPerIpPerHour = 30;
+
     public function __construct()
     {
         parent::__construct();
@@ -32,6 +34,7 @@ class Access extends BaseConfig
         $this->maxAttempts           = $this->positive('SIGNUP_MAX_ATTEMPTS', $this->maxAttempts);
         $this->resendCooldownSeconds = $this->positive('SIGNUP_RESEND_COOLDOWN', $this->resendCooldownSeconds);
         $this->maxSendsPerHour       = $this->positive('SIGNUP_MAX_SENDS_PER_HOUR', $this->maxSendsPerHour);
+        $this->maxSendsPerIpPerHour  = $this->positive('SIGNUP_MAX_SENDS_PER_IP_PER_HOUR', $this->maxSendsPerIpPerHour);
     }
 
     public function domainCheckEnabled(): bool

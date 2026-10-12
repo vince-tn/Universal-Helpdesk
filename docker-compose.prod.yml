@@ -1,10 +1,18 @@
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   app:
     restart: always
+    logging: *logging
     ports: !override
       - "80:8080"
     environment:
       - CI_ENVIRONMENT=production
+      - PHP_CLI_SERVER_WORKERS=32
 
       - app_baseURL=${APP_URL:?set APP_URL to this machine's address, e.g. http://helpdesk.local/}
 
@@ -20,6 +28,7 @@ services:
 
   db:
     restart: always
+    logging: *logging
     environment:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD:?set MYSQL_PASSWORD - do not ship the default}
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD:?set MYSQL_ROOT_PASSWORD}
@@ -29,6 +38,7 @@ services:
 
   n8n:
     restart: always
+    logging: *logging
     environment:
       - N8N_SECURE_COOKIE=false
       - WEBHOOK_URL=http://localhost:5678/
@@ -38,6 +48,7 @@ services:
 
   ollama:
     restart: always
+    logging: *logging
 
     environment:
       - OLLAMA_KEEP_ALIVE=-1
@@ -47,11 +58,13 @@ services:
 
   ollama-init:
     restart: always
+    logging: *logging
     environment:
       - OLLAMA_INIT_STAY=yes
 
   mailpit:
     restart: always
+    logging: *logging
 
     ports: !override
       - "127.0.0.1:8025:8025"

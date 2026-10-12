@@ -155,6 +155,33 @@ the `docker` group, your crontab works as well, with no admin password:
 Watch it with `tail -f ~/chikiting-deploy.log`. The log stays quiet when
 there's nothing new.
 
+## Backups
+
+Every night at 02:30 the database and the uploaded screenshots are saved to
+`~/chikiting-backups/<date>`, and backups older than 14 days are deleted:
+
+```bash
+(crontab -l 2>/dev/null; echo '30 2 * * * /bin/bash /opt/chikiting/production/deploy/backup.sh >> $HOME/chikiting-backup.log 2>&1') | crontab -
+```
+
+To take one now, run `bash deploy/backup.sh`. These copies sit on the same disk
+as the app, so copy them somewhere else now and then.
+
+To restore one (this replaces what's in the database now):
+
+```bash
+cd /opt/chikiting/production
+gunzip -c ~/chikiting-backups/<date>/database.sql.gz | docker compose exec -T db sh -c 'export MYSQL_PWD="$MYSQL_PASSWORD"; exec mysql -uhelpdesk helpdesk'
+tar -xzf ~/chikiting-backups/<date>/uploads.tar.gz -C writable
+```
+
+## Sign-up limits
+
+Each address gets at most 5 sign-up codes an hour, and each visitor (by IP
+address) at most 30. On a rollout day, when many people sign up from the same
+office connection, raise the second limit in `.env`, for example
+`SIGNUP_MAX_SENDS_PER_IP_PER_HOUR=300`. The app picks it up straight away.
+
 ## 6. Put it online: Cloudflare Tunnel (free)
 
 ### No domain yet: a quick tunnel

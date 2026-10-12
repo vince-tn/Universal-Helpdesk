@@ -62,6 +62,14 @@ class EmailVerificationModel extends Model
             ->countAllResults();
     }
 
+    public function sendsFromIpSince(string $ip, string $since, string $purpose = 'signup'): int
+    {
+        return $this->where('ip_address', $ip)
+            ->where('purpose', $purpose)
+            ->where('created_at >=', $since)
+            ->countAllResults();
+    }
+
     public function markConsumed(int $id): bool
     {
         return $this->update($id, ['consumed_at' => date('Y-m-d H:i:s')]);
