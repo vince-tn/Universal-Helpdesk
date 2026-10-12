@@ -130,7 +130,7 @@
             <div>No tickets match right now. <a href="/tickets/new">Submit a new one</a>.</div>
         </div>
     <?php else: ?>
-        <table>
+        <table class="ticket-table">
             <thead>
                 <tr>
                     <th><?= sortLink('title', 'Title', $sort, $baseParams) ?></th>
