@@ -12,6 +12,10 @@ class KnowledgeBase
     private const MIN_SCORE      = 0.01;
     private const RELATIVE_SCORE = 0.2;
 
+    public const MIN_MEANING = 0.45;
+    public const MARGIN      = 0.12;
+    public const WORD_WEIGHT = 0.15;
+
     public function relevant(string $department, string $text, int $limit = self::LIMIT): array
     {
         $text = trim($text);
@@ -20,10 +24,50 @@ class KnowledgeBase
             return [];
         }
 
-        $db           = db_connect();
         $departmentId = (new DepartmentModel())->idFor($department);
 
-        $builder = $db->table('knowledge_articles')
+        try {
+            $byMeaning = $this->byMeaning($departmentId, $text, $limit);
+        } catch (\Throwable $e) {
+            log_message('error', 'Search by meaning failed, using word search: {message}', ['message' => $e->getMessage()]);
+            $byMeaning = null;
+        }
+
+        return $byMeaning ?? $this->byWords($departmentId, $text, $limit);
+    }
+
+    public static function rank(array $articles, array $query, array $wordScores, int $limit = self::LIMIT): array
+    {
+        $bestWords = $wordScores === [] ? 0.0 : (float) max($wordScores);
+        $scored    = [];
+
+        foreach ($articles as $article) {
+            $meaning = Embeddings::cosine($query, (array) ($article['vector'] ?? []));
+
+            if ($meaning < self::MIN_MEANING) {
+                continue;
+            }
+
+            $words = $bestWords > 0.0 ? (float) ($wordScores[(int) $article['id']] ?? 0.0) / $bestWords : 0.0;
+
+            unset($article['vector'], $article['embedding'], $article['embedding_model'], $article['embedding_hash']);
+
+            $scored[] = $article + [
+                'score'   => round($meaning + self::WORD_WEIGHT * $words, 4),
+                'meaning' => round($meaning, 4),
+            ];
+        }
+
+        usort($scored, static fn ($a, $b) => $b['score'] <=> $a['score']);
+
+        $floor = ($scored[0]['score'] ?? 0.0) - self::MARGIN;
+
+        return array_slice(array_values(array_filter($scored, static fn ($a) => $a['score'] >= $floor)), 0, $limit);
+    }
+
+    private function scoped(?int $departmentId)
+    {
+        $builder = db_connect()->table('knowledge_articles')
             ->where('is_active', 1)
             ->groupStart()
                 ->where('department_id IS NULL', null, false);
@@ -32,7 +76,103 @@ class KnowledgeBase
             $builder->orWhere('department_id', $departmentId);
         }
 
-        $builder->groupEnd();
+        return $builder->groupEnd();
+    }
+
+    private function byMeaning(?int $departmentId, string $text, int $limit): ?array
+    {
+        $embeddings = new Embeddings();
+
+        if (! $embeddings->enabled()) {
+            return null;
+        }
+
+        $articles = $this->scoped($departmentId)
+            ->select('id, department_id, title, keywords, body, embedding, embedding_model, embedding_hash')
+            ->get()
+            ->getResultArray();
+
+        if ($articles === []) {
+            return [];
+        }
+
+        $articles = $this->withVectors($articles, $embeddings);
+
+        if ($articles === null) {
+            return null;
+        }
+
+        $query = $embeddings->embed([$embeddings->query($text)]);
+
+        if ($query === null || $query === []) {
+            return null;
+        }
+
+        return self::rank($articles, $query[0], $this->wordScores($departmentId, $text), $limit);
+    }
+
+    private function withVectors(array $articles, Embeddings $embeddings): ?array
+    {
+        $stale = [];
+
+        foreach ($articles as $i => $article) {
+            $hash   = sha1($embeddings->model() . "\n" . Embeddings::document($article));
+            $vector = $article['embedding_hash'] === $hash ? json_decode((string) $article['embedding'], true) : null;
+
+            if (is_array($vector) && $vector !== []) {
+                $articles[$i]['vector'] = $vector;
+            } else {
+                $stale[$i] = $hash;
+            }
+        }
+
+        if ($stale === []) {
+            return $articles;
+        }
+
+        $vectors = $embeddings->embed(array_map(static fn ($i) => Embeddings::document($articles[$i]), array_keys($stale)));
+
+        if ($vectors === null) {
+            return null;
+        }
+
+        $table = db_connect()->table('knowledge_articles');
+
+        foreach (array_keys($stale) as $n => $i) {
+            $articles[$i]['vector'] = $vectors[$n];
+
+            $table->where('id', (int) $articles[$i]['id'])->update([
+                'embedding'       => json_encode(array_map(static fn ($v) => round($v, 6), $vectors[$n])),
+                'embedding_model' => $embeddings->model(),
+                'embedding_hash'  => $stale[$i],
+            ]);
+        }
+
+        return $articles;
+    }
+
+    private function wordScores(?int $departmentId, string $text): array
+    {
+        $db = db_connect();
+
+        if (! str_contains(strtolower($db->DBDriver), 'mysql')) {
+            return [];
+        }
+
+        $match  = 'MATCH(title, keywords, body) AGAINST (' . $db->escape($text) . ' IN NATURAL LANGUAGE MODE)';
+        $scores = [];
+
+        foreach ($this->scoped($departmentId)->select('id, ' . $match . ' AS score', false)->where($match, null, false)->get()->getResultArray() as $row) {
+            $scores[(int) $row['id']] = (float) $row['score'];
+        }
+
+        return $scores;
+    }
+
+    private function byWords(?int $departmentId, string $text, int $limit): array
+    {
+        $db      = db_connect();
+        $builder = $this->scoped($departmentId);
 
         if (str_contains(strtolower($db->DBDriver), 'mysql')) {
             $match = 'MATCH(title, keywords, body) AGAINST (' . $db->escape($text) . ' IN NATURAL LANGUAGE MODE)';
@@ -61,7 +201,7 @@ class KnowledgeBase
         }
         $builder->groupEnd();
 
-        return $builder->orderBy('id', 'ASC')->limit($limit)->get()->getResultArray();
+        return $builder->select('id, department_id, title, keywords, body')->orderBy('id', 'ASC')->limit($limit)->get()->getResultArray();
     }
 
     private function strongest(array $rows, int $limit): array

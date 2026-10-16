@@ -130,6 +130,19 @@ class Doctor extends BaseCommand
         if (str_contains($body, '"' . $model . '"')) {
             $this->ok('ollama      ' . $model . ' is on disk');
 
+            $search = new \App\Libraries\Embeddings($url);
+
+            if (! $search->enabled()) {
+                CLI::write('  --   guide search: word matching only (KNOWLEDGE_SEARCH=text)', 'dark_gray');
+            } elseif (str_contains($body, '"' . $search->model() . '"')) {
+                $this->ok('search      guides are matched by meaning (' . $search->model() . ')');
+            } else {
+                $this->fail(
+                    'search      ' . $search->model() . ' has not been pulled - guides fall back to word matching',
+                    'docker compose logs ollama-init'
+                );
+            }
+
             return;
         }
 
