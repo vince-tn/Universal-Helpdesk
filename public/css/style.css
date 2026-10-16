@@ -1905,3 +1905,20 @@ button.chip-x { border: none; background: none; padding: 0; cursor: pointer; lin
   .ticket-table td:nth-child(8)::before { content: "· "; }
   .ticket-table td:nth-child(7)::before { content: "· Assigned: "; }
 }
+
+.plain-list { list-style: none; padding: 0; margin: 10px 0 0; display: flex; flex-direction: column; gap: 8px; }
+.plain-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+.plain-block {
+  margin: 6px 0 0;
+  padding: 12px 14px;
+  border: 1px solid var(--line-soft);
+  border-radius: var(--radius);
+  background: var(--paper-tint);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

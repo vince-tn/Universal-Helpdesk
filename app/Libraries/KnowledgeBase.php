@@ -12,6 +12,10 @@ class KnowledgeBase
     private const MIN_SCORE      = 0.01;
     private const RELATIVE_SCORE = 0.2;
 
+    private const MAX_SCAN = 400;
+
+    private const VECTOR_COLUMNS = 'id, department_id, title, keywords, body, embedding, embedding_model, embedding_hash';
+
     public const MIN_MEANING = 0.45;
     public const MARGIN      = 0.12;
     public const WORD_WEIGHT = 0.15;
@@ -87,10 +91,7 @@ class KnowledgeBase
             return null;
         }
 
-        $articles = $this->scoped($departmentId)
-            ->select('id, department_id, title, keywords, body, embedding, embedding_model, embedding_hash')
-            ->get()
-            ->getResultArray();
+        $articles = $this->candidates($departmentId, $text);
 
         if ($articles === []) {
             return [];
@@ -109,6 +110,44 @@ class KnowledgeBase
         }
 
         return self::rank($articles, $query[0], $this->wordScores($departmentId, $text), $limit);
+    }
+
+    private function candidates(?int $departmentId, string $text): array
+    {
+        $total = $this->scoped($departmentId)->countAllResults();
+
+        if ($total === 0) {
+            return [];
+        }
+
+        if ($total <= self::MAX_SCAN) {
+            return $this->scoped($departmentId)->select(self::VECTOR_COLUMNS)->get()->getResultArray();
+        }
+
+        log_message('warning', '{n} guides are in scope, past the {max} this search ranks in one pass. Falling back to the strongest word matches plus the newest guides - a vector index is the fix.', [
+            'n'   => $total,
+            'max' => self::MAX_SCAN,
+        ]);
+
+        $scores = $this->wordScores($departmentId, $text);
+        arsort($scores);
+
+        $ids    = array_slice(array_keys($scores), 0, intdiv(self::MAX_SCAN, 2));
+        $recent = $this->scoped($departmentId)
+            ->select('id')
+            ->orderBy('updated_at', 'DESC')
+            ->limit(self::MAX_SCAN - count($ids))
+            ->get()
+            ->getResultArray();
+
+        $ids = array_values(array_unique(array_merge(
+            array_map('intval', $ids),
+            array_map(static fn ($row) => (int) $row['id'], $recent)
+        )));
+
+        return $ids === []
+            ? []
+            : $this->scoped($departmentId)->select(self::VECTOR_COLUMNS)->whereIn('id', $ids)->get()->getResultArray();
     }
 
     private function withVectors(array $articles, Embeddings $embeddings): ?array

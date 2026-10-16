@@ -66,11 +66,12 @@ class AuthController extends BaseController
         session()->set([
             'isLoggedIn' => true,
             'user' => [
-                'id'         => $user['id'],
-                'name'       => $user['name'],
-                'email'      => $user['email'],
-                'role'       => $user['role'],
-                'department' => $user['department'],
+                'id'                 => $user['id'],
+                'name'               => $user['name'],
+                'email'              => $user['email'],
+                'role'               => $user['role'],
+                'department'         => $user['department'],
+                'can_edit_knowledge' => (int) ($user['can_edit_knowledge'] ?? 0),
             ],
         ]);
 

@@ -27,11 +27,12 @@ class AuthFilter implements FilterInterface
         }
 
         $fresh = [
-            'id'         => $row['id'],
-            'name'       => $row['name'],
-            'email'      => $row['email'],
-            'role'       => $row['role'],
-            'department' => $row['department'],
+            'id'                 => $row['id'],
+            'name'               => $row['name'],
+            'email'              => $row['email'],
+            'role'               => $row['role'],
+            'department'         => $row['department'],
+            'can_edit_knowledge' => (int) ($row['can_edit_knowledge'] ?? 0),
         ];
 
         if ($fresh != $session->get('user')) {

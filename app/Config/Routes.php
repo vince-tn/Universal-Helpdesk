@@ -68,9 +68,12 @@ $routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,tea
     $routes->post('(:num)/roles', 'AdminDepartmentController::storeRole/$1');
     $routes->post('roles/(:num)', 'AdminDepartmentController::updateRole/$1');
     $routes->post('roles/(:num)/delete', 'AdminDepartmentController::deleteRole/$1');
+});
 
+$routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,team_leader,agent'], static function (RouteCollection $routes) {
     $routes->get('(:num)/knowledge', 'AdminKnowledgeController::index/$1');
     $routes->post('(:num)/knowledge', 'AdminKnowledgeController::storeArticle/$1');
+    $routes->get('knowledge/(:num)/history', 'AdminKnowledgeController::history/$1');
     $routes->post('knowledge/(:num)', 'AdminKnowledgeController::updateArticle/$1');
     $routes->post('knowledge/(:num)/delete', 'AdminKnowledgeController::deleteArticle/$1');
     $routes->post('(:num)/guardrails', 'AdminKnowledgeController::storeGuardrail/$1');

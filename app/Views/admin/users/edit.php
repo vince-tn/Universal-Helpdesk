@@ -75,6 +75,13 @@
             <div class="field-hint">Optional. The job title within that department.</div>
         </div>
 
+
+        <div class="form-group checkbox-row">
+            <input type="checkbox" id="can_edit_knowledge" name="can_edit_knowledge" value="1" <?= (int) ($editUser['can_edit_knowledge'] ?? 0) === 1 ? 'checked' : '' ?>>
+            <label for="can_edit_knowledge">May edit their department's AI knowledge</label>
+        </div>
+        <div class="field-hint">Only adds anything for an agent. Supervisors and team leaders already edit the guides for the departments they run.</div>
+
         <div class="form-group checkbox-row">
             <input type="checkbox" id="is_active" name="is_active" value="1" <?= (int) $editUser['is_active'] === 1 ? 'checked' : '' ?>>
             <label for="is_active">Account active</label>

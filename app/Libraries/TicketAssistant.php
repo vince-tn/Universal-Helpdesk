@@ -2,6 +2,7 @@
 
 namespace App\Libraries;
 
+use App\Models\KnowledgeCitationModel;
 use App\Models\N8nService;
 use App\Models\TicketMessageModel;
 use App\Models\TicketMetaModel;
@@ -102,7 +103,7 @@ class TicketAssistant
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
         }
 
-        return $this->say($ticketId, $notice . $body, $kind, $this->confidenceOf($output));
+        return $this->say($ticketId, $notice . $body, $kind, $this->confidenceOf($output), $article);
     }
 
     private function noFirmFix(string $ticketId, string $notice, array $output, string $department, array $articles): ?array
@@ -113,7 +114,7 @@ class TicketAssistant
             $body = $this->guideBody($department, $guide);
 
             if ($this->guardrails->blockedPhrase($department, $body) === null) {
-                return $this->say($ticketId, $notice . $body, TicketMessageModel::KIND_GUIDE);
+                return $this->say($ticketId, $notice . $body, TicketMessageModel::KIND_GUIDE, null, $guide);
             }
         }
 
@@ -257,10 +258,12 @@ class TicketAssistant
             $result['can_self_serve']   = 'No';
         }
 
-        $kind = $this->replyKind($result, $grounded);
+        $kind  = $this->replyKind($result, $grounded);
+        $cited = null;
 
         if ($offersSteps && $grounded) {
             $result['reply'] = $this->withSources($result['reply'], $department, $priorFix, $article);
+            $cited           = $article;
         }
 
         $topic   = $this->guardrails->handoffTopic($department, $message);
@@ -276,14 +279,16 @@ class TicketAssistant
             $result['resolution_state'] = $resolved ? $result['resolution_state'] : 'NEEDS_STAFF';
             $result['can_self_serve']   = 'No';
 
-            $kind = $this->replyKind($result, false);
+            $cited = null;
+            $kind  = $this->replyKind($result, false);
         }
 
         $stored = $this->say(
             $ticketId,
             $result['reply'],
             $kind,
-            $this->confidenceOf(['confidence' => $result['confidence']])
+            $this->confidenceOf(['confidence' => $result['confidence']]),
+            $cited
         );
 
         if ($stored === null) {
@@ -437,7 +442,8 @@ class TicketAssistant
         string $ticketId,
         string $body,
         string $kind = TicketMessageModel::KIND_MESSAGE,
-        ?string $confidence = null
+        ?string $confidence = null,
+        ?array $article = null
     ): ?array {
         $id = $this->messages->post($ticketId, null, self::AUTHOR, self::ROLE, $body, $kind, $confidence);
 
@@ -445,6 +451,10 @@ class TicketAssistant
             log_message('error', 'Could not store the assistant message on ticket {id}', ['id' => $ticketId]);
 
             return null;
+        }
+
+        if ($article !== null && ($article['id'] ?? null) !== null) {
+            (new KnowledgeCitationModel())->record((int) $id, $ticketId, (int) $article['id']);
         }
 
         return [

@@ -62,13 +62,14 @@ class AdminUserController extends BaseController
         $scoped = in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true);
 
         $this->userModel->insert([
-            'name'          => $name,
-            'email'         => strtolower($email),
-            'company'       => trim((string) $this->request->getPost('company')) ?: null,
-            'password_hash' => password_hash($password, PASSWORD_DEFAULT),
-            'role'          => $role,
-            'department'    => $scoped ? $department : null,
-            'is_active'     => 1,
+            'name'               => $name,
+            'email'              => strtolower($email),
+            'company'            => trim((string) $this->request->getPost('company')) ?: null,
+            'password_hash'      => password_hash($password, PASSWORD_DEFAULT),
+            'role'               => $role,
+            'department'         => $scoped ? $department : null,
+            'can_edit_knowledge' => $this->knowledgeFlag($role),
+            'is_active'          => 1,
         ]);
 
         return redirect()->to('/admin/users')->with('success', "Account for {$name} created.");
@@ -133,11 +134,12 @@ class AdminUserController extends BaseController
         }
 
         $data = [
-            'name'       => $name,
-            'role'       => $role,
-            'department' => in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true) ? $department : null,
-            'company'    => trim((string) $this->request->getPost('company')) ?: null,
-            'is_active'  => $isActive,
+            'name'               => $name,
+            'role'               => $role,
+            'department'         => in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true) ? $department : null,
+            'company'            => trim((string) $this->request->getPost('company')) ?: null,
+            'can_edit_knowledge' => $this->knowledgeFlag($role),
+            'is_active'          => $isActive,
         ];
 
         if ($password !== '') {
@@ -154,6 +156,11 @@ class AdminUserController extends BaseController
         $this->userModel->update($id, $data);
 
         return redirect()->to('/admin/users')->with('success', "Account for {$name} updated.");
+    }
+
+    private function knowledgeFlag(string $role): int
+    {
+        return $role === UserModel::ROLE_AGENT && $this->request->getPost('can_edit_knowledge') !== null ? 1 : 0;
     }
 
     private function departmentRoleIn(int $roleId, string $department): ?int

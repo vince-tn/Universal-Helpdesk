@@ -58,6 +58,15 @@
                         <?= icon('department') ?>
                         Departments &amp; AI knowledge
                     </a>
+                <?php else: ?>
+                    <?php $knowledgeDept = \App\Libraries\Org::knowledgeOnlyDepartment($user); ?>
+                    <?php if ($knowledgeDept !== null): ?>
+                        <div class="nav-section-label">Your department</div>
+                        <a href="/admin/departments/<?= (int) $knowledgeDept['id'] ?>/knowledge" class="<?= str_starts_with(uri_string(), 'admin/departments') ? 'active' : '' ?>">
+                            <?= icon('inbox') ?>
+                            AI knowledge
+                        </a>
+                    <?php endif ?>
                 <?php endif ?>
             </nav>
 
