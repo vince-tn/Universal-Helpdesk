@@ -12,7 +12,7 @@ $kindLabel = match ($kind) {
     default       => '',
 };
 ?>
-<div class="msg role-<?= esc($role) ?> kind-<?= esc($kind) ?>" data-message-id="<?= (int) ($msg['id'] ?? 0) ?>">
+<div class="msg role-<?= esc($role) ?> kind-<?= esc($kind) ?><?= (int) ($msg['is_internal'] ?? 0) === 1 ? ' is-internal' : '' ?>" data-message-id="<?= (int) ($msg['id'] ?? 0) ?>">
     <div class="msg-avatar" aria-hidden="true">
         <?= $isAi ? icon('sparkle', 18) : esc(strtoupper(substr((string) ($msg['author_name'] ?? '?'), 0, 1))) ?>
     </div>
@@ -29,6 +29,7 @@ $kindLabel = match ($kind) {
                 <span class="badge-outline"><?= esc($role) ?></span>
             <?php endif ?>
 
+            <?php if ((int) ($msg['is_internal'] ?? 0) === 1): ?><span class="badge-outline">internal note</span><?php endif ?>
             <span class="msg-time"><?= esc(date('j M, g:i A', strtotime((string) ($msg['created_at'] ?? 'now'))) . ' ' . brand()->timezoneLabel) ?></span>
         </div>
 

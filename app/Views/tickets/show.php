@@ -19,11 +19,16 @@
     };
 
     $statusPill = static fn (string $status): string => match ($status) {
-        'In Progress' => 'pill-status-in-progress',
-        'Resolved'    => 'pill-status-resolved',
-        'Closed'      => 'pill-status-closed',
-        default       => 'pill-status-new',
+        'In Progress', 'Reopened'                         => 'pill-status-in-progress',
+        'Awaiting Requester', 'On Hold', 'Pending Approval' => 'pill-status-waiting',
+        'Resolved'                                        => 'pill-status-resolved',
+        'Closed', 'Cancelled'                             => 'pill-status-closed',
+        default                                           => 'pill-status-new',
     };
+
+    $slaClass = 'sla-' . str_replace('_', '-', $slaState);
+    $answers  = json_decode((string) ($f['Service Fields'] ?? ''), true) ?: [];
+    $isStaffView = $canManage;
 
     $needsReview   = (string) ($f['Needs Human Review'] ?? '0') === '1';
 
@@ -52,8 +57,43 @@
     <div class="table-actions">
         <span class="pill <?= $statusPill((string) ($f['Status'] ?? 'New')) ?>"><span class="dot"></span><?= esc($f['Status'] ?? 'New') ?></span>
         <span class="pill <?= $priorityPill($meta['priority'] ?? 'Medium') ?>"><span class="dot"></span><?= esc($meta['priority'] ?? 'Medium') ?></span>
+        <?php if ((int) ($f['Confidential'] ?? 0) === 1): ?>
+            <span class="pill pill-confidential"><?= icon('lock', 12) ?> Confidential</span>
+        <?php endif ?>
     </div>
 </div>
+
+<div class="sla-strip <?= esc($slaClass) ?>">
+    <div><span class="k">SLA</span><span class="v"><?= esc(\App\Libraries\Sla::label($slaState)) ?></span></div>
+    <div><span class="k">First response due</span><span class="v"><?= esc(format_when($meta['response_due_at'] ?? null) ?: 'Not set') ?><?= ! empty($meta['first_response_at']) ? ' <span class="by-user">answered ' . esc(format_when($meta['first_response_at'])) . '</span>' : '' ?></span></div>
+    <div><span class="k">Resolve by</span><span class="v"><?= esc(format_when($meta['due_at'] ?? null) ?: 'Not set') ?></span></div>
+    <?php if (! empty($meta['needed_by'])): ?>
+        <div><span class="k">Needed by</span><span class="v"><?= esc(format_day($meta['needed_by'])) ?></span></div>
+    <?php endif ?>
+</div>
+
+<?php if ($approvals !== []): ?>
+    <div class="approval-card">
+        <h3 class="section-title"><?= icon('shield', 16) ?> Approval</h3>
+        <ol class="approval-steps">
+            <?php foreach ($approvals as $step): ?>
+                <li class="step-<?= esc($step['status']) ?>">
+                    <strong><?= esc(role_label($step['approver_role'])) ?></strong>
+                    <span><?= esc(ucfirst($step['status'])) ?><?= ! empty($step['decided_at']) ? ' on ' . esc(format_when($step['decided_at'])) : '' ?></span>
+                    <?php if (! empty($step['note'])): ?><div class="field-hint"><?= esc($step['note']) ?></div><?php endif ?>
+                </li>
+            <?php endforeach ?>
+        </ol>
+        <?php if ($canApprove): ?>
+            <form action="/tickets/<?= esc($tid) ?>/approval" method="post" class="approval-form">
+                <?= csrf_field() ?>
+                <input type="text" name="note" maxlength="500" placeholder="Note (needed when you reject)">
+                <button type="submit" name="decision" value="approve" class="btn btn-sm"><?= icon('check', 14) ?> Approve</button>
+                <button type="submit" name="decision" value="reject" class="btn btn-sm btn-danger">Reject</button>
+            </form>
+        <?php endif ?>
+    </div>
+<?php endif ?>
 
 <div class="detail-layout">
     <div>
@@ -69,12 +109,16 @@
                 <?php endif ?>
             </div>
             <div class="ai-tags-grid">
-                <div><span class="k">Routed to</span><span class="v"><?= esc($ownerLabel) ?> <span class="by-user"><?= esc($ownerNote) ?></span></span></div>
-                <div><span class="k">Category</span><span class="v"><?= esc($f['Category'] ?? '—') ?></span></div>
-                <div><span class="k">Turnaround</span><span class="v"><?= esc($f['Suggested TAT'] ?? '—') ?> <span class="by-user">set by staff</span></span></div>
-                <div><span class="k">Due</span><span class="v"><?= $meta['due_date'] ? esc(date('j M Y', strtotime($meta['due_date']))) : '—' ?> <span class="by-user">set by staff</span></span></div>
+                <div><span class="k">Handled by</span><span class="v"><?= esc($ownerLabel) ?> <span class="by-user"><?= esc($ownerNote) ?></span></span></div>
+                <?php if (! empty($f['Routing Reason'])): ?>
+                    <div><span class="k">Why</span><span class="v"><?= esc($f['Routing Reason']) ?></span></div>
+                <?php endif ?>
+                <div><span class="k">Category</span><span class="v"><?= esc($f['Category'] ?? 'Not set') ?></span></div>
                 <div><span class="k">Assigned</span><span class="v"><?= $assignedTo ? esc($assignedTo['name']) : 'Unassigned' ?></span></div>
-                <div><span class="k">Raised from</span><span class="v"><?= esc($f['Submitting Department'] ?? '—') ?><?= ! empty($f['Submitting Role']) ? ' · ' . esc($f['Submitting Role']) : '' ?></span></div>
+                <div><span class="k">Requester's department</span><span class="v"><?= esc($f['Requester Department'] ?? '') ?: 'Not given' ?></span></div>
+                <?php if (! empty($f['Service Key'])): ?>
+                    <div><span class="k">Request type</span><span class="v"><?= esc($f['Service Key']) ?></span></div>
+                <?php endif ?>
             </div>
         </div>
 
@@ -103,8 +147,11 @@
             </div>
         </div>
 
-        <?php if ((string) ($f['Status'] ?? 'New') === 'Closed'): ?>
-            <div class="thread-empty">This ticket is closed. Raise a new one if it comes back.</div>
+        <?php if (in_array((string) ($f['Status'] ?? 'New'), ['Closed', 'Cancelled'], true)): ?>
+            <div class="thread-empty">This ticket is <?= esc(strtolower((string) $f['Status'])) ?>. Raise a new one if it comes back.</div>
+            <?php if (! empty($feedback) && (int) $feedback['rating'] > 0): ?>
+                <div class="field-hint">Rated <?= (int) $feedback['rating'] ?> out of 5 by the requester.</div>
+            <?php endif ?>
         <?php else: ?>
             <form action="/tickets/<?= esc($tid) ?>/messages" method="post" class="composer" id="composer">
                 <?= csrf_field() ?>
@@ -112,10 +159,22 @@
                 <div class="mention-pop" id="mention-pop" hidden></div>
                 <div class="composer-foot">
                     <?php if ($canManage): ?>
+                        <label class="solution-toggle internal-toggle" title="Only staff can see internal notes">
+                            <input type="checkbox" name="is_internal" value="1" id="is-internal">
+                            <span><?= icon('lock', 13) ?> Internal note</span>
+                        </label>
                         <label class="solution-toggle" title="Only replies marked here are remembered">
                             <input type="checkbox" name="is_solution" value="1">
                             <span><?= icon('check', 13) ?> This reply is the solution</span>
                         </label>
+                        <?php if (! empty($canned)): ?>
+                            <select class="canned-pick" id="canned-pick" aria-label="Insert a canned reply">
+                                <option value="">Canned reply...</option>
+                                <?php foreach ($canned as $c): ?>
+                                    <option value="<?= esc($c['body']) ?>"><?= esc($c['title']) ?></option>
+                                <?php endforeach ?>
+                            </select>
+                        <?php endif ?>
                     <?php else: ?>
                         <span class="composer-hint">
                             The assistant reads your replies. Say it's sorted and it'll mark the ticket resolved.
@@ -148,18 +207,32 @@
                     <div class="field-value"><?= esc($f['Request'] ?? '—') ?></div>
                 <?php endif ?>
             </div>
+            <?php foreach ($answers as $label => $value): ?>
+                <div class="detail-field">
+                    <div class="field-label"><?= esc($label) ?></div>
+                    <div class="field-value"><?= esc($value) ?></div>
+                </div>
+            <?php endforeach ?>
             <div class="detail-field full">
                 <div class="field-label">Expected deliverable</div>
                 <div class="field-value"><?= esc($f['Expected Deliverable'] ?? '—') ?></div>
             </div>
-            <div class="detail-field full">
-                <div class="field-label">Requirements needed</div>
-                <div class="field-value"><?= esc($f['Requirements Needed'] ?? '—') ?></div>
-            </div>
+            <?php if (trim((string) ($f['Requirements Needed'] ?? '')) !== '' && stripos((string) $f['Requirements Needed'], 'to be confirmed') === false): ?>
+                <div class="detail-field full">
+                    <div class="field-label">Requirements needed</div>
+                    <div class="field-value"><?= esc($f['Requirements Needed']) ?></div>
+                </div>
+            <?php endif ?>
             <div class="detail-field full">
                 <div class="field-label">Closure criteria</div>
                 <div class="field-value"><?= esc($f['Closure Criteria'] ?? '—') ?></div>
             </div>
+            <?php if (! empty($f['Resolution Note'])): ?>
+                <div class="detail-field full">
+                    <div class="field-label">Resolution note</div>
+                    <div class="field-value"><?= esc($f['Resolution Note']) ?></div>
+                </div>
+            <?php endif ?>
             <?php if (! empty($f['AI Resolution Note'])): ?>
                 <div class="detail-field full">
                     <div class="field-label">Resolution note <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></div>
@@ -167,6 +240,15 @@
                 </div>
             <?php endif ?>
         </div>
+
+        <?php if ($isStaffView && ! empty($events)): ?>
+            <h3 class="section-title"><?= icon('clock', 16) ?> Activity</h3>
+            <ol class="activity-log">
+                <?php foreach ($events as $e): ?>
+                    <li><span class="when"><?= esc(format_when($e['created_at'])) ?></span> <strong><?= esc($e['actor_name'] ?: 'System') ?></strong> <?= esc(\App\Libraries\Activity::describe($e)) ?></li>
+                <?php endforeach ?>
+            </ol>
+        <?php endif ?>
     </div>
 
     <div>
@@ -175,11 +257,17 @@
                 <h3><?= icon('edit', 15) ?> Update status</h3>
                 <form action="/tickets/<?= esc($tid) ?>/status" method="post" class="inline-form">
                     <?= csrf_field() ?>
-                    <select name="status" onchange="this.form.submit()">
-                        <?php foreach (['New', 'In Progress', 'Resolved', 'Closed'] as $opt): ?>
+                    <select name="status" id="status-pick">
+                        <?php foreach (\App\Models\TicketModel::STATUSES as $opt): ?>
                             <option value="<?= $opt ?>" <?= ($f['Status'] ?? 'New') === $opt ? 'selected' : '' ?>><?= $opt ?></option>
                         <?php endforeach ?>
                     </select>
+                    <div id="resolve-note" hidden>
+                        <label for="resolution_note">What fixed it?</label>
+                        <textarea id="resolution_note" name="resolution_note" rows="3" maxlength="2000" placeholder="A short note the requester and the team will see"></textarea>
+                        <div class="field-hint">Needs an assignee and a note to resolve.</div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-sm"><?= icon('check', 14) ?> Update</button>
                 </form>
             </div>
 
@@ -194,7 +282,7 @@
                         <?php endforeach ?>
                     </select>
 
-                    <label for="due_date">Due date</label>
+                    <label for="due_date">Due date <span class="by-user">set from the SLA, change only if agreed</span></label>
                     <input type="date" id="due_date" name="due_date" value="<?= esc($meta['due_date'] ?? '') ?>">
 
                     <label for="category">Category</label>
@@ -204,8 +292,6 @@
                         <?php endforeach ?>
                     </select>
 
-                    <label for="suggested_tat">Turnaround</label>
-                    <input type="text" id="suggested_tat" name="suggested_tat" maxlength="100" value="<?= esc($f['Suggested TAT'] ?? '') ?>">
 
                     <label for="owning_team">Owning team</label>
                     <select id="owning_team" name="owning_team">
@@ -252,13 +338,42 @@
                     <div><span class="k">Status</span><span class="v"><?= esc($f['Status'] ?? 'New') ?></span></div>
                     <div><span class="k">Priority</span><span class="v"><?= esc($meta['priority'] ?? 'Medium') ?></span></div>
                     <div><span class="k">Owning team</span><span class="v"><?= esc($ownerLabel) ?></span></div>
-                    <div><span class="k">Target date</span><span class="v"><?= $meta['due_date'] ? esc(date('j M Y', strtotime($meta['due_date']))) : '—' ?></span></div>
+                    <div><span class="k">Target</span><span class="v"><?= esc(format_when($meta['due_at'] ?? null) ?: 'Not set') ?></span></div>
                 </div>
                 <div class="field-hint">Anything you add in the conversation is visible to the team handling this.</div>
             </div>
         <?php endif ?>
     </div>
 </div>
+
+<script>
+(function () {
+    var pick = document.getElementById('status-pick');
+    var note = document.getElementById('resolve-note');
+    if (pick && note) {
+        var sync = function () { note.hidden = pick.value !== 'Resolved'; };
+        pick.addEventListener('change', sync);
+        sync();
+    }
+    var canned = document.getElementById('canned-pick');
+    var body   = document.getElementById('composer-body');
+    if (canned && body) {
+        canned.addEventListener('change', function () {
+            if (!canned.value) return;
+            body.value = (body.value ? body.value + '\n\n' : '') + canned.value;
+            canned.value = '';
+            body.focus();
+        });
+    }
+    var internal = document.getElementById('is-internal');
+    if (internal && body) {
+        internal.addEventListener('change', function () {
+            body.classList.toggle('is-internal', internal.checked);
+            body.placeholder = internal.checked ? 'Internal note, only staff will see this' : 'Write a reply…  Type @ to mention someone';
+        });
+    }
+})();
+</script>
 
 <script>
 (function () {
