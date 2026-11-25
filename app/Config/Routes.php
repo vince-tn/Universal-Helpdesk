@@ -76,3 +76,23 @@ $routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,tea
     $routes->post('(:num)/guardrails', 'AdminKnowledgeController::storeGuardrail/$1');
     $routes->post('guardrails/(:num)/delete', 'AdminKnowledgeController::deleteGuardrail/$1');
 });
+
+$routes->group('rooms/manage', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
+    $routes->get('/', 'RoomController::manage');
+    $routes->post('/', 'RoomController::manageStore');
+    $routes->post('(:num)', 'RoomController::manageUpdate/$1');
+    $routes->post('(:num)/toggle', 'RoomController::manageToggle/$1');
+});
+
+$routes->group('rooms', ['filter' => 'auth'], static function (RouteCollection $routes) {
+    $routes->get('/', 'RoomController::index');
+    $routes->get('week', 'RoomController::week');
+    $routes->get('mine', 'RoomController::mine');
+    $routes->get('book', 'RoomController::create');
+    $routes->post('book', 'RoomController::store');
+    $routes->get('bookings/(:num)/ics', 'RoomController::ics/$1');
+    $routes->post('bookings/(:num)/cancel', 'RoomController::cancel/$1');
+    $routes->post('bookings/(:num)/checkin', 'RoomController::checkin/$1');
+    $routes->post('bookings/(:num)/approve', 'RoomController::approve/$1');
+    $routes->post('bookings/(:num)/reject', 'RoomController::reject/$1');
+});
