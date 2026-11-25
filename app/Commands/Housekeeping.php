@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Controllers\TicketController;
 use App\Libraries\Activity;
+use App\Libraries\GraphMail;
 use App\Libraries\Notifier;
 use App\Libraries\Sla;
 use App\Models\TicketMetaModel;
@@ -11,7 +12,7 @@ use App\Models\TicketModel;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
-// sla warnings, auto close of resolved tickets and the mail queue, run every few minutes
+// sla warnings, auto close of resolved tickets, email intake and the mail queue, run every few minutes
 class Housekeeping extends BaseCommand
 {
     protected $group       = 'Helpdesk';
@@ -60,6 +61,14 @@ class Housekeeping extends BaseCommand
                 Activity::ticket($id, 'status', 'Resolved', 'Closed', ['id' => null, 'name' => 'System']);
                 (new TicketController())->sendSurvey($id, $fields);
                 $closed++;
+            }
+        }
+
+        if (GraphMail::configured()) {
+            try {
+                $this->call('tickets:mail-intake');
+            } catch (\Throwable $e) {
+                CLI::error('mail intake failed: ' . $e->getMessage());
             }
         }
 

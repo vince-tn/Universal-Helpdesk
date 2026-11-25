@@ -2159,3 +2159,17 @@ a.rg-title:hover { text-decoration: underline; }
   .room-grid thead th { min-width: 140px; }
   .room-grid .rg-time { width: 60px; min-width: 60px; padding: 0 6px; }
 }
+
+/* knowledge review queue and sla targets */
+.badge-solution.is-pending { background: var(--amber-bg); color: var(--amber-tx); border-color: var(--amber); }
+.review-item { display: flex; flex-direction: column; gap: 8px; }
+.review-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.review-head a { color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.review-head a:hover { text-decoration: underline; }
+.review-text { max-height: 320px; overflow-y: auto; }
+.sla-signoff .note-strip { margin: 12px 0 0; }
+.sla-signoff-form { margin-top: 14px; }
+.sla-table .sla-group td { background: var(--paper-tint); padding-top: 10px; padding-bottom: 10px; }
+.sla-table .sla-hours { width: 110px; max-width: 100%; margin: 0; }
+.sla-table .field-hint { display: block; }
+.sla-save { margin-top: 14px; }

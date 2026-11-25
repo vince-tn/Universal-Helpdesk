@@ -86,6 +86,18 @@ class Notifier
         }
     }
 
+    public function solutionPending(string $ticketId, array $fields, array $author): void
+    {
+        $title = $this->title($fields);
+
+        foreach (Org::knowledgeReviewers($fields) as $user) {
+            if ((int) $user['id'] === (int) ($author['id'] ?? 0)) {
+                continue;
+            }
+            $this->push($user, $ticketId, ($author['name'] ?? 'Someone') . " marked an answer on #{$ticketId} as the solution. It needs your review: {$title}", 'review');
+        }
+    }
+
     public function slaAtRisk(string $ticketId, array $fields, string $state): void
     {
         $title = $this->title($fields);

@@ -18,6 +18,10 @@ services:
 
       - ALLOWED_EMAIL_DOMAINS=${ALLOWED_EMAIL_DOMAINS:?set ALLOWED_EMAIL_DOMAINS - an empty allowlist lets anyone sign up}
       - ALLOWED_EMAILS=${ALLOWED_EMAILS:-}
+      - GRAPH_TENANT_ID=${GRAPH_TENANT_ID:-}
+      - GRAPH_CLIENT_ID=${GRAPH_CLIENT_ID:-}
+      - GRAPH_CLIENT_SECRET=${GRAPH_CLIENT_SECRET:-}
+      - MAIL_INTAKE=${MAIL_INTAKE:-}
       - MAIL_HOST=${MAIL_HOST:?set MAIL_HOST - signup codes have to actually arrive}
       - MAIL_PORT=${MAIL_PORT:-587}
       - MAIL_USER=${MAIL_USER:-}
