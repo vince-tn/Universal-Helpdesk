@@ -87,7 +87,18 @@ $routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,tea
     $routes->post('guardrails/(:num)/delete', 'AdminKnowledgeController::deleteGuardrail/$1');
 });
 
-$routes->group('account', ['filter' => 'auth'], static function (RouteCollection $routes) {
+$routes->group('admin/knowledge-review', ['filter' => 'auth:superadmin,supervisor,team_leader'], static function (RouteCollection $routes) {
+    $routes->get('/', 'KnowledgeReviewController::index');
+    $routes->post('(:num)', 'KnowledgeReviewController::decide/$1');
+});
+
+$routes->group('admin/sla', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
+    $routes->get('/', 'AdminSlaController::index');
+    $routes->post('/', 'AdminSlaController::save');
+    $routes->post('signoff', 'AdminSlaController::signoff');
+});
+
+$routes->group('account', ['filter' => 'auth'],static function (RouteCollection $routes) {
     $routes->get('/', 'AccountController::index');
     $routes->post('/', 'AccountController::update');
     $routes->get('mfa/setup', 'MfaController::setupForm');

@@ -56,11 +56,23 @@
                         <?= icon('department') ?>
                         Departments
                     </a>
+                    <a href="/admin/knowledge-review" class="<?= str_starts_with(uri_string(), 'admin/knowledge-review') ? 'active' : '' ?>">
+                        <?= icon('check') ?>
+                        Knowledge review
+                    </a>
+                    <a href="/admin/sla" class="<?= str_starts_with(uri_string(), 'admin/sla') ? 'active' : '' ?>">
+                        <?= icon('clock') ?>
+                        SLA targets
+                    </a>
                 <?php elseif (\App\Libraries\Org::canOpenAdmin($user)): ?>
                     <div class="nav-section-label">Your departments</div>
                     <a href="/admin/departments" class="<?= str_starts_with(uri_string(), 'admin/departments') ? 'active' : '' ?>">
                         <?= icon('department') ?>
                         Departments &amp; AI knowledge
+                    </a>
+                    <a href="/admin/knowledge-review" class="<?= str_starts_with(uri_string(), 'admin/knowledge-review') ? 'active' : '' ?>">
+                        <?= icon('check') ?>
+                        Knowledge review
                     </a>
                 <?php endif ?>
             </nav>

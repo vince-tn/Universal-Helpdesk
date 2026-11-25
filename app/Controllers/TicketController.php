@@ -6,13 +6,14 @@ use App\Libraries\Activity;
 use App\Libraries\Approvals;
 use App\Libraries\ExportGuard;
 use App\Libraries\Html;
+use App\Libraries\KnowledgeReview;
 use App\Libraries\Notifier;
 use App\Libraries\Sla;
-use App\Libraries\Mentions;
 use App\Libraries\Org;
 use App\Libraries\PriorCases;
 use App\Libraries\RoutingDirectory;
 use App\Libraries\TicketAssistant;
+use App\Libraries\TicketIntake;
 use App\Models\N8nService;
 use App\Models\TicketModel;
 use App\Models\TicketMetaModel;
@@ -395,36 +396,16 @@ class TicketController extends BaseController
                 ->with('error', 'Something went wrong saving your ticket. Please try again.');
         }
 
-        $category = $service['category'] ?? 'Common Request';
-
-        $this->ticketModel->update((int) $id, [
-            'requester_department' => $ownDepartment !== '' ? mb_substr($ownDepartment, 0, 100) : null,
-            'service_key'          => $service['service_key'] ?? null,
-            'service_fields'       => $answers === [] ? null : json_encode($answers),
-            'is_confidential'      => $this->isConfidential($department, $role) ? 1 : 0,
-            'category'             => $category,
+        (new TicketIntake())->afterCreate($id, [
+            'department'     => $department,
+            'role'           => $role,
+            'service'        => $service,
+            'answers'        => $answers,
+            'own_department' => $ownDepartment,
+            'people'         => $people,
+            'stopped'        => $stopped,
+            'needed_by'      => $neededBy,
         ]);
-
-        $priority = self::priorityFrom($people, $stopped);
-
-        $this->metaModel->firstOrCreate($id);
-        $this->metaModel->updateForTicket($id, array_filter([
-            'priority'        => $priority,
-            'people_affected' => in_array($people, ['me', 'team', 'many'], true) ? $people : null,
-            'work_stopped'    => $stopped === 'yes' ? 1 : 0,
-            'needed_by'       => is_ymd_date($neededBy) ? $neededBy : null,
-        ], static fn ($v) => $v !== null));
-
-        (new Sla())->stamp($id, date('Y-m-d H:i:s'), $category, $priority ?? 'Medium');
-        Activity::ticket($id, 'created', null, $department . ($role !== '' ? ' / ' . $role : ''));
-
-        $fields = $this->ticketModel->getTicket($id)['fields'] ?? [];
-
-        if ($service !== null && (int) $service['requires_approval'] === 1) {
-            (new Approvals())->start($id, $fields, (string) ($service['approval_chain'] ?: 'supervisor'));
-        }
-
-        (new Notifier())->created($id, $fields);
 
         return redirect()->to("/tickets/{$id}")->with('success', "Ticket #{$id} submitted. We emailed you a copy.");
     }
@@ -619,25 +600,12 @@ class TicketController extends BaseController
 
     private function changeStatus(string $id, array $fields, string $from, string $to): void
     {
-        $this->ticketModel->updateStatus($id, $to);
-        (new Sla())->onStatusChange($id, $from, $to);
-        Activity::ticket($id, 'status', $from, $to);
-        (new Notifier())->statusChanged($id, $fields, $from, $to);
-
-        if ($to === 'Closed') {
-            $this->sendSurvey($id, $fields);
-        }
+        (new TicketIntake())->changeStatus($id, $fields, $from, $to);
     }
 
     public function sendSurvey(string $id, array $fields): void
     {
-        $db = \Config\Database::connect();
-        if ($db->table('ticket_feedback')->where('ticket_id', $id)->countAllResults() > 0) {
-            return;
-        }
-        $token = bin2hex(random_bytes(16));
-        $db->table('ticket_feedback')->insert(['ticket_id' => $id, 'rating' => 0, 'token' => $token, 'created_at' => date('Y-m-d H:i:s')]);
-        (new Notifier())->survey($id, $fields, $token);
+        (new TicketIntake())->sendSurvey($id, $fields);
     }
 
     public function feedback(string $id)
@@ -684,15 +652,7 @@ class TicketController extends BaseController
     // impact and urgency matrix from the two intake questions
     public static function priorityFrom(string $people, string $stopped): ?string
     {
-        if (! in_array($people, ['me', 'team', 'many'], true) || ! in_array($stopped, ['yes', 'no'], true)) {
-            return null;
-        }
-
-        return [
-            'me'   => ['no' => 'Low', 'yes' => 'Medium'],
-            'team' => ['no' => 'Medium', 'yes' => 'High'],
-            'many' => ['no' => 'High', 'yes' => 'Urgent'],
-        ][$people][$stopped];
+        return TicketIntake::priorityFrom($people, $stopped);
     }
 
     private function service(string $key): ?array
@@ -706,21 +666,7 @@ class TicketController extends BaseController
 
     private function isConfidential(string $department, string $role): bool
     {
-        foreach ((new \App\Models\DepartmentModel())->withRoles() as $d) {
-            if (strcasecmp($d['name'], $department) !== 0) {
-                continue;
-            }
-            if ((int) ($d['is_confidential'] ?? 0) === 1) {
-                return true;
-            }
-            foreach ($d['roles'] as $r) {
-                if ($role !== '' && strcasecmp($r['name'], $role) === 0 && (int) ($r['is_confidential'] ?? 0) === 1) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
+        return TicketIntake::isConfidential($department, $role);
     }
 
     private function canned(array $fields): array
@@ -864,6 +810,8 @@ class TicketController extends BaseController
             && $this->request->getPost('is_solution') !== null
             && mb_strlen($body) >= 25;
 
+        $selfApproved = $isSolution && KnowledgeReview::canReview($user, ticket_department($fields));
+
         $messageId = $this->messageModel->post(
             $id,
             $user['id'],
@@ -880,28 +828,13 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'Your message could not be saved. Please try again.');
         }
 
-        $status      = (string) ($fields['Status'] ?? 'New');
-        $isRequester = strcasecmp((string) ($fields['Requester Email'] ?? ''), (string) $user['email']) === 0;
-
-        if ($internal) {
-            Activity::ticket($id, 'note');
-        } elseif ($isRequester && in_array($status, ['Resolved', 'Closed'], true)) {
-            $this->changeStatus($id, $fields, $status, 'Reopened');
-        } elseif ($isRequester && $status === 'Awaiting Requester') {
-            $this->changeStatus($id, $fields, $status, 'In Progress');
-        } elseif (! $isRequester && $this->canManage($fields, $user)) {
-            (new Sla())->markFirstResponse($id);
+        if ($selfApproved) {
+            $this->messageModel->reviewSolution((int) $messageId, TicketMessageModel::SOLUTION_APPROVED, (int) $user['id']);
+        } elseif ($isSolution) {
+            (new Notifier())->solutionPending($id, $fields, $user);
         }
 
-        (new Notifier())->replied($id, $fields, $user, $internal);
-
-        $mentioned = (new Mentions())->notify(
-            $body,
-            $user,
-            $id,
-            (string) ($fields['Request Title'] ?? $fields['Title'] ?? 'a ticket'),
-            Org::ticketAudience($fields)
-        );
+        $mentioned = (new TicketIntake())->afterReply($id, $fields, $user, $body, $internal);
 
         $redirect = redirect()->to("/tickets/{$id}#conversation");
 
@@ -909,8 +842,10 @@ class TicketController extends BaseController
             $redirect = $redirect->with('success', 'Notified ' . implode(', ', array_column($mentioned, 'name')) . '.');
         }
 
-        if ($isSolution) {
+        if ($selfApproved) {
             $redirect = $redirect->with('success', 'Saved as the solution. The assistant can reuse it on similar tickets.');
+        } elseif ($isSolution) {
+            $redirect = $redirect->with('success', 'Marked as the solution. A team lead reviews it before the assistant reuses it.');
         }
 
         if (! $internal && $this->assistantShouldAnswer($fields, $user)) {

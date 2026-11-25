@@ -152,6 +152,23 @@ class Org
         ));
     }
 
+    // team leaders and supervisors who can approve answers for the ticket's department
+    public static function knowledgeReviewers(array $fields): array
+    {
+        [$department, $leaderId, $supervisorId] = self::departmentLeads($fields);
+
+        if ($department === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            (new UserModel())->whereIn('role', [UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR])->where('is_active', 1)->findAll(),
+            static fn ($u) => ($u['role'] === UserModel::ROLE_TEAM_LEADER
+                    && (($leaderId > 0 && (int) $u['id'] === $leaderId) || strtolower(trim((string) $u['department'])) === $department))
+                || ($u['role'] === UserModel::ROLE_SUPERVISOR && $supervisorId > 0 && (int) $u['id'] === $supervisorId)
+        ));
+    }
+
     public static function ticketAudience(array $fields): array
     {
         [$department, $leaderId, $supervisorId] = self::departmentLeads($fields);

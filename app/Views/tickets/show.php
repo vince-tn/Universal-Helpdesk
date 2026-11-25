@@ -163,7 +163,7 @@
                             <input type="checkbox" name="is_internal" value="1" id="is-internal">
                             <span><?= icon('lock', 13) ?> Internal note</span>
                         </label>
-                        <label class="solution-toggle" title="Only replies marked here are remembered">
+                        <label class="solution-toggle" title="A team lead reviews it before the assistant reuses it">
                             <input type="checkbox" name="is_solution" value="1">
                             <span><?= icon('check', 13) ?> This reply is the solution</span>
                         </label>

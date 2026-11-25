@@ -33,8 +33,11 @@ $kindLabel = match ($kind) {
             <span class="msg-time"><?= esc(date('j M, g:i A', strtotime((string) ($msg['created_at'] ?? 'now'))) . ' ' . brand()->timezoneLabel) ?></span>
         </div>
 
-        <?php if ((int) ($msg['is_solution'] ?? 0) === 1): ?>
+        <?php $solutionState = (int) ($msg['is_solution'] ?? 0) === 1 ? (string) ($msg['solution_state'] ?? '') : ''; ?>
+        <?php if ($solutionState === 'approved'): ?>
             <span class="badge-solution"><?= icon('check', 11) ?> Solution</span>
+        <?php elseif ($solutionState === 'pending' && (current_user()['role'] ?? 'requester') !== 'requester'): ?>
+            <span class="badge-solution is-pending" title="A team lead has to approve it before the assistant reuses it"><?= icon('clock', 11) ?> Waiting for review</span>
         <?php endif ?>
 
         <div class="msg-text"><?= esc($msg['body'] ?? '') ?></div>

@@ -31,6 +31,10 @@ class NotificationController extends BaseController
 
         $model->markRead($id, (int) $user['id']);
 
+        if (($row['type'] ?? '') === 'review') {
+            return redirect()->to('/admin/knowledge-review');
+        }
+
         if (! empty($row['ticket_id'])) {
             return redirect()->to('/tickets/' . $row['ticket_id'] . '#conversation');
         }
