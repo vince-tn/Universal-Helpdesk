@@ -5,7 +5,7 @@
 <div class="page-header">
     <div>
         <h1>Submit a New Ticket</h1>
-        <div class="subtitle">Describe it in your own words — we'll classify it and route it to the right team.</div>
+        <div class="subtitle">Pick what you need, describe it in your own words, and we will route it to the right team.</div>
     </div>
 </div>
 
@@ -29,21 +29,76 @@
             </div>
 
             <div class="form-group">
-                <label for="submitting_department">Submitting Department</label>
-                <select id="submitting_department" name="submitting_department" required>
-                    <option value="">Select a department...</option>
+                <label for="requester_department">Your department</label>
+                <select id="requester_department" name="requester_department">
+                    <?php $mine = old('requester_department') ?: ($user['department'] ?? ''); ?>
+                    <option value="">Select your department...</option>
+                    <?php foreach ($departments as $d): ?>
+                        <option value="<?= esc($d) ?>" <?= $mine === $d ? 'selected' : '' ?>><?= esc($d) ?></option>
+                    <?php endforeach ?>
+                </select>
+                <div class="field-hint">Where you work. Filled in from your profile.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="service_key">What do you need help with?</label>
+                <select id="service_key" name="service_key">
+                    <option value="">Something else (pick the team below)</option>
+                    <?php $groups = []; foreach ($services as $svc) { $groups[$svc['department']][] = $svc; } ?>
+                    <?php foreach ($groups as $dept => $items): ?>
+                        <optgroup label="<?= esc($dept) ?>">
+                            <?php foreach ($items as $svc): ?>
+                                <option value="<?= esc($svc['service_key']) ?>" <?= old('service_key') === $svc['service_key'] || ($room > 0 && $svc['service_key'] === 'ops-room' && ! old('service_key')) ? 'selected' : '' ?>><?= esc($svc['name']) ?><?= (int) $svc['requires_approval'] === 1 ? ' (needs approval)' : '' ?></option>
+                            <?php endforeach ?>
+                        </optgroup>
+                    <?php endforeach ?>
+                </select>
+                <div class="field-hint" id="service-hint">Pick the closest match. The assistant double-checks and moves the ticket if it belongs elsewhere.</div>
+            </div>
+
+            <div class="span-2 service-fields" id="service-fields"></div>
+
+            <div class="form-group team-pick">
+                <label for="submitting_department">Team that should handle it</label>
+                <select id="submitting_department" name="submitting_department">
+                    <option value="">Select a team...</option>
                     <?php foreach ($roles as $d): ?>
                         <option value="<?= esc($d['name']) ?>" <?= old('submitting_department') === $d['name'] ? 'selected' : '' ?>><?= esc($d['name']) ?></option>
                     <?php endforeach ?>
                 </select>
             </div>
 
-            <div class="form-group">
-                <label for="submitting_role">Role</label>
+            <div class="form-group team-pick">
+                <label for="submitting_role">Sub-team</label>
                 <select id="submitting_role" name="submitting_role" data-selected="<?= esc(old('submitting_role')) ?>">
-                    <option value="">Select a department first...</option>
+                    <option value="">Select a team first...</option>
                 </select>
-                <div class="field-hint" id="role-hint">Optional. Not sure? Pick your best guess — the assistant double-checks and moves the ticket if it belongs elsewhere.</div>
+                <div class="field-hint" id="role-hint">Optional. Not sure? Pick your best guess.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="people_affected">Who is affected?</label>
+                <select id="people_affected" name="people_affected">
+                    <option value="">Choose one...</option>
+                    <option value="me" <?= old('people_affected') === 'me' ? 'selected' : '' ?>>Just me</option>
+                    <option value="team" <?= old('people_affected') === 'team' ? 'selected' : '' ?>>My team</option>
+                    <option value="many" <?= old('people_affected') === 'many' ? 'selected' : '' ?>>Several teams or a client</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="work_stopped">Is work stopped?</label>
+                <select id="work_stopped" name="work_stopped">
+                    <option value="">Choose one...</option>
+                    <option value="yes" <?= old('work_stopped') === 'yes' ? 'selected' : '' ?>>Yes, we cannot work</option>
+                    <option value="no" <?= old('work_stopped') === 'no' ? 'selected' : '' ?>>No, we can keep working</option>
+                </select>
+                <div class="field-hint">These two answers set the priority.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="needed_by">Needed by (optional)</label>
+                <input type="date" id="needed_by" name="needed_by" value="<?= esc(old('needed_by')) ?>" min="<?= date('Y-m-d') ?>">
             </div>
 
             <div class="form-group span-2">
@@ -71,12 +126,12 @@
                          aria-label="Describe your request"
                          data-placeholder="What do you need? Include what you've already tried, any error message, and a deadline if there is one."></div>
 
-                    <input type="file" id="rt-file" accept="image/png,image/jpeg,image/gif,image/webp" hidden>
+                    <input type="file" id="rt-file" accept="image/png,image/jpeg,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.csv" hidden>
                     <input type="hidden" name="request_html" id="request_html">
                 </div>
 
                 <div class="field-hint" id="rt-status">
-                    Screenshots help a lot — paste one in, or drag it onto the box. JPG, PNG, GIF or WebP, up to 5MB each.
+                    Screenshots help a lot. Paste one in, or drag it onto the box. Images, PDF, Word, Excel or CSV, up to 10MB each.
                 </div>
             </div>
         </div>
@@ -85,6 +140,53 @@
     </form>
 </div>
 
+<script>window.UHD_SERVICES = <?= json_encode(array_map(static fn ($v) => ['key' => $v['service_key'], 'description' => $v['description'], 'approval' => (int) $v['requires_approval'], 'fields' => json_decode((string) $v['fields_json'], true) ?: []], $services), JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
+<script>
+(function () {
+    var pick  = document.getElementById('service_key');
+    var box   = document.getElementById('service-fields');
+    var hint  = document.getElementById('service-hint');
+    var teams = document.querySelectorAll('.team-pick');
+    var dept  = document.getElementById('submitting_department');
+    var old   = <?= json_encode((array) (old('svc') ?? []), JSON_HEX_TAG | JSON_HEX_AMP) ?>;
+    if (!pick || !box) return;
+    var byKey = {};
+    (window.UHD_SERVICES || []).forEach(function (s) { byKey[s.key] = s; });
+    var defaultHint = hint ? hint.textContent : '';
+
+    function render() {
+        var s = byKey[pick.value];
+        box.innerHTML = '';
+        teams.forEach(function (t) { t.hidden = !!s; });
+        if (dept) dept.required = !s;
+        if (hint) hint.textContent = s ? (s.description + (s.approval ? '. This needs approval before work starts.' : '.')) : defaultHint;
+        if (!s) return;
+        var grid = document.createElement('div');
+        grid.className = 'form-grid';
+        s.fields.forEach(function (f) {
+            var g = document.createElement('div');
+            g.className = 'form-group';
+            var l = document.createElement('label');
+            l.textContent = f.label + (f.required ? '' : ' (optional)');
+            l.htmlFor = 'svc_' + f.key;
+            var i = document.createElement('input');
+            i.type = ['number', 'date', 'url'].indexOf(f.type) >= 0 ? f.type : 'text';
+            i.name = 'svc[' + f.key + ']';
+            i.id = 'svc_' + f.key;
+            i.required = !!f.required;
+            if (i.type === 'text' || i.type === 'url') i.maxLength = 300;
+            if (old[f.key]) i.value = old[f.key];
+            g.appendChild(l);
+            g.appendChild(i);
+            grid.appendChild(g);
+        });
+        box.appendChild(grid);
+    }
+
+    pick.addEventListener('change', render);
+    render();
+})();
+</script>
 <script>window.UHD_ROLES = <?= json_encode(array_column($roles, 'roles', 'name'), JSON_HEX_TAG | JSON_HEX_AMP) ?>;</script>
 <script>
 (function () {
@@ -173,10 +275,15 @@
     });
 
     function upload(file) {
-        if (!file || file.type.indexOf('image/') !== 0) return;
+        if (!file) return;
+        var isImage = (file.type || '').indexOf('image/') === 0;
+        if (!isImage && !/\.(pdf|docx?|xlsx?|csv)$/i.test(file.name || '')) {
+            setStatus('You can attach images, PDF, Word, Excel or CSV files.', 'error');
+            return;
+        }
 
-        if (file.size > 5 * 1024 * 1024) {
-            setStatus('That image is larger than 5MB — please attach a smaller one.', 'error');
+        if (file.size > 10 * 1024 * 1024) {
+            setStatus('That file is larger than 10MB. Please attach a smaller one.', 'error');
             return;
         }
 
@@ -198,10 +305,17 @@
                 }
                 surface.focus();
 
-                var img = document.createElement('img');
-                img.src = data.url;
-                img.alt = file.name || 'attachment';
-                insert(img);
+                if (data.kind === 'file') {
+                    var a = document.createElement('a');
+                    a.href = data.url;
+                    a.textContent = 'Attachment: ' + (data.name || file.name || 'file');
+                    insert(a);
+                } else {
+                    var img = document.createElement('img');
+                    img.src = data.url;
+                    img.alt = file.name || 'attachment';
+                    insert(img);
+                }
                 setStatus('');
             })
             .catch(function () {

@@ -31,6 +31,8 @@ $routes->group('tickets', ['filter' => 'auth'], static function (RouteCollection
 
     $routes->post('(:segment)/assist', 'TicketController::assist/$1');
     $routes->post('(:segment)/classify', 'TicketController::classify/$1');
+    $routes->post('(:segment)/approval', 'TicketController::approval/$1');
+    $routes->get('(:segment)/feedback', 'TicketController::feedback/$1');
     $routes->get('(:segment)/updates', 'TicketController::updates/$1');
     $routes->get('(:segment)', 'TicketController::show/$1');
 });
@@ -75,4 +77,9 @@ $routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,tea
     $routes->post('knowledge/(:num)/delete', 'AdminKnowledgeController::deleteArticle/$1');
     $routes->post('(:num)/guardrails', 'AdminKnowledgeController::storeGuardrail/$1');
     $routes->post('guardrails/(:num)/delete', 'AdminKnowledgeController::deleteGuardrail/$1');
+});
+
+$routes->group('account', ['filter' => 'auth'], static function (RouteCollection $routes) {
+    $routes->get('/', 'AccountController::index');
+    $routes->post('/', 'AccountController::update');
 });

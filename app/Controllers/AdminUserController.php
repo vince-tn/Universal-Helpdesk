@@ -192,6 +192,17 @@ class AdminUserController extends BaseController
             return redirect()->to('/admin/users')->with('error', 'That is the last active super admin. Promote somebody else first.');
         }
 
+        $history = db_connect()->table('ticket_messages')->where('user_id', $id)->countAllResults()
+            + db_connect()->table('tickets')->where('requester_email', $user['email'])->countAllResults();
+
+        // people with ticket history are disabled, not deleted, so the audit trail stays whole
+        if ($history > 0) {
+            $this->userModel->update($id, ['is_active' => 0]);
+            \App\Libraries\Activity::audit('user_disabled', 'disabled ' . $user['email'] . ' instead of deleting, has ticket history');
+
+            return redirect()->to('/admin/users')->with('success', "{$user['name']} has ticket history, so the account was disabled instead of deleted.");
+        }
+
         $openTickets = db_connect()->table('ticket_meta')
             ->where('assigned_to', $id)
             ->countAllResults();
@@ -202,6 +213,7 @@ class AdminUserController extends BaseController
 
         $name = (string) $user['name'];
         $this->userModel->delete($id);
+        \App\Libraries\Activity::audit('user_deleted', 'deleted ' . $user['email']);
 
         $note = $openTickets > 0
             ? " {$openTickets} ticket(s) were unassigned."
@@ -225,6 +237,7 @@ class AdminUserController extends BaseController
         }
 
         $this->userModel->update($id, ['is_active' => (int) $user['is_active'] === 1 ? 0 : 1]);
+        \App\Libraries\Activity::audit((int) $user['is_active'] === 1 ? 'user_disabled' : 'user_enabled', $user['email']);
 
         return redirect()->to('/admin/users')->with(
             'success',

@@ -43,9 +43,26 @@ class RoutingDirectory
         return $entries;
     }
 
+    public const FALLBACK_LIMIT = 14;
+
     public function shortlist(string $text, string $department, string $role): array
     {
-        return self::rank($this->entries(), $text, $department, $role);
+        $entries = $this->entries();
+        $ranked  = self::rank($entries, $text, $department, $role);
+
+        if (count($ranked) > 1 || count($entries) < 2) {
+            return $ranked;
+        }
+
+        // nothing matched by words, so let the model choose from every team
+        $all = [$ranked[0]];
+        foreach ($entries as $entry) {
+            if (! self::same($entry, $ranked[0]['department'], $ranked[0]['role']) && count($all) < self::FALLBACK_LIMIT) {
+                $all[] = $entry;
+            }
+        }
+
+        return $all;
     }
 
     public static function rank(array $entries, string $text, string $department, string $role, int $limit = self::LIMIT): array
@@ -138,7 +155,10 @@ class RoutingDirectory
             return null;
         }
 
-        if (self::evidence($to, $request) <= self::evidence($from, $request)) {
+        $toScore   = self::evidence($to, $request);
+        $fromScore = self::evidence($from, $request);
+
+        if ($toScore < $fromScore) {
             return null;
         }
 
@@ -149,6 +169,9 @@ class RoutingDirectory
             'to'              => self::label($to),
             'from_department' => $from['department'],
             'from_role'       => $from['role'],
+            'reason'          => $toScore > $fromScore
+                ? 'the request matches what ' . self::label($to) . ' handles'
+                : 'the assistant judged ' . self::label($to) . ' a better fit',
         ];
     }
 
@@ -158,6 +181,7 @@ class RoutingDirectory
 
         if ($route !== null) {
             (new TicketModel())->applyRoute($ticketId, $route['department'], $route['role'], 'moved by the assistant from ' . $route['from']);
+            (new TicketModel())->update((int) $ticketId, ['routing_reason' => mb_substr($route['reason'], 0, 255)]);
 
             log_message('info', 'Routing: ticket {id} moved from {from} to {to}', [
                 'id' => $ticketId, 'from' => $route['from'], 'to' => $route['to'],

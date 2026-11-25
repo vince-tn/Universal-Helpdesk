@@ -19,7 +19,7 @@ class N8nService
         $this->client = \Config\Services::curlrequest([], null, null, false);
     }
 
-    public function classify(array $submission, string $priorContext = ''): ?array
+    public function classify(array $submission, string $priorContext = '', bool $localOnly = false): ?array
     {
         $department = (string) ($submission['Submitting Department'] ?? '');
         $request    = (string) ($submission['Request'] ?? '');
@@ -31,7 +31,7 @@ class N8nService
 
         $item = $this->post($this->config->webhookUrl, $submission + [
 
-            'allow_escalation' => $this->config->cloudEnabled() ? 'Yes' : 'No',
+            'allow_escalation' => $this->cloudFor($localOnly) ? 'Yes' : 'No',
             'prior_context'    => $priorContext,
             'dept_context'     => $knowledge->context($articles),
             'dept_guardrails'  => (new Guardrails())->instructions($department),
@@ -58,7 +58,8 @@ class N8nService
 
     public function chat(array $payload): ?array
     {
-        $payload['prefer_cloud'] = $this->config->cloudEnabled() ? 'Yes' : 'No';
+        $payload['prefer_cloud'] = $this->cloudFor(! empty($payload['local_only'])) ? 'Yes' : 'No';
+        unset($payload['local_only']);
 
         $ticket     = $payload['ticket'] ?? [];
         $department = (string) (($ticket['responsible_department'] ?? '') ?: ($ticket['submitting_department'] ?? ''));
@@ -97,6 +98,12 @@ class N8nService
             'matched_prior'    => (string) ($item['matched_prior'] ?? ''),
             'articles'         => $articles,
         ];
+    }
+
+    // confidential tickets stay on the local model
+    private function cloudFor(bool $localOnly): bool
+    {
+        return $this->config->cloudEnabled() && ! ($localOnly && $this->config->confidentialLocalOnly());
     }
 
     private function post(string $url, array $payload): ?array
