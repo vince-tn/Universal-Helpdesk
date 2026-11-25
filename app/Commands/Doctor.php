@@ -142,7 +142,7 @@ class Doctor extends BaseCommand
     private function cloud(N8n $config): void
     {
         if ($config->cloudEnabled()) {
-            $this->ok('cloud model enabled - ' . ((new ConfigN8n())->cloudProvider() === 'openrouter' ? 'OpenRouter' : 'Gemini') . ' answers first, Ollama takes over if it fails');
+            $this->ok('cloud model enabled - ' . ((new \Config\N8n())->cloudProvider() === 'openrouter' ? 'OpenRouter' : 'Gemini') . ' answers first, Ollama takes over if it fails');
 
             return;
         }
