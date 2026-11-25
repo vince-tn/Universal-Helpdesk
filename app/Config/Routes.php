@@ -83,6 +83,8 @@ $routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,tea
 $routes->group('account', ['filter' => 'auth'], static function (RouteCollection $routes) {
     $routes->get('/', 'AccountController::index');
     $routes->post('/', 'AccountController::update');
+});
+
 $routes->group('rooms/manage', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
     $routes->get('/', 'RoomController::manage');
     $routes->post('/', 'RoomController::manageStore');
