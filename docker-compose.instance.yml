@@ -1,0 +1,78 @@
+# one branded copy on a shared box: own names, no clashing ports, shared local model, own tailscale name
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+services:
+  db:
+    container_name: ${INSTANCE:?set INSTANCE}-db
+    ports: !reset []
+
+  app:
+    container_name: ${INSTANCE}-app
+    ports: !override
+      - "${APP_BIND:-127.0.0.1}:${APP_PORT:?set APP_PORT}:8080"
+    environment:
+      - BRAND=${BRAND:-chikiting}
+      - BRAND_TZ_LABEL=${BRAND_TZ_LABEL:-PHT}
+      - CONFIDENTIAL_LOCAL_ONLY=${CONFIDENTIAL_LOCAL_ONLY:-on}
+      - AI_CLOUD_PROVIDER=openrouter
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+
+  mailpit:
+    container_name: ${INSTANCE}-mailpit
+    ports: !reset []
+
+  n8n:
+    container_name: ${INSTANCE}-n8n
+    ports: !reset []
+    environment:
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/free}
+      - OPENROUTER_FALLBACK_MODEL=${OPENROUTER_FALLBACK_MODEL:-google/gemma-4-31b-it:free}
+
+  ollama:
+    profiles: ["disabled"]
+
+  ollama-init:
+    profiles: ["disabled"]
+
+  nocodb:
+    profiles: ["disabled"]
+
+  ollama-bridge:
+    image: alpine/socat:latest
+    container_name: ${INSTANCE}-ollama-bridge
+    restart: always
+    logging: *logging
+    command: ["tcp-listen:11434,fork,reuseaddr", "tcp-connect:${SHARED_OLLAMA_HOST:-helpdesk-ollama}:11434"]
+    networks:
+      default:
+        aliases: [ollama]
+      shared-ollama: {}
+
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: ${INSTANCE}-tailscale
+    hostname: ${TS_HOSTNAME:?set TS_HOSTNAME}
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      TS_HOSTNAME: ${TS_HOSTNAME}
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_AUTH_ONCE: "true"
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/funnel.json
+      TS_USERSPACE: "true"
+    volumes:
+      - ${TS_DIR:?set TS_DIR}/state:/var/lib/tailscale
+      - ${TS_DIR}/config:/config
+    depends_on:
+      - app
+
+networks:
+  shared-ollama:
+    external: true
+    name: ${SHARED_OLLAMA_NETWORK:-chikiting_default}

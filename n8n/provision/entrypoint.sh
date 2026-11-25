@@ -10,6 +10,8 @@ CHAT_ID=HelpdeskChat0001
 
 OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:3b}"
 GEMINI_MODEL="${GEMINI_MODEL:-models/gemini-3.6-flash}"
+OPENROUTER_MODEL="${OPENROUTER_MODEL:-openrouter/free}"
+BRAND_NAME="${BRAND_NAME:-Service Desk}"
 
 log() { echo "[provision] $*"; }
 
@@ -19,6 +21,17 @@ if [ ! -f "$MARKER" ]; then
     log "seeding the Ollama credential (http://ollama:11434)"
     n8n import:credentials --input="$PROVISION_DIR/credentials/ollama.json" \
         || log "WARNING: could not import the Ollama credential"
+fi
+
+if [ -n "$OPENROUTER_API_KEY" ]; then
+    log "seeding the OpenRouter credential from OPENROUTER_API_KEY"
+    sed "s|__OPENROUTER_API_KEY__|${OPENROUTER_API_KEY}|" \
+        "$PROVISION_DIR/credentials/openrouter.json" > "$WORK/openrouter.json"
+    n8n import:credentials --input="$WORK/openrouter.json" \
+        || log "WARNING: could not import the OpenRouter credential"
+    rm -f "$WORK/openrouter.json"
+else
+    log "OPENROUTER_API_KEY is empty - cloud branch off, running on the local model"
 fi
 
 if [ -n "$GEMINI_API_KEY" ]; then
@@ -51,6 +64,8 @@ import_workflow() {
     log "importing $label ($id)"
     sed -e "s|__OLLAMA_MODEL__|${OLLAMA_MODEL}|g" \
         -e "s|__GEMINI_MODEL__|${GEMINI_MODEL}|g" \
+        -e "s|__OPENROUTER_MODEL__|${OPENROUTER_MODEL}|g" \
+        -e "s|__BRAND_NAME__|${BRAND_NAME}|g" \
         "$file" > "$WORK/${id}.json"
     n8n import:workflow --input="$WORK/${id}.json" \
         || log "WARNING: could not import $label"

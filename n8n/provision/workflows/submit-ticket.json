@@ -222,26 +222,30 @@
         -160
       ],
       "id": "794b2d2c-6ac3-4ba6-be70-c8b2b18a3852",
-      "name": "Classify (Gemini)",
+      "name": "Classify (Cloud)",
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "modelName": "__GEMINI_MODEL__",
-        "options": {}
+        "model": "__OPENROUTER_MODEL__",
+        "options": {
+          "temperature": 0.2,
+          "timeout": 90000,
+          "maxRetries": 1
+        }
       },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1.1,
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
       "position": [
         480,
         40
       ],
       "id": "8304aae8-90dd-4433-b2e8-982ffa94266b",
-      "name": "Google Gemini Chat Model",
+      "name": "OpenRouter Chat Model",
       "credentials": {
-        "googlePalmApi": {
-          "id": "HelpdeskGemini01",
-          "name": "Helpdesk Gemini (cloud)"
+        "openRouterApi": {
+          "id": "HelpdeskOpenRouter1",
+          "name": "Helpdesk OpenRouter (cloud)"
         }
       }
     },
@@ -252,7 +256,7 @@
             {
               "id": "a1f0c3d2-gem0-4c1a-9e77-5b2d31f0a8c4",
               "name": "ai_source",
-              "value": "Gemini",
+              "value": "OpenRouter",
               "type": "string"
             }
           ]
@@ -267,7 +271,7 @@
         -160
       ],
       "id": "a7014c34-74c8-4f79-a7b4-4162d07a2972",
-      "name": "Tag Source: Gemini"
+      "name": "Tag Source: Cloud"
     },
     {
       "parameters": {
@@ -295,7 +299,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const CATALOG = {\n  ADVERTISING_MATERIALS_REVIEW: {\n    request_title: 'Advertising Materials Review Request',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Marketing Team needed compliance team approval of all advertising materials that the company will be using',\n    expected_deliverable: 'Compliance team approved the advertising materials.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Marketing Team revision (if applicable)',\n    closure_criteria: 'Marketing Team received the approved advertising materials',\n    priority: 'Medium' },\n  WEBSITE_AUDIT: {\n    request_title: 'Website Audit Request',\n    category: 'Large-Scale Request',\n    responsible_department: 'Compliance HQ',\n    description: \"Website Team needed compliance approval when they make changes in the website specially if it's critical information\",\n    expected_deliverable: 'Compliance team approved the new website webpage or website revision.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Website Team revision (if applicable)',\n    closure_criteria: 'Website Team received the approval of such changes in website',\n    priority: 'High' },\n  THIRD_PARTY_ONBOARDING: {\n    request_title: 'Third Party Onboarding',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Sales team request onboarding of third parties',\n    expected_deliverable: 'Third party agreement is fully signed and welcome email has been sent.',\n    suggested_tat: '1-2 weeks depends on the complexity and/or volume',\n    requirements_needed: 'Third party information, Compliance Manager Approval, Sales Manager Approval, Chief Revenue Officer Approval, Third Party Director contract signing, Chief Revenue Officer contract signing, informing Help Desk for Creation of Account, informing Accounting for Comission Fee and Sales Manager to confirm third party to have onboarding training',\n    closure_criteria: 'Third party agreement is fully signed and welcome email has been sent.',\n    priority: 'High' },\n  COMPLIANCE_REVIEW: {\n    request_title: 'Review Request for Compliance',\n    category: 'Special Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Any team will request a review of current regulatory updates in regards with their processes and/or policy',\n    expected_deliverable: 'Compliance will answer the question with basis',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Details of the request or inquiry',\n    closure_criteria: 'Inquiry answered or comments given by Compliance Team',\n    priority: 'Medium' },\n  REPORT_DATA_COMPLETION: {\n    request_title: 'Request for Report Data Completion',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data completion for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Collection Owner provided the complete data requested',\n    suggested_tat: '5 Working Days',\n    requirements_needed: 'All required data listed in the Regulatory Report',\n    closure_criteria: 'Data Completion requested is completed',\n    priority: 'High' },\n  DATA_VALIDATION: {\n    request_title: 'Request for Data Validation',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data validation for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Responsible Person provided data validation (including comments) requested',\n    suggested_tat: '2 Working Days',\n    requirements_needed: 'Depends on the data being validated',\n    closure_criteria: 'Data Validation requested is completed',\n    priority: 'High' },\n  TRAINING_SUMMARY: {\n    request_title: 'Summary of Training Request',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request of Summary of Training to TQA Team',\n    expected_deliverable: 'TQA Team to provide the requested Training Summary',\n    suggested_tat: '2 Days',\n    requirements_needed: 'Summary of Training in a given period',\n    closure_criteria: 'Summary of Training is provided',\n    priority: 'Medium' },\n  TRAINING_LODGEMENT: {\n    request_title: 'Request to lodge a Training',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request to lodge a Training in the Training Register - Knowledge Base',\n    expected_deliverable: 'TQA Team to lodge the requested Training in the Training Register - Knowledge Base',\n    suggested_tat: '1 Day',\n    requirements_needed: 'Training Date and hour, Training Description, Trainee name',\n    closure_criteria: 'Training is logged in the Training Register',\n    priority: 'Medium' },\n  MONITORING_ASSURANCE_AUDIT: {\n    request_title: 'Compliance Monitoring Assurance Program',\n    category: 'Large-Scale Request',\n    responsible_department: 'AU Operation Team',\n    description: 'Internal Audit every quarter of different team',\n    expected_deliverable: 'Audit Report has been approved by CRC',\n    suggested_tat: 'Every 3 months',\n    requirements_needed: 'Management Review Form, Updated policy or processes if applicable, audit report',\n    closure_criteria: 'Audit report has been finalized',\n    priority: 'High' },\n  IT_EQUIPMENT: {\n    request_title: 'IT equipment',\n    category: 'Special Request',\n    responsible_department: 'IT Team',\n    description: 'Equipment replacement or trouble shooting',\n    expected_deliverable: 'IT team replaced or fix IT equipment',\n    suggested_tat: '1 day',\n    requirements_needed: 'IT equipment',\n    closure_criteria: 'Fully functional IT Equipment',\n    priority: 'High' },\n  LOGIN_LOGOUT: {\n    request_title: 'Log-in / Log - out Request',\n    category: 'Special Request',\n    responsible_department: 'HR / IT',\n    description: 'Cannot log in or log out / Log in log out do not reflect in HRIS',\n    expected_deliverable: 'HR will provide Log in/ log out time. IT will update log in log out time in HRIS',\n    suggested_tat: '1 day',\n    requirements_needed: 'Log in time guard slip',\n    closure_criteria: 'Log in Log out time has been revised',\n    priority: 'High' }\n};\n\nconst VALID_CATEGORIES = [\n  'Common Request', 'Special Request', 'Small-Scale Request',\n  'Mid-Scale Request', 'Large-Scale Request'\n];\n\nconst CATEGORY_ALIASES = {\n  'large request': 'Large-Scale Request',\n  'large-scale': 'Large-Scale Request',\n  'mid request': 'Mid-Scale Request',\n  'medium request': 'Mid-Scale Request',\n  'mid-scale': 'Mid-Scale Request',\n  'small request': 'Small-Scale Request',\n  'small-scale': 'Small-Scale Request',\n  'common': 'Common Request',\n  'special': 'Special Request'\n};\n\nconst normaliseCategory = (raw) => {\n  const value = String(raw || '').trim();\n  if (VALID_CATEGORIES.includes(value)) return value;\n  return CATEGORY_ALIASES[value.toLowerCase()] || null;\n};\n\nconst VALID_DEPARTMENTS = [\n  'Compliance HQ', 'Operations Team and Support Team', 'TQA Team',\n  'AU Operation Team', 'IT Team', 'HR / IT', 'Reports/WFM',\n  'Technical - Web', 'Technical - Marketing', 'Technical - Salesforce/Tally',\n  'Technical - SQL'\n];\n\nconst normaliseDepartment = (raw, fallback) => {\n  const value = String(raw || '').trim();\n  if (VALID_DEPARTMENTS.includes(value)) return { department: value, ok: true };\n\n  const hit = VALID_DEPARTMENTS.find((d) => d.toLowerCase() === value.toLowerCase());\n  if (hit) return { department: hit, ok: true };\n\n  return { department: String(fallback || '').trim() || 'IT Team', ok: false };\n};\n\nconst CONFIDENCE = ['low', 'medium', 'high'];\n\nconst normaliseConfidence = (raw) => {\n  const value = String(raw || '').trim().toLowerCase();\n  return CONFIDENCE.includes(value) ? value : 'medium';\n};\n\nconst opening = (out, ai, modelOk) => {\n  if (!modelOk) {\n    return [\n      'Thanks - your ticket is saved and nothing has been lost.',\n      'I could not reach my classifier just now, so the details below have not been filled in yet. On a first run that usually means the local model is still downloading. Either way a person will review this.',\n      'Reply here if there is anything you want to add.'\n    ].join('\\n\\n');\n  }\n\n  const dept = String(out.responsible_department || '').trim() || 'the assigned team';\n  const parts = [];\n\n  const drafted = String(ai.requester_message || '').trim();\n  parts.push(drafted || `Thanks - I have logged this as \"${out.request_title}\" and routed it to ${dept}.`);\n\n  const facts = [];\n  if (out.expected_deliverable) facts.push(`Done looks like: ${out.expected_deliverable}`);\n  if (out.requirements_needed) facts.push(`To start, we need: ${out.requirements_needed}`);\n  if (facts.length) parts.push(facts.join('\\n'));\n\n  if (out.suggesting === 'Yes') {\n    parts.push(out.matched_prior\n      ? 'That is what resolved it last time this came up. If it works for you too, reply \"resolved\" here and I will update the ticket.'\n      : 'If you try that and it sorts itself out, reply \"resolved\" here and I will update the ticket for you.');\n  } else {\n    parts.push(`I have not tried to solve this one myself - ${dept} owns the next step. Reply here with anything that changes and I will keep the ticket up to date.`);\n  }\n\n  return parts.join('\\n\\n');\n};\n\nconst submitted = $('Webhook').first().json.body || {};\n\nlet routedTeam = '';\ntry { routedTeam = String(((($('Route (Local)').first() || {}).json || {}).message || {}).content || '').trim(); } catch (e) { routedTeam = ''; }\n\nconst ANSWER_FIELDS = ['request_type', 'category', 'request_title', 'description', 'requester_message'];\nconst answered = (o) => ANSWER_FIELDS.some((k) => String((o || {})[k] ?? '').trim() !== '');\n\nconst results = [];\nfor (const item of $input.all()) {\n  const ai = item.json.output || {};\n  const modelOk = answered(ai);\n\n  const key = String(ai.request_type || 'OTHER').trim().toUpperCase();\n  const row = CATALOG[key];\n\n  const hasDeptContext = String(submitted.dept_context || '').trim() !== '';\n\n  const prefer = (base, over) => {\n    const merged = { ...base };\n    for (const [k, v] of Object.entries(over)) {\n      if (v !== undefined && v !== null && String(v).trim() !== '') merged[k] = v;\n    }\n    return merged;\n  };\n\n  const ROUTING_ONLY = ['category', 'suggested_tat', 'priority'];\n\n  const routingOf = (r) => Object.fromEntries(\n    ROUTING_ONLY.filter((k) => r[k] !== undefined).map((k) => [k, r[k]])\n  );\n\n  const out = row\n    ? (hasDeptContext ? prefer(routingOf(row), ai) : prefer(ai, row))\n    : { ...ai };\n\n  out.matched_catalogue_key = row ? key : 'OTHER';\n  out.needs_human_review = (row && modelOk) ? 'No' : 'Yes';\n\n  const category = normaliseCategory(out.category);\n  if (category === null) {\n    out.needs_human_review = 'Yes';\n    out.category_raw = out.category || '';\n    out.category = 'Common Request';\n  } else {\n    out.category = category;\n  }\n\n  out.responsible_department = String(submitted['Submitting Department'] || '').trim();\n\n  out.routed_team = routedTeam;\n\n  if (!out.requirements_needed || !String(out.requirements_needed).trim()) {\n    out.requirements_needed = 'To be confirmed with the requester - not provided in the request';\n  }\n  if (!out.request_title || !String(out.request_title).trim()) {\n    out.request_title = 'Unclassified Request';\n  }\n  if (!out.priority) out.priority = out.category === 'Large-Scale Request' ? 'High' : 'Medium';\n\n  out.self_service = String(ai.self_service || '').trim().toLowerCase().startsWith('y') ? 'Yes' : 'No';\n  out.confidence = normaliseConfidence(ai.confidence);\n  out.model_ok = modelOk ? 'Yes' : 'No';\n  out.should_escalate = out.should_escalate || 'No';\n\n  const priorSupplied = String(submitted.prior_context || '').trim() !== '';\n  const priorCase = String(ai.matched_prior || '').trim();\n  const usedPrior = priorSupplied && /^[1-9]$/.test(priorCase)\n    && submitted.prior_context.includes('CASE ' + priorCase + ' ');\n\n  out.matched_prior = usedPrior ? priorCase : '';\n\n  const articleNo = String(ai.matched_article || '').trim();\n  const usedArticle = hasDeptContext && /^[1-9]$/.test(articleNo)\n    && submitted.dept_context.includes('ARTICLE ' + articleNo + ':');\n\n  out.matched_article = usedArticle ? articleNo : '';\n  out.dept_context_present = hasDeptContext ? 'Yes' : 'No';\n\n  const fromArticle = usedArticle && out.self_service === 'Yes' && out.confidence === 'high';\n  out.suggesting = (modelOk && (fromArticle || usedPrior)) ? 'Yes' : 'No';\n\n  out.requester_message = opening(out, ai, modelOk);\n\n  results.push({ json: { ...item.json, output: out } });\n}\nreturn results;"
+        "jsCode": "const CATALOG = {\n  ADVERTISING_MATERIALS_REVIEW: {\n    request_title: 'Advertising Materials Review Request',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Marketing Team needed compliance team approval of all advertising materials that the company will be using',\n    expected_deliverable: 'Compliance team approved the advertising materials.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Marketing Team revision (if applicable)',\n    closure_criteria: 'Marketing Team received the approved advertising materials',\n    priority: 'Medium' },\n  WEBSITE_AUDIT: {\n    request_title: 'Website Audit Request',\n    category: 'Large-Scale Request',\n    responsible_department: 'Compliance HQ',\n    description: \"Website Team needed compliance approval when they make changes in the website specially if it's critical information\",\n    expected_deliverable: 'Compliance team approved the new website webpage or website revision.',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Advertising materials, Manager Approval, Website Team revision (if applicable)',\n    closure_criteria: 'Website Team received the approval of such changes in website',\n    priority: 'High' },\n  THIRD_PARTY_ONBOARDING: {\n    request_title: 'Third Party Onboarding',\n    category: 'Common Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Sales team request onboarding of third parties',\n    expected_deliverable: 'Third party agreement is fully signed and welcome email has been sent.',\n    suggested_tat: '1-2 weeks depends on the complexity and/or volume',\n    requirements_needed: 'Third party information, Compliance Manager Approval, Sales Manager Approval, Chief Revenue Officer Approval, Third Party Director contract signing, Chief Revenue Officer contract signing, informing Help Desk for Creation of Account, informing Accounting for Comission Fee and Sales Manager to confirm third party to have onboarding training',\n    closure_criteria: 'Third party agreement is fully signed and welcome email has been sent.',\n    priority: 'High' },\n  COMPLIANCE_REVIEW: {\n    request_title: 'Review Request for Compliance',\n    category: 'Special Request',\n    responsible_department: 'Compliance HQ',\n    description: 'Any team will request a review of current regulatory updates in regards with their processes and/or policy',\n    expected_deliverable: 'Compliance will answer the question with basis',\n    suggested_tat: 'Depends on the complexity and depth of the inquiry',\n    requirements_needed: 'Details of the request or inquiry',\n    closure_criteria: 'Inquiry answered or comments given by Compliance Team',\n    priority: 'Medium' },\n  REPORT_DATA_COMPLETION: {\n    request_title: 'Request for Report Data Completion',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data completion for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Collection Owner provided the complete data requested',\n    suggested_tat: '5 Working Days',\n    requirements_needed: 'All required data listed in the Regulatory Report',\n    closure_criteria: 'Data Completion requested is completed',\n    priority: 'High' },\n  DATA_VALIDATION: {\n    request_title: 'Request for Data Validation',\n    category: 'Large-Scale Request',\n    responsible_department: 'Operations Team and Support Team',\n    description: 'Request for data validation for Regulatory Report',\n    expected_deliverable: 'Indicator Owner/Data Responsible Person provided data validation (including comments) requested',\n    suggested_tat: '2 Working Days',\n    requirements_needed: 'Depends on the data being validated',\n    closure_criteria: 'Data Validation requested is completed',\n    priority: 'High' },\n  TRAINING_SUMMARY: {\n    request_title: 'Summary of Training Request',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request of Summary of Training to TQA Team',\n    expected_deliverable: 'TQA Team to provide the requested Training Summary',\n    suggested_tat: '2 Days',\n    requirements_needed: 'Summary of Training in a given period',\n    closure_criteria: 'Summary of Training is provided',\n    priority: 'Medium' },\n  TRAINING_LODGEMENT: {\n    request_title: 'Request to lodge a Training',\n    category: 'Common Request',\n    responsible_department: 'TQA Team',\n    description: 'Request to lodge a Training in the Training Register - Knowledge Base',\n    expected_deliverable: 'TQA Team to lodge the requested Training in the Training Register - Knowledge Base',\n    suggested_tat: '1 Day',\n    requirements_needed: 'Training Date and hour, Training Description, Trainee name',\n    closure_criteria: 'Training is logged in the Training Register',\n    priority: 'Medium' },\n  MONITORING_ASSURANCE_AUDIT: {\n    request_title: 'Compliance Monitoring Assurance Program',\n    category: 'Large-Scale Request',\n    responsible_department: 'AU Operation Team',\n    description: 'Internal Audit every quarter of different team',\n    expected_deliverable: 'Audit Report has been approved by CRC',\n    suggested_tat: 'Every 3 months',\n    requirements_needed: 'Management Review Form, Updated policy or processes if applicable, audit report',\n    closure_criteria: 'Audit report has been finalized',\n    priority: 'High' },\n  IT_EQUIPMENT: {\n    request_title: 'IT equipment',\n    category: 'Special Request',\n    responsible_department: 'IT Team',\n    description: 'Equipment replacement or trouble shooting',\n    expected_deliverable: 'IT team replaced or fix IT equipment',\n    suggested_tat: '1 day',\n    requirements_needed: 'IT equipment',\n    closure_criteria: 'Fully functional IT Equipment',\n    priority: 'High' },\n  LOGIN_LOGOUT: {\n    request_title: 'Log-in / Log - out Request',\n    category: 'Special Request',\n    responsible_department: 'HR / IT',\n    description: 'Cannot log in or log out / Log in log out do not reflect in HRIS',\n    expected_deliverable: 'HR will provide Log in/ log out time. IT will update log in log out time in HRIS',\n    suggested_tat: '1 day',\n    requirements_needed: 'Log in time guard slip',\n    closure_criteria: 'Log in Log out time has been revised',\n    priority: 'High' }\n};\n\nconst VALID_CATEGORIES = [\n  'Common Request', 'Special Request', 'Small-Scale Request',\n  'Mid-Scale Request', 'Large-Scale Request'\n];\n\nconst CATEGORY_ALIASES = {\n  'large request': 'Large-Scale Request',\n  'large-scale': 'Large-Scale Request',\n  'mid request': 'Mid-Scale Request',\n  'medium request': 'Mid-Scale Request',\n  'mid-scale': 'Mid-Scale Request',\n  'small request': 'Small-Scale Request',\n  'small-scale': 'Small-Scale Request',\n  'common': 'Common Request',\n  'special': 'Special Request'\n};\n\nconst normaliseCategory = (raw) => {\n  const value = String(raw || '').trim();\n  if (VALID_CATEGORIES.includes(value)) return value;\n  return CATEGORY_ALIASES[value.toLowerCase()] || null;\n};\n\nconst VALID_DEPARTMENTS = [\n  'Compliance HQ', 'Operations Team and Support Team', 'TQA Team',\n  'AU Operation Team', 'IT Team', 'HR / IT', 'Reports/WFM',\n  'Technical - Web', 'Technical - Marketing', 'Technical - Salesforce/Tally',\n  'Technical - SQL'\n];\n\nconst normaliseDepartment = (raw, fallback) => {\n  const value = String(raw || '').trim();\n  if (VALID_DEPARTMENTS.includes(value)) return { department: value, ok: true };\n\n  const hit = VALID_DEPARTMENTS.find((d) => d.toLowerCase() === value.toLowerCase());\n  if (hit) return { department: hit, ok: true };\n\n  return { department: String(fallback || '').trim() || 'IT Team', ok: false };\n};\n\nconst CONFIDENCE = ['low', 'medium', 'high'];\n\nconst normaliseConfidence = (raw) => {\n  const value = String(raw || '').trim().toLowerCase();\n  return CONFIDENCE.includes(value) ? value : 'medium';\n};\n\nconst opening = (out, ai, modelOk) => {\n  if (!modelOk) {\n    return [\n      'Thanks - your ticket is saved and nothing has been lost.',\n      'I could not reach my classifier just now, so the details below have not been filled in yet. On a first run that usually means the local model is still downloading. Either way a person will review this.',\n      'Reply here if there is anything you want to add.'\n    ].join('\\n\\n');\n  }\n\n  const dept = String(out.responsible_department || '').trim() || 'the assigned team';\n  const parts = [];\n\n  const drafted = String(ai.requester_message || '').trim();\n  parts.push(drafted || `Thanks - I have logged this as \"${out.request_title}\" and routed it to ${dept}.`);\n\n  const facts = [];\n  if (out.expected_deliverable) facts.push(`Done looks like: ${out.expected_deliverable}`);\n  if (out.requirements_needed) facts.push(`To start, we need: ${out.requirements_needed}`);\n  if (facts.length) parts.push(facts.join('\\n'));\n\n  if (out.suggesting === 'Yes') {\n    parts.push(out.matched_prior\n      ? 'That is what resolved it last time this came up. If it works for you too, reply \"resolved\" here and I will update the ticket.'\n      : 'If you try that and it sorts itself out, reply \"resolved\" here and I will update the ticket for you.');\n  } else {\n    parts.push(`I have not tried to solve this one myself - ${dept} owns the next step. Reply here with anything that changes and I will keep the ticket up to date.`);\n  }\n\n  return parts.join('\\n\\n');\n};\n\nconst submitted = $('Webhook').first().json.body || {};\n\nlet routedTeam = '';\ntry { routedTeam = String(((((($('Route (Cloud)').first() || {}).json || {}).choices || [])[0] || {}).message || {}).content || '').trim(); } catch (e) { routedTeam = ''; }\nif (!routedTeam) { try { routedTeam = String(((($('Route (Local)').first() || {}).json || {}).message || {}).content || '').trim(); } catch (e) { routedTeam = ''; } }\n\nconst ANSWER_FIELDS = ['request_type', 'category', 'request_title', 'description', 'requester_message'];\nconst answered = (o) => ANSWER_FIELDS.some((k) => String((o || {})[k] ?? '').trim() !== '');\n\nconst results = [];\nfor (const item of $input.all()) {\n  const ai = item.json.output || {};\n  const modelOk = answered(ai);\n\n  const key = String(ai.request_type || 'OTHER').trim().toUpperCase();\n  const row = CATALOG[key];\n\n  const hasDeptContext = String(submitted.dept_context || '').trim() !== '';\n\n  const prefer = (base, over) => {\n    const merged = { ...base };\n    for (const [k, v] of Object.entries(over)) {\n      if (v !== undefined && v !== null && String(v).trim() !== '') merged[k] = v;\n    }\n    return merged;\n  };\n\n  const ROUTING_ONLY = ['category', 'suggested_tat', 'priority'];\n\n  const routingOf = (r) => Object.fromEntries(\n    ROUTING_ONLY.filter((k) => r[k] !== undefined).map((k) => [k, r[k]])\n  );\n\n  const out = row\n    ? (hasDeptContext ? prefer(routingOf(row), ai) : prefer(ai, row))\n    : { ...ai };\n\n  out.matched_catalogue_key = row ? key : 'OTHER';\n  out.needs_human_review = (row && modelOk) ? 'No' : 'Yes';\n\n  const category = normaliseCategory(out.category);\n  if (category === null) {\n    out.needs_human_review = 'Yes';\n    out.category_raw = out.category || '';\n    out.category = 'Common Request';\n  } else {\n    out.category = category;\n  }\n\n  out.responsible_department = String(submitted['Submitting Department'] || '').trim();\n\n  out.routed_team = routedTeam;\n\n  if (!out.requirements_needed || !String(out.requirements_needed).trim()) {\n    out.requirements_needed = '';\n  }\n  if (!out.request_title || !String(out.request_title).trim()) {\n    out.request_title = 'Unclassified Request';\n  }\n  if (!out.priority) out.priority = out.category === 'Large-Scale Request' ? 'High' : 'Medium';\n\n  out.self_service = String(ai.self_service || '').trim().toLowerCase().startsWith('y') ? 'Yes' : 'No';\n  out.confidence = normaliseConfidence(ai.confidence);\n  out.model_ok = modelOk ? 'Yes' : 'No';\n  out.should_escalate = out.should_escalate || 'No';\n\n  const priorSupplied = String(submitted.prior_context || '').trim() !== '';\n  const priorCase = String(ai.matched_prior || '').trim();\n  const usedPrior = priorSupplied && /^[1-9]$/.test(priorCase)\n    && submitted.prior_context.includes('CASE ' + priorCase + ' ');\n\n  out.matched_prior = usedPrior ? priorCase : '';\n\n  const articleNo = String(ai.matched_article || '').trim();\n  const usedArticle = hasDeptContext && /^[1-9]$/.test(articleNo)\n    && submitted.dept_context.includes('ARTICLE ' + articleNo + ':');\n\n  out.matched_article = usedArticle ? articleNo : '';\n  out.dept_context_present = hasDeptContext ? 'Yes' : 'No';\n\n  const fromArticle = usedArticle && out.self_service === 'Yes' && out.confidence === 'high';\n  out.suggesting = (modelOk && (fromArticle || usedPrior)) ? 'Yes' : 'No';\n\n  out.requester_message = opening(out, ai, modelOk);\n\n  results.push({ json: { ...item.json, output: out } });\n}\nreturn results;"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -346,7 +350,7 @@
         "options": {}
       },
       "id": "fbe24e90-29a5-42d6-a4f3-623fd38acbe2",
-      "name": "Gemini answered?",
+      "name": "Cloud answered?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
@@ -380,7 +384,7 @@
         "options": {}
       },
       "id": "e5fdb891-b7cd-4288-b15a-eface63d4477",
-      "name": "Retry Gemini once?",
+      "name": "Retry cloud once?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
@@ -457,6 +461,112 @@
         620
       ],
       "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "eb2d1fc9-beb4-4548-b4ed-68e1ab82ed97",
+              "leftValue": "={{ $('Webhook').first().json.body.allow_escalation === 'Yes' }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ea6916ed-5119-447f-806e-8e3e7bf735c1",
+      "name": "Route in cloud?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://openrouter.ai/api/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openRouterApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Title",
+              "value": "__BRAND_NAME__"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: '__OPENROUTER_MODEL__', temperature: 0, max_tokens: 40, messages: [ { role: 'system', content: 'You route helpdesk tickets. Pick the ONE team whose handles list covers the request, and return its name exactly as written in the list. Reply with the team name only.' }, { role: 'user', content: $('Webhook').first().json.body.routing_prompt } ] }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "029053bd-dead-48e1-9f44-cf32395c1153",
+      "name": "Route (Cloud)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        460
+      ],
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "openRouterApi": {
+          "id": "HelpdeskOpenRouter1",
+          "name": "Helpdesk OpenRouter (cloud)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b7b6251c-c2bd-4f7f-9bad-5e6b7606f8cf",
+              "leftValue": "={{ !!($json.choices && $json.choices[0] && $json.choices[0].message && String($json.choices[0].message.content || '').trim()) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "ee42ef0b-a4c7-4784-ab2d-c47d5fd11c2b",
+      "name": "Cloud routed?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        680,
+        460
+      ]
     }
   ],
   "connections": {
@@ -475,7 +585,7 @@
       "main": [
         [
           {
-            "node": "Classify (Gemini)",
+            "node": "Classify (Cloud)",
             "type": "main",
             "index": 0
           }
@@ -489,40 +599,40 @@
         ]
       ]
     },
-    "Google Gemini Chat Model": {
+    "OpenRouter Chat Model": {
       "ai_languageModel": [
         [
           {
-            "node": "Classify (Gemini)",
+            "node": "Classify (Cloud)",
             "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Classify (Gemini)": {
+    "Classify (Cloud)": {
       "main": [
         [
           {
-            "node": "Gemini answered?",
+            "node": "Cloud answered?",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Retry Gemini once?",
+            "node": "Retry cloud once?",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Gemini answered?": {
+    "Cloud answered?": {
       "main": [
         [
           {
-            "node": "Tag Source: Gemini",
+            "node": "Tag Source: Cloud",
             "type": "main",
             "index": 0
           }
@@ -558,7 +668,7 @@
         ]
       ]
     },
-    "Tag Source: Gemini": {
+    "Tag Source: Cloud": {
       "main": [
         [
           {
@@ -591,7 +701,7 @@
         ]
       ]
     },
-    "Retry Gemini once?": {
+    "Retry cloud once?": {
       "main": [
         [
           {
@@ -613,7 +723,7 @@
       "main": [
         [
           {
-            "node": "Classify (Gemini)",
+            "node": "Classify (Cloud)",
             "type": "main",
             "index": 0
           }
@@ -624,7 +734,7 @@
       "main": [
         [
           {
-            "node": "Route (Local)",
+            "node": "Route in cloud?",
             "type": "main",
             "index": 0
           }
@@ -643,6 +753,53 @@
         [
           {
             "node": "Cloud model available?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route in cloud?": {
+      "main": [
+        [
+          {
+            "node": "Route (Cloud)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route (Local)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route (Cloud)": {
+      "main": [
+        [
+          {
+            "node": "Cloud routed?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cloud routed?": {
+      "main": [
+        [
+          {
+            "node": "Cloud model available?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Route (Local)",
             "type": "main",
             "index": 0
           }
