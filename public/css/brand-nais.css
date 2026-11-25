@@ -81,3 +81,5 @@
 .stat-card.accent-urgent::before { background: #d32f2f; }
 .stat-card.accent-urgent .value { color: #d32f2f; }
 .sidebar nav a.active { box-shadow: inset 3px 0 0 var(--plum); }
+.sidebar .brand-logo { height: 30px; }
+.sidebar .brand-text { font-size: 16px; line-height: 1.15; white-space: nowrap; }

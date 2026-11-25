@@ -351,7 +351,8 @@
     var pick = document.getElementById('status-pick');
     var note = document.getElementById('resolve-note');
     if (pick && note) {
-        var sync = function () { note.hidden = pick.value !== 'Resolved'; };
+        var start = pick.value;
+        var sync = function () { note.hidden = pick.value !== 'Resolved' || start === 'Resolved'; };
         pick.addEventListener('change', sync);
         sync();
     }
