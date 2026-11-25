@@ -157,6 +157,16 @@ class Doctor extends BaseCommand
         if ($config->cloudEnabled()) {
             $this->ok('cloud model enabled - Gemini answers first, Ollama takes over if it fails');
 
+            try {
+                $local = (new \App\Models\DepartmentModel())->localOnlyNames();
+
+                CLI::write($local === []
+                    ? '  --   every department may use the cloud model'
+                    : '  --   local-only departments (nothing leaves the server): ' . implode(', ', $local), 'dark_gray');
+            } catch (\Throwable $e) {
+                CLI::write('  --   could not read the per-department cloud settings', 'dark_gray');
+            }
+
             return;
         }
 

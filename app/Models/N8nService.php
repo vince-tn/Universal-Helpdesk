@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Libraries\Guardrails;
+use App\Models\DepartmentModel;
 use App\Libraries\KnowledgeBase;
 use App\Libraries\RoutingDirectory;
 use Config\N8n;
@@ -31,7 +32,7 @@ class N8nService
 
         $item = $this->post($this->config->webhookUrl, $submission + [
 
-            'allow_escalation' => $this->config->cloudEnabled() ? 'Yes' : 'No',
+            'allow_escalation' => $this->cloudAllowed($department) ? 'Yes' : 'No',
             'prior_context'    => $priorContext,
             'dept_context'     => $knowledge->context($articles),
             'dept_guardrails'  => (new Guardrails())->instructions($department),
@@ -58,10 +59,10 @@ class N8nService
 
     public function chat(array $payload): ?array
     {
-        $payload['prefer_cloud'] = $this->config->cloudEnabled() ? 'Yes' : 'No';
-
         $ticket     = $payload['ticket'] ?? [];
         $department = (string) (($ticket['responsible_department'] ?? '') ?: ($ticket['submitting_department'] ?? ''));
+
+        $payload['prefer_cloud'] = $this->cloudAllowed($department) ? 'Yes' : 'No';
         $knowledge  = new KnowledgeBase();
         $question   = trim(($ticket['request_body'] ?? '') . ' ' . ($payload['message'] ?? ''));
 
@@ -97,6 +98,24 @@ class N8nService
             'matched_prior'    => (string) ($item['matched_prior'] ?? ''),
             'articles'         => $articles,
         ];
+    }
+
+    public function cloudAllowed(string $department): bool
+    {
+        if (! $this->config->cloudEnabled()) {
+            return false;
+        }
+
+        try {
+            return (new DepartmentModel())->allowsCloud($department);
+        } catch (\Throwable $e) {
+            log_message('error', 'Could not read the cloud setting for {dept}, keeping it local: {message}', [
+                'dept'    => $department,
+                'message' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
     }
 
     private function post(string $url, array $payload): ?array

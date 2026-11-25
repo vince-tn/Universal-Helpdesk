@@ -111,6 +111,15 @@
                         <option value="0" <?= (int) $d['is_active'] === 0 ? 'selected' : '' ?>>Hidden from new tickets</option>
                     </select>
                 </div>
+
+                <div class="field">
+                    <label for="ai-<?= $id ?>">Where this team's tickets are read</label>
+                    <select id="ai-<?= $id ?>" name="dept[<?= $id ?>][allow_cloud_ai]">
+                        <option value="1" <?= (int) ($d['allow_cloud_ai'] ?? 1) === 1 ? 'selected' : '' ?>>Local model, cloud model if needed</option>
+                        <option value="0" <?= (int) ($d['allow_cloud_ai'] ?? 1) === 0 ? 'selected' : '' ?>>Local model only - nothing leaves the server</option>
+                    </select>
+                    <div class="field-hint">Choose local only for payroll, employee relations and anything else that must not be sent outside.</div>
+                </div>
             </div>
 
             <div class="note-strip">
