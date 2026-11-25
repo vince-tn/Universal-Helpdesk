@@ -60,7 +60,7 @@ class Notifier
             if ($user !== null) {
                 $what = $internal ? 'added an internal note on' : 'replied on';
                 $this->push($user, $ticketId, ($author['name'] ?? 'Someone') . " {$what} #{$ticketId}", 'reply');
-                if ($byRequester) {
+                if ($byRequester && ! $internal) {
                     $this->mailUser($user, "[#{$ticketId}] Requester replied: {$title}", ($author['name'] ?? 'The requester') . " replied.\n\n" . $this->link($ticketId));
                 }
             }
