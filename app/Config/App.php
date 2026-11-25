@@ -29,7 +29,7 @@ class App extends BaseConfig
 
     public bool $forceGlobalSecureRequests = false;
 
-    public array $proxyIPs = ['172.16.0.0/12' => 'CF-Connecting-IP'];
+    public array $proxyIPs = ['127.0.0.1' => 'X-Forwarded-For', '172.16.0.0/12' => 'X-Forwarded-For'];
 
     public bool $CSPEnabled = false;
 

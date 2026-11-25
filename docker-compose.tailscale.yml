@@ -1,0 +1,25 @@
+services:
+  tailscale:
+    image: tailscale/tailscale:stable
+    container_name: helpdesk-tailscale
+    restart: always
+    network_mode: service:app
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:-}
+      TS_HOSTNAME: ${TS_HOSTNAME:-servicedesk}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_SERVE_CONFIG: /config/funnel.json
+      TS_AUTH_ONCE: "true"
+    volumes:
+      - tailscale_state:/var/lib/tailscale
+      - ./deploy/tailscale/funnel.json:/config/funnel.json:ro
+    depends_on:
+      - app
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  tailscale_state:
