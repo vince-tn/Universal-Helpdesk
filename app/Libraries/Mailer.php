@@ -18,7 +18,8 @@ class Mailer
         return $this->config->protocol === 'smtp' && trim($this->config->SMTPHost) !== '';
     }
 
-    public function send(string $to, string $subject, string $body): bool
+    // attachments are lists of [content, filename, mime] held in memory
+    public function send(string $to, string $subject, string $body, array $attachments = []): bool
     {
         if (! $this->isConfigured()) {
             log_message('error', 'Mail not configured - dropping "{subject}" to {to}', [
@@ -36,6 +37,10 @@ class Mailer
             $email->setTo($to);
             $email->setSubject($subject);
             $email->setMessage($body);
+
+            foreach ($attachments as [$content, $filename, $mime]) {
+                $email->attach((string) $content, 'attachment', (string) $filename, (string) $mime);
+            }
 
             if ($email->send(false)) {
                 log_message('info', 'Sent "{subject}" to {to}', ['subject' => $subject, 'to' => $to]);

@@ -26,6 +26,10 @@
                     <?= icon('plus') ?>
                     New Ticket
                 </a>
+                <a href="/rooms" class="<?= str_starts_with(uri_string(), 'rooms') ? 'active' : '' ?>">
+                    <?= icon('building') ?>
+                    Room bookings
+                </a>
 
                 <?php $unread = unread_notifications(); ?>
                 <a href="/notifications" class="<?= uri_string() === 'notifications' ? 'active' : '' ?>">
