@@ -47,12 +47,14 @@
         </div>
     </div>
     <div class="table-actions">
+        <?php if (\App\Libraries\ExportGuard::allowed($user)): ?>
         <div class="export-group">
             <span class="export-label"><?= icon('download', 14) ?> Export</span>
             <a href="/tickets/export?<?= esc(http_build_query(array_merge($exportParams, ['format' => 'csv']))) ?>">CSV</a>
             <a href="/tickets/export?<?= esc(http_build_query(array_merge($exportParams, ['format' => 'xls']))) ?>">Excel</a>
             <a href="/tickets/export?<?= esc(http_build_query(array_merge($exportParams, ['format' => 'json']))) ?>">JSON</a>
         </div>
+        <?php endif ?>
         <a href="/tickets/new" class="btn"><?= icon('plus', 16) ?> New Ticket</a>
     </div>
 </div>

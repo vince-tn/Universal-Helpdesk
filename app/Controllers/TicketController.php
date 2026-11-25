@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\ExportGuard;
 use App\Libraries\Html;
 use App\Libraries\Mentions;
 use App\Libraries\Org;
@@ -179,7 +180,12 @@ class TicketController extends BaseController
 
     public function export()
     {
-        $user    = current_user();
+        $user = current_user();
+
+        if (! ExportGuard::allowed($user)) {
+            return redirect()->to('/tickets')->with('error', 'Only super admins and supervisors can export ticket data.');
+        }
+
         $tickets = $this->applyFilters($this->enrichedScopedTickets($user), $user, $this->requestFilters());
 
         $rows = array_map(function ($t) {
@@ -203,7 +209,10 @@ class TicketController extends BaseController
         }, $tickets);
 
         $format   = strtolower((string) ($this->request->getGet('format') ?? 'csv'));
+        $format   = in_array($format, ['json', 'xls'], true) ? $format : 'csv';
         $filename = 'tickets_export_' . date('Y-m-d_His');
+
+        ExportGuard::log($user, 'raw ticket export, format ' . $format . ', ' . count($rows) . ' rows, filters ' . http_build_query(array_filter($this->requestFilters())));
 
         return match ($format) {
             'json' => $this->response

@@ -1786,3 +1786,118 @@ input:focus, select:focus, textarea:focus {
 .role-chip > span { font-size: 13px; padding: 4px 0; }
 button.chip-x { border: none; background: none; padding: 0; cursor: pointer; line-height: 1; }
 .role-row .role-handles { flex: 1; min-width: 240px; }
+
+/* reports page */
+.reports-page { container-type: inline-size; }
+.report-exports { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+.reports-page .export-group .export-label,
+.reports-page .export-group a {
+  font-family: var(--font-body);
+  font-size: 13.5px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.reports-page .export-group a { padding: 8px 14px; }
+
+.report-filters { gap: 12px 16px; }
+.report-range { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line-soft); border-radius: var(--radius); overflow: hidden; }
+.report-range-opt { margin: 0; cursor: pointer; position: relative; }
+.report-range-opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.report-range-opt span {
+  display: block;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+  border-right: 1px solid var(--line-soft);
+}
+.report-range-opt:last-child span { border-right: none; }
+.report-range-opt input:checked + span { background: var(--accent-soft); color: var(--accent-dark); }
+.report-range-opt input:focus-visible + span { outline: 2px solid var(--accent-ring); outline-offset: -2px; }
+.report-custom { display: flex; gap: 12px; flex-wrap: wrap; }
+.report-custom[hidden] { display: none; }
+.report-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.report-field input[type="date"], .report-field select { width: auto; font-family: var(--font-body); font-size: 14px; }
+.report-reset { font-size: 14px; color: var(--ink-2); }
+
+.report-section-title {
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  margin: 6px 0 12px;
+}
+
+.report-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 16px;
+  margin-bottom: 26px;
+}
+/* four cards never split three plus one */
+@container (min-width: 662px) and (max-width: 887.98px) {
+  .report-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+.report-kpis .stat-card { opacity: 1; animation: none; }
+.report-kpis .stat-card .value { font-size: 38px; }
+.report-kpis .stat-card .value.is-text { font-size: 28px; line-height: 1.1; }
+.report-kpis .stat-card .value.is-note {
+  font-family: var(--font-body);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+.report-kpis .stat-card .value-unit { font-size: 18px; color: var(--ink-2); }
+.report-kpis .stat-card .label {
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+  margin-top: 10px;
+}
+.report-kpis .stat-card .sub { font-size: 13px; color: var(--ink-3); margin-top: 4px; line-height: 1.4; }
+
+.reports-page .side-panel h3 { text-transform: none; }
+.reports-page .barlist-row { grid-template-columns: minmax(110px, 170px) 1fr 52px; }
+.reports-page .daychart-col { min-width: 34px; }
+.reports-page .daychart-axis { font-family: var(--font-body); font-size: 11.5px; }
+.report-hint { margin: -6px 0 14px; }
+
+.report-table-wrap { overflow-x: auto; }
+.report-table { font-size: 14px; }
+.report-table th, .report-table td { padding: 10px 12px; }
+.reports-page .report-table thead th {
+  background: var(--paper-tint);
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+}
+.reports-page .report-table tbody th {
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  border-bottom: 1px solid var(--line-soft);
+}
+.report-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.report-table tbody tr { animation: none; }
