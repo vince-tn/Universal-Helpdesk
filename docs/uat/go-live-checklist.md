@@ -2,6 +2,8 @@
 
 One table per department. A department goes live only when every line has an Owner, a Date and a tick. The department head signs at the bottom of the table.
 
+Before any department goes live, once per copy: create named admins with `php spark helpdesk:admin --name "Full Name" --email you@company.com`, then lock the shared admin with `--lock-shared`, and confirm `php spark helpdesk:doctor` shows no red lines.
+
 Sample routing and AI reply checks come from `php spark helpdesk:ai-eval --department=<name> --chat`. Attach the report.
 
 ## IT (Helpdesk, Systems, Network)
