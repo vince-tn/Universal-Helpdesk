@@ -12,7 +12,7 @@ class TicketMessageModel extends Model
     protected $useTimestamps = false;
     protected $allowedFields = [
         'ticket_id', 'user_id', 'author_name', 'author_role',
-        'kind', 'ai_confidence', 'is_solution', 'body', 'created_at',
+        'kind', 'ai_confidence', 'is_solution', 'body', 'created_at', 'is_internal',
     ];
 
     public const KIND_MESSAGE     = 'message';
@@ -21,8 +21,12 @@ class TicketMessageModel extends Model
     public const KIND_HANDOFF     = 'handoff';
     public const KIND_GUIDE       = 'guide';
 
-    public function forTicket(string $ticketId): array
+    public function forTicket(string $ticketId, bool $withInternal = true): array
     {
+        if (! $withInternal) {
+            $this->where('is_internal', 0);
+        }
+
         return $this->where('ticket_id', $ticketId)
             ->orderBy('created_at', 'ASC')
             ->orderBy('id', 'ASC')
@@ -49,7 +53,8 @@ class TicketMessageModel extends Model
         string $body,
         string $kind = self::KIND_MESSAGE,
         ?string $confidence = null,
-        bool $isSolution = false
+        bool $isSolution = false,
+        bool $internal = false
     ): int|string|false {
         return $this->insert([
             'ticket_id'     => $ticketId,
@@ -59,6 +64,7 @@ class TicketMessageModel extends Model
             'kind'          => $kind,
             'ai_confidence' => $confidence,
             'is_solution'   => $isSolution ? 1 : 0,
+            'is_internal'   => $internal ? 1 : 0,
             'body'          => $body,
             'created_at'    => date('Y-m-d H:i:s'),
         ]);

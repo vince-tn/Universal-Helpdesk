@@ -18,9 +18,16 @@ class TicketModel extends Model
         'expected_deliverable', 'suggested_tat', 'requirements_needed',
         'closure_criteria', 'ai_source', 'matched_catalogue_key',
         'needs_human_review', 'status', 'ai_updated_at', 'ai_resolution_note',
+        'requester_department', 'service_key', 'service_fields', 'is_confidential', 'approval_state',
+        'resolution_note', 'routing_reason',
     ];
 
-    public const STATUSES = ['New', 'In Progress', 'Resolved', 'Closed'];
+    public const STATUSES = [
+        'New', 'In Progress', 'Awaiting Requester', 'On Hold', 'Pending Approval',
+        'Resolved', 'Reopened', 'Closed', 'Cancelled',
+    ];
+
+    public const OPEN_STATUSES = ['New', 'In Progress', 'Awaiting Requester', 'On Hold', 'Pending Approval', 'Reopened'];
 
     private const ASSISTANT_WRITABLE = ['status', 'description', 'ai_resolution_note', 'ai_updated_at'];
 
@@ -49,6 +56,13 @@ class TicketModel extends Model
         'ai_updated_at'          => 'AI Updated At',
         'ai_resolution_note'     => 'AI Resolution Note',
         'needs_human_review'     => 'Needs Human Review',
+        'requester_department'   => 'Requester Department',
+        'service_key'            => 'Service Key',
+        'service_fields'         => 'Service Fields',
+        'is_confidential'        => 'Confidential',
+        'approval_state'         => 'Approval State',
+        'resolution_note'        => 'Resolution Note',
+        'routing_reason'         => 'Routing Reason',
     ];
 
     private const CLAIM_TTL = 600;
@@ -120,6 +134,7 @@ class TicketModel extends Model
     {
         $builder = static fn (self $m) => $m
             ->whereIn('status', self::SETTLED)
+            ->where('is_confidential', 0)
             ->where('request_body IS NOT NULL');
 
         if (str_contains(strtolower($this->db->DBDriver), 'mysql')) {
@@ -165,6 +180,7 @@ class TicketModel extends Model
             ->whereIn('ticket_id', $ticketIds)
             ->whereIn('author_role', UserModel::STAFF_ROLES)
             ->where('is_solution', 1)
+            ->where('is_internal', 0)
             ->orderBy('id', 'ASC')
             ->get()
             ->getResultArray();

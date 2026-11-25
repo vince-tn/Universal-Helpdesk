@@ -46,7 +46,7 @@
         <h1><?= esc($f['Request Title'] ?? $f['Title'] ?? 'Ticket') ?></h1>
         <div class="subtitle">
             <span class="ticket-ref">#<?= esc($tid) ?></span>
-            Submitted by <?= esc($f['Requester'] ?? '—') ?> · <?= esc(date('M j, Y g:i A', strtotime($f['CreatedAt'] ?? 'now'))) ?>
+            Submitted by <?= esc($f['Requester'] ?? '—') ?> · <?= esc(format_when($f['CreatedAt'] ?? null)) ?>
         </div>
     </div>
     <div class="table-actions">
@@ -72,7 +72,7 @@
                 <div><span class="k">Routed to</span><span class="v"><?= esc($ownerLabel) ?> <span class="by-user"><?= esc($ownerNote) ?></span></span></div>
                 <div><span class="k">Category</span><span class="v"><?= esc($f['Category'] ?? '—') ?></span></div>
                 <div><span class="k">Turnaround</span><span class="v"><?= esc($f['Suggested TAT'] ?? '—') ?> <span class="by-user">set by staff</span></span></div>
-                <div><span class="k">Due</span><span class="v"><?= $meta['due_date'] ? esc(date('M j, Y', strtotime($meta['due_date']))) : '—' ?> <span class="by-user">set by staff</span></span></div>
+                <div><span class="k">Due</span><span class="v"><?= $meta['due_date'] ? esc(date('j M Y', strtotime($meta['due_date']))) : '—' ?> <span class="by-user">set by staff</span></span></div>
                 <div><span class="k">Assigned</span><span class="v"><?= $assignedTo ? esc($assignedTo['name']) : 'Unassigned' ?></span></div>
                 <div><span class="k">Raised from</span><span class="v"><?= esc($f['Submitting Department'] ?? '—') ?><?= ! empty($f['Submitting Role']) ? ' · ' . esc($f['Submitting Role']) : '' ?></span></div>
             </div>
@@ -252,7 +252,7 @@
                     <div><span class="k">Status</span><span class="v"><?= esc($f['Status'] ?? 'New') ?></span></div>
                     <div><span class="k">Priority</span><span class="v"><?= esc($meta['priority'] ?? 'Medium') ?></span></div>
                     <div><span class="k">Owning team</span><span class="v"><?= esc($ownerLabel) ?></span></div>
-                    <div><span class="k">Target date</span><span class="v"><?= $meta['due_date'] ? esc(date('M j, Y', strtotime($meta['due_date']))) : '—' ?></span></div>
+                    <div><span class="k">Target date</span><span class="v"><?= $meta['due_date'] ? esc(date('j M Y', strtotime($meta['due_date']))) : '—' ?></span></div>
                 </div>
                 <div class="field-hint">Anything you add in the conversation is visible to the team handling this.</div>
             </div>

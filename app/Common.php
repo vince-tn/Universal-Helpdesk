@@ -345,3 +345,23 @@ if (! function_exists('asset')) {
         return '/' . $path . (is_file($file) ? '?v=' . filemtime($file) : '');
     }
 }
+
+if (! function_exists('format_day')) {
+    // day first date like 26 Nov 2026
+    function format_day(?string $value): string
+    {
+        $t = $value ? strtotime($value) : false;
+
+        return $t ? date('j M Y', $t) : '';
+    }
+}
+
+if (! function_exists('format_when')) {
+    // day first date and time with the zone, like 26 Nov 2026, 1:51 PM PHT
+    function format_when(?string $value): string
+    {
+        $t = $value ? strtotime($value) : false;
+
+        return $t ? date('j M Y, g:i A', $t) . ' ' . brand()->timezoneLabel : '';
+    }
+}

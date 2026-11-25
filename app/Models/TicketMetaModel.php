@@ -12,7 +12,11 @@ class TicketMetaModel extends Model
     protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
-    protected $allowedFields = ['ticket_id', 'priority', 'due_date', 'assigned_to'];
+    protected $allowedFields = [
+        'ticket_id', 'priority', 'due_date', 'assigned_to', 'response_due_at', 'due_at', 'first_response_at',
+        'resolved_at', 'paused_at', 'sla_paused_minutes', 'reopened_count', 'sla_warned_at', 'needed_by',
+        'people_affected', 'work_stopped',
+    ];
 
     public static function fromClassification(array $output): array
     {

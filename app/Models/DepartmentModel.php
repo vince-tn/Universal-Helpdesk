@@ -10,7 +10,7 @@ class DepartmentModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'handles', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order'];
+    protected $allowedFields = ['name', 'handles', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order', 'is_confidential'];
 
     public const HANDLES_MAX = 150;
 

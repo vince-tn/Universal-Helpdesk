@@ -41,7 +41,7 @@
 <div class="page-header">
     <div>
         <h1><?= icon('trend', 24) ?> Reports &amp; Analytics</h1>
-        <div class="subtitle">Cross-department ticket volume, workload, and health — as of <?= esc(date('M j, Y g:i A')) ?>.</div>
+        <div class="subtitle">Cross-department ticket volume, workload, and health — as of <?= esc(date('j M Y, g:i A') . ' ' . brand()->timezoneLabel) ?>.</div>
     </div>
     <div class="export-group">
         <span class="export-label"><?= icon('download', 14) ?> Export raw data</span>
@@ -138,7 +138,7 @@
         <?= icon('clock', 15) ?>
         Ticket Volume —
         <?= ($dateFrom || $dateTo)
-            ? esc(date('M j, Y', strtotime($volumeRangeStart))) . ' – ' . esc(date('M j, Y', strtotime($volumeRangeEnd)))
+            ? esc(date('j M Y', strtotime($volumeRangeStart))) . ' – ' . esc(date('j M Y', strtotime($volumeRangeEnd)))
             : 'Last 14 Days' ?>
     </h3>
     <?php if ($volumeRangeTruncated): ?>
@@ -147,10 +147,10 @@
     <div class="daychart-scroll">
         <div class="daychart">
             <?php foreach ($volumeByDay as $day => $count): $h = max(4, round($count / $maxDay * 100)); ?>
-                <div class="daychart-col" title="<?= esc(date('M j', strtotime($day))) ?>: <?= $count ?> ticket<?= $count === 1 ? '' : 's' ?>">
+                <div class="daychart-col" title="<?= esc(date('j M', strtotime($day))) ?>: <?= $count ?> ticket<?= $count === 1 ? '' : 's' ?>">
                     <?php if ($count === $maxDay && $count > 0): ?><div class="daychart-cap"><?= $count ?></div><?php endif ?>
                     <div class="daychart-bar" style="height:<?= $h ?>%"></div>
-                    <div class="daychart-axis"><?= esc(date('n/j', strtotime($day))) ?></div>
+                    <div class="daychart-axis"><?= esc(date('j M', strtotime($day))) ?></div>
                 </div>
             <?php endforeach ?>
         </div>

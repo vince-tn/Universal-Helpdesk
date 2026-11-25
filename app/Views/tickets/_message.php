@@ -29,7 +29,7 @@ $kindLabel = match ($kind) {
                 <span class="badge-outline"><?= esc($role) ?></span>
             <?php endif ?>
 
-            <span class="msg-time"><?= esc(date('M j, g:i A', strtotime((string) ($msg['created_at'] ?? 'now')))) ?></span>
+            <span class="msg-time"><?= esc(date('j M, g:i A', strtotime((string) ($msg['created_at'] ?? 'now'))) . ' ' . brand()->timezoneLabel) ?></span>
         </div>
 
         <?php if ((int) ($msg['is_solution'] ?? 0) === 1): ?>

@@ -153,7 +153,7 @@
                         <td><span class="pill <?= priorityPillClass($m['priority']) ?>"><span class="dot"></span><?= esc($m['priority']) ?></span></td>
                         <td><span class="pill <?= statusPillClass($f['Status'] ?? 'New') ?>"><?= esc($f['Status'] ?? 'New') ?></span></td>
                         <td class="cell-muted"><?= $m['assigned_name'] ? esc($m['assigned_name']) : '—' ?></td>
-                        <td class="cell-muted"><?= esc(date('M j, g:i A', strtotime($f['CreatedAt'] ?? 'now'))) ?></td>
+                        <td class="cell-muted"><?= esc(date('j M, g:i A', strtotime($f['CreatedAt'] ?? 'now'))) ?></td>
                     </tr>
                 <?php endforeach ?>
             </tbody>
