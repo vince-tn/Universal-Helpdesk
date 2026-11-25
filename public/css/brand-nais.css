@@ -82,4 +82,17 @@
 .stat-card.accent-urgent .value { color: #d32f2f; }
 .sidebar nav a.active { box-shadow: inset 3px 0 0 var(--plum); }
 .sidebar .brand-logo { height: 30px; }
-.sidebar .brand-text { font-size: 16px; line-height: 1.15; white-space: nowrap; }
+.sidebar .brand { min-width: 0; }
+.sidebar .brand-text { flex: 1 1 auto; min-width: 0; font-size: 16px; line-height: 1.15; white-space: normal; overflow-wrap: break-word; }
+
+/* active fill dark enough for white text */
+:root { --active-bg: #8048f0; }
+[data-theme="dark"] { --active-bg: #8048f0; }
+@media (min-width: 1441px) {
+  .sidebar .brand-logo { height: calc(30 * var(--u)); }
+  .sidebar .brand-text { font-size: calc(16 * var(--u)); }
+}
+@media (max-width: 760px) {
+  .sidebar .brand-logo { height: 26px; }
+  .sidebar .brand-text { font-size: 15px; }
+}

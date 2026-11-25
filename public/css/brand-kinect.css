@@ -84,3 +84,13 @@
 .stat-card.accent-urgent::before { background: #d32f2f; }
 .stat-card.accent-urgent .value { color: #d32f2f; }
 .sidebar nav a.active { box-shadow: inset 3px 0 0 var(--amber); }
+
+/* active fill dark enough for white text */
+:root, [data-theme="dark"] { --active-bg: #1273b3; }
+.sidebar .brand { flex-wrap: wrap; row-gap: 6px; min-width: 0; }
+.sidebar .brand-logo-wordmark { max-width: 100%; }
+@media (min-width: 1441px) {
+  .sidebar .brand-logo-wordmark { height: calc(28 * var(--u)); }
+  .brand-suffix { font-size: calc(13 * var(--u)); padding-left: calc(10 * var(--u)); }
+  .auth-brand .brand-logo-wordmark { height: calc(46 * var(--u)); }
+}
