@@ -17,6 +17,7 @@ services:
     environment:
       - BRAND=${BRAND:-chikiting}
       - BRAND_TZ_LABEL=${BRAND_TZ_LABEL:-PHT}
+      - LAN_HOSTS=${LAN_HOSTS:-}
       - CONFIDENTIAL_LOCAL_ONLY=${CONFIDENTIAL_LOCAL_ONLY:-on}
       - AI_CLOUD_PROVIDER=openrouter
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
