@@ -45,7 +45,7 @@ class RoutingDirectory
         return $entries;
     }
 
-    public const FALLBACK_LIMIT = 14;
+    public const FALLBACK_LIMIT = 40;
 
     public function shortlist(string $text, string $department, string $role): array
     {

@@ -136,7 +136,7 @@ class TicketAssistant
     // true when the model wrote as if it were the requester
     public static function soundsLikeRequester(string $text): bool
     {
-        return preg_match('/\b(I have tried|I tried|I will let you know|I\'ll let you know|my (laptop|headset|computer|pc) (is|keeps)|I am unable to|I can\'t log in)\b/iu', $text) === 1;
+        return preg_match('/\b(I have tried|I tried|I will let you know|I\'ll let you know|I understand the issue is with my|with my (laptop|headset|computer|pc|account|payslip|screen|mouse|keyboard)|my (laptop|headset|computer|pc|account|payslip) (is|keeps|stopped)|I am unable to|I can\'t log in|I need (a|my|the)\b)\b/iu', $text) === 1;
     }
 
     private function noFirmFix(string $ticketId, string $notice, array $output, string $department, array $articles): ?array

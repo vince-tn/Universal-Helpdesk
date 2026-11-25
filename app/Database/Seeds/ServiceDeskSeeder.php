@@ -42,7 +42,7 @@ class ServiceDeskSeeder extends Seeder
                 'Recruitment'        => ['manpower requests, referrals, job posts, interviews, onboarding', 0],
                 'Payroll'            => ['pay disputes, pay adjustments, deductions, payslips, government contributions', 1],
                 'Employee Relations' => ['workplace concerns, grievances, conduct, disciplinary matters', 1],
-                'Records'            => ['certificate of employment, personal details updates, 201 file', 0],
+                'Records'            => ['COE, certificate of employment, personal details updates, 201 file', 0],
             ],
         ],
         'TQA' => [
