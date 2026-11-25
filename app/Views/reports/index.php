@@ -140,7 +140,7 @@
 <div class="report-kpis">
     <div class="stat-card accent-done">
         <?php if ($slaOn): ?>
-            <div class="value"><?= esc($pct($slaMetPct)) ?></div>
+            <div class="value<?= $slaMetPct === null ? ' is-text' : '' ?>"><?= esc($pct($slaMetPct)) ?></div>
             <div class="label">Resolution SLA met</div>
             <div class="sub"><?= $slaMet ?> met, <?= $slaPending ?> still within target<?= $respSlaPct !== null ? '. Response target met ' . esc($pct($respSlaPct)) : '' ?></div>
         <?php else: ?>
@@ -150,7 +150,7 @@
     </div>
     <div class="stat-card <?= $slaOn && $slaBreached > 0 ? 'accent-urgent' : '' ?>">
         <?php if ($slaOn): ?>
-            <div class="value"><?= esc($pct($slaBreachedPct)) ?></div>
+            <div class="value<?= $slaBreachedPct === null ? ' is-text' : '' ?>"><?= esc($pct($slaBreachedPct)) ?></div>
             <div class="label">Resolution SLA breached</div>
             <div class="sub"><?= $plural($slaBreached, 'ticket') ?> past target</div>
         <?php else: ?>
@@ -159,7 +159,7 @@
         <?php endif ?>
     </div>
     <div class="stat-card">
-        <div class="value"><?= esc($pct($reopenRate)) ?></div>
+        <div class="value<?= $reopenRate === null ? ' is-text' : '' ?>"><?= esc($pct($reopenRate)) ?></div>
         <div class="label">Reopen rate</div>
         <div class="sub"><?= $plural($reopenCount, 'ticket') ?><?= $reopenTracked ? ' reopened at least once' : ' currently reopened' ?></div>
     </div>
