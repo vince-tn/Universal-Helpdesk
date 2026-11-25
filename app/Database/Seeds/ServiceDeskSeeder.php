@@ -134,6 +134,8 @@ class ServiceDeskSeeder extends Seeder
         'never ask for or repeat passwords, one time codes or full bank details',
         'speak as the help desk, never as the requester',
         'do not mention internal article numbers or field names',
+        'COE means certificate of employment, never certificate of eligibility. 201 file means the employee record. TL means team leader',
+        'SSS, PhilHealth and Pag-IBIG are government contributions handled by HR Payroll',
     ];
 
     private const SERVICES = [
