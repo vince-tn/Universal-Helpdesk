@@ -3,19 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Log in — Chikiting System</title>
+    <title>Log in — <?= esc(brand_name()) ?></title>
     <?= theme_head() ?>
     <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
+    <?= brand_css() ?>
 </head>
 <body>
     <div class="auth-shell">
         <?= theme_toggle('auth-theme') ?>
         <div class="auth-wrap">
-            <div class="auth-brand"><?= brand_mark(34) ?> Chikiting System</div>
+            <div class="auth-brand"><?= brand_lockup(34) ?></div>
 
             <div class="auth-card">
                 <h1>Welcome back</h1>
-                <div class="subtitle">Chikiting System</div>
+                <div class="subtitle"><?= esc(brand_name()) ?></div>
 
                 <?php if (session()->getFlashdata('error')): ?>
                     <div class="alert alert-error"><?= icon('flag', 16) ?> <?= esc(session()->getFlashdata('error')) ?></div>

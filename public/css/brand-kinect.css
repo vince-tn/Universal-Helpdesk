@@ -1,0 +1,86 @@
+/* kinect theme, colours and type taken from kinectbpo.com */
+@import url('https://fonts.googleapis.com/css2?family=Epilogue:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  --paper:        #f5f7fb;
+  --paper-tint:   #eaf0f7;
+  --ink:          #0b1640;
+  --ink-2:        #3c4a6e;
+  --ink-3:        #5f6b8a;
+  --line:         rgba(0, 8, 67, 0.16);
+  --line-soft:    rgba(0, 8, 67, 0.10);
+
+  --vermilion:    #157ec3;
+  --vermilion-bg: #dcecf8;
+  --vermilion-tx: #004e7e;
+
+  --amber:        #f76a0c;
+  --amber-bg:     #fde6d6;
+  --amber-tx:     #9a3d00;
+
+  --plum:         #186faf;
+  --plum-bg:      #dde9f5;
+  --plum-tx:      #0b4c80;
+
+  --grad:         linear-gradient(100deg, #004e7e 0%, #157ec3 60%, #2a9be0 100%);
+  --grad-warm:    linear-gradient(100deg, #f76a0c 0%, #ffa24d 100%);
+
+  --priority-urgent-bg: #fbdada; --priority-urgent-text: #a11919;
+
+  --accent:        #157ec3;
+  --accent-dark:   #004e7e;
+  --accent-bright: #f76a0c;
+  --accent-soft:   #dcecf8;
+  --accent-ring:   rgba(21, 126, 195, 0.32);
+
+  --sidebar-bg:    #000843;
+  --sidebar-panel: #0b1764;
+  --sidebar-text:  #dbe3f7;
+  --sidebar-dim:   #9fb0d8;
+  --sidebar-line:  #1c2a7a;
+
+  --font-display: 'Epilogue', 'Arial Black', sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+[data-theme="dark"] {
+  --paper:        #030a2c;
+  --paper-tint:   #07113d;
+  --surface:      #0c1849;
+  --surface-2:    #112058;
+  --ink:          #eef2fc;
+  --ink-2:        #b6c3e4;
+  --ink-3:        #8d9cc4;
+
+  --vermilion:    #3ea6ea;
+  --vermilion-bg: #0b3557;
+  --vermilion-tx: #b5dcf7;
+
+  --amber:        #ff8a3d;
+  --amber-bg:     #4a2208;
+  --amber-tx:     #ffc79f;
+
+  --plum:         #5aa9e6;
+  --plum-bg:      #10325a;
+  --plum-tx:      #c0dcf5;
+
+  --priority-urgent-bg: #4a1111; --priority-urgent-text: #ffb3b3;
+
+  --accent-ring:  rgba(62, 166, 234, 0.35);
+
+  --sidebar-bg:    #01051f;
+  --sidebar-panel: #0a1450;
+  --sidebar-line:  #18246a;
+}
+
+.brand { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--cream); display: flex; align-items: center; gap: 10px; }
+.brand-logo { display: block; width: auto; }
+.sidebar .brand-logo-wordmark { height: 28px; }
+.brand-suffix { font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: 0.02em; color: var(--sidebar-dim); padding-left: 10px; border-left: 1px solid var(--sidebar-line); }
+.auth-brand { display: flex; align-items: center; gap: 12px; }
+.auth-brand .brand-logo-wordmark { background: #000843; padding: 8px 12px; border-radius: 8px; height: 46px; }
+.auth-brand .brand-suffix { color: var(--ink-2); border-left-color: var(--line); }
+.stat-card.accent-urgent::before { background: #d32f2f; }
+.stat-card.accent-urgent .value { color: #d32f2f; }
+.sidebar nav a.active { box-shadow: inset 3px 0 0 var(--amber); }

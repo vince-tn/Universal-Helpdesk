@@ -179,11 +179,68 @@ if (! function_exists('brand_mark')) {
     }
 }
 
+if (! function_exists('brand')) {
+    // returns the cached brand config for this copy
+    function brand(): \Config\Brand
+    {
+        static $brand = null;
+
+        return $brand ??= new \Config\Brand();
+    }
+}
+
+if (! function_exists('brand_name')) {
+    function brand_name(): string
+    {
+        return brand()->name;
+    }
+}
+
+if (! function_exists('brand_lockup')) {
+    // logo plus name, or the wordmark logo alone
+    function brand_lockup(int $size = 32): string
+    {
+        $b = brand();
+
+        if ($b->logo === '') {
+            return brand_mark($size) . ' ' . esc($b->name);
+        }
+
+        $src = esc(asset($b->logo), 'attr');
+        $alt = esc($b->company ?: $b->name, 'attr');
+
+        if ($b->logoHasWordmark) {
+            return '<img class="brand-logo brand-logo-wordmark" src="' . $src . '" alt="' . $alt . '" height="' . $size . '">'
+                . '<span class="brand-suffix">' . esc($b->short) . '</span>';
+        }
+
+        return '<img class="brand-logo" src="' . $src . '" alt="' . $alt . '" height="' . $size . '">'
+            . '<span class="brand-text">' . esc($b->name) . '</span>';
+    }
+}
+
+if (! function_exists('brand_css')) {
+    // brand stylesheet, loaded after style.css so its tokens win
+    function brand_css(): string
+    {
+        $sheet = brand()->stylesheet;
+
+        return $sheet === '' ? '' : '<link rel="stylesheet" href="' . esc(asset($sheet), 'attr') . '">';
+    }
+}
+
 if (! function_exists('theme_head')) {
 
     function theme_head(): string
     {
-        return <<<HTML
+        $b     = brand();
+        $extra = '';
+
+        if ($b->icon !== '') {
+            $extra .= '<link rel="icon" type="image/png" href="' . esc(asset($b->icon), 'attr') . '">' . "\n";
+        }
+
+        return $extra . <<<HTML
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <script>

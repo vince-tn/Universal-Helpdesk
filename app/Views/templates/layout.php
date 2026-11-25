@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Chikiting System</title>
+    <title><?= esc(brand_name()) ?></title>
     <?= theme_head() ?>
     <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
+    <?= brand_css() ?>
 </head>
 <body>
     <?php $user = current_user(); ?>
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand">
-                <?= brand_mark() ?>
-                Chikiting System
+                <?= brand_lockup(30) ?>
             </div>
-            <div class="tagline">Support &amp; Ticketing</div>
+            <div class="tagline"><?= esc(brand()->tagline) ?></div>
 
             <nav>
                 <a href="/tickets" class="<?= uri_string() === 'tickets' ? 'active' : '' ?>">

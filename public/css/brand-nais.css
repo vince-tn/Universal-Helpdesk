@@ -1,0 +1,83 @@
+/* nais corp theme, colours and type taken from naiscorp.co */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --paper:        #f8f6ff;
+  --paper-tint:   #f0ecfd;
+  --ink:          #120d1f;
+  --ink-2:        #463e5e;
+  --ink-3:        #6b6385;
+  --line:         rgba(18, 13, 31, 0.15);
+  --line-soft:    rgba(18, 13, 31, 0.09);
+
+  --vermilion:    #8c4dff;
+  --vermilion-bg: #ece2ff;
+  --vermilion-tx: #5a22c8;
+
+  --amber:        #ff8b5f;
+  --amber-bg:     #ffe6dc;
+  --amber-tx:     #9b3a14;
+
+  --plum:         #eb56d4;
+  --plum-bg:      #fde3f8;
+  --plum-tx:      #9c1d86;
+
+  --grad:         linear-gradient(100deg, #8c4dff 0%, #eb56d4 60%, #ff8b5f 100%);
+  --grad-warm:    linear-gradient(100deg, #ff8b5f 0%, #eb56d4 100%);
+
+  --priority-urgent-bg: #fbdada; --priority-urgent-text: #a11919;
+
+  --accent:        #8c4dff;
+  --accent-dark:   #5a22c8;
+  --accent-bright: #eb56d4;
+  --accent-soft:   #ece2ff;
+  --accent-ring:   rgba(140, 77, 255, 0.32);
+
+  --sidebar-bg:    #09070f;
+  --sidebar-panel: #171126;
+  --sidebar-text:  #ddd7ef;
+  --sidebar-dim:   #a69dc4;
+  --sidebar-line:  #251c3d;
+
+  --font-display: 'Inter', 'Arial Black', sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+[data-theme="dark"] {
+  --paper:        #09070f;
+  --paper-tint:   #120d1f;
+  --surface:      #171126;
+  --surface-2:    #1f1733;
+  --ink:          #f6f3ff;
+  --ink-2:        #bcb4d4;
+  --ink-3:        #958cb3;
+
+  --vermilion:    #a678ff;
+  --vermilion-bg: #2c1a55;
+  --vermilion-tx: #d8c6ff;
+
+  --amber:        #ff9d77;
+  --amber-bg:     #4a2213;
+  --amber-tx:     #ffc3a0;
+
+  --plum:         #f27adf;
+  --plum-bg:      #46143d;
+  --plum-tx:      #ffb8e8;
+
+  --priority-urgent-bg: #4a1111; --priority-urgent-text: #ffb3b3;
+
+  --accent-ring:  rgba(166, 120, 255, 0.35);
+
+  --sidebar-bg:    #050409;
+  --sidebar-panel: #140f22;
+  --sidebar-line:  #221a38;
+}
+
+.brand { background: none; -webkit-background-clip: border-box; background-clip: border-box; color: var(--cream); display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -0.01em; }
+.brand-logo { display: block; width: auto; }
+.brand-text { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.auth-brand { display: flex; align-items: center; gap: 12px; }
+.stat-card.accent-urgent::before { background: #d32f2f; }
+.stat-card.accent-urgent .value { color: #d32f2f; }
+.sidebar nav a.active { box-shadow: inset 3px 0 0 var(--plum); }
