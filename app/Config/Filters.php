@@ -14,6 +14,7 @@ use CodeIgniter\Filters\PerformanceMetrics;
 use CodeIgniter\Filters\SecureHeaders;
 use App\Filters\AuthFilter;
 use App\Filters\GuestFilter;
+use App\Filters\SecurityHeaders;
 
 class Filters extends BaseFilters
 {
@@ -30,6 +31,8 @@ class Filters extends BaseFilters
         'performance'   => PerformanceMetrics::class,
         'auth'          => AuthFilter::class,
         'guest'         => GuestFilter::class,
+        'securityheaders' => SecurityHeaders::class,
+        'securityheaders' => SecurityHeaders::class,
     ];
 
     public array $required = [
@@ -51,7 +54,7 @@ class Filters extends BaseFilters
 
         ],
         'after' => [
-            'secureheaders',
+            'securityheaders',
         ],
     ];
 

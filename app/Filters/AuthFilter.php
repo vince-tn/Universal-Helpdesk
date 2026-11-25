@@ -2,6 +2,8 @@
 
 namespace App\Filters;
 
+use App\Libraries\LoginSession;
+use App\Libraries\Mfa;
 use App\Models\UserModel;
 use CodeIgniter\Filters\FilterInterface;
 use CodeIgniter\HTTP\RequestInterface;
@@ -38,7 +40,24 @@ class AuthFilter implements FilterInterface
             $session->set('user', $fresh);
         }
 
-        $role = $fresh['role'];
+        $role     = $fresh['role'];
+        $enrolled = (int) ($row['mfa_enabled'] ?? 0) === 1;
+
+        // enrolled users must have passed the second step in this session
+        if ($enrolled && ! $session->get('auth_mfa')) {
+            $session->remove(['isLoggedIn', 'user', 'auth_mfa', 'auth_method']);
+
+            return redirect()->to('/login')->with('error', 'Please log in again to confirm your two-step sign-in.');
+        }
+
+        // roles that need mfa finish setup before anything else, sso already counts
+        if (! $enrolled && Mfa::requiredFor($role) && Mfa::canStoreSecrets() && $session->get('auth_method') !== LoginSession::METHOD_SSO) {
+            $path = trim($request->getPath(), '/');
+
+            if (! in_array($path, ['account/mfa/setup', 'logout'], true)) {
+                return redirect()->to('/account/mfa/setup')->with('error', 'Your role needs two-step sign-in. Set it up to continue.');
+            }
+        }
 
         if ($arguments !== null && ! in_array($role, $arguments, true)) {
             return redirect()->to('/tickets')->with('error', "You don't have access to that page.");

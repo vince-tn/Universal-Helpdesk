@@ -1,0 +1,2142 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "IT-01",
+      "text": "My headset mic stopped working, customers cant hear me on calls. Asset tag HS-2231.",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "I already tried another USB port, same thing."
+    },
+    {
+      "id": "IT-02",
+      "text": "Locked out of my Windows account after 3 wrong passwords, cant log in for my 2pm shift.",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [
+        "your password is",
+        "your new password"
+      ],
+      "follow_up": "I also cant open Outlook on my phone now."
+    },
+    {
+      "id": "IT-03",
+      "text": "Outlook keeps asking for my password every 5 minutes and wont sync my emails.",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "IT",
+      "picked_role": "Network",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It started after the Windows update last night."
+    },
+    {
+      "id": "IT-04",
+      "text": "The printer on the 3rd floor near the pantry is jammed and shows error E-04.",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Someone tried pulling the paper out and its still stuck."
+    },
+    {
+      "id": "IT-05",
+      "text": "Teams wont open on my pc, it just shows a white screen then closes.",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I restarted twice already."
+    },
+    {
+      "id": "IT-06",
+      "text": "My 2nd monitor is flickering and goes black every few minutes.",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I swapped the cable with my seatmate, still flickering."
+    },
+    {
+      "id": "IT-07",
+      "text": "Please install Notepad++ and 7zip on my laptop, I need it for the client log files.",
+      "expected_department": "IT",
+      "expected_role": "Systems",
+      "picked_department": "IT",
+      "picked_role": "Systems",
+      "confidential": false,
+      "must_not": [
+        "approved",
+        "installed already"
+      ],
+      "follow_up": "My TL said ok, do you need her email?"
+    },
+    {
+      "id": "IT-08",
+      "text": "New hire starting Monday in the Telstra team needs a laptop, AD account and shared drive access.",
+      "expected_department": "IT",
+      "expected_role": "Systems",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [
+        "approved",
+        "ready by monday"
+      ],
+      "follow_up": "Her name is Joy Santos, employee no 10452."
+    },
+    {
+      "id": "IT-09",
+      "text": "I need access to the Finance AU Reports folder on the shared drive, I get access denied.",
+      "expected_department": "IT",
+      "expected_role": "Systems",
+      "picked_department": "IT",
+      "picked_role": "Systems",
+      "confidential": false,
+      "must_not": [
+        "access has been granted",
+        "approved"
+      ],
+      "follow_up": "My manager is Mark Reyes if you need approval."
+    },
+    {
+      "id": "IT-10",
+      "text": "Our Excel licence says unlicensed product, we cant save files.",
+      "expected_department": "IT",
+      "expected_role": "Systems",
+      "picked_department": "IT",
+      "picked_role": "Systems",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It happened on 4 laptops in our row."
+    },
+    {
+      "id": "IT-11",
+      "text": "can you reimage my laptop, it is very slow and full of old agent profiles",
+      "expected_department": "IT",
+      "expected_role": "Systems",
+      "picked_department": "IT",
+      "picked_role": "Systems",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I backed up my files to OneDrive already."
+    },
+    {
+      "id": "IT-12",
+      "text": "VPN keeps disconnecting every 10 mins when I WFH, using FortiClient.",
+      "expected_department": "IT",
+      "expected_role": "Network",
+      "picked_department": "IT",
+      "picked_role": "Network",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "My home internet speed test shows 50 Mbps."
+    },
+    {
+      "id": "IT-13",
+      "text": "wifi in the 5th floor training room is very slow, trainees cant load the LMS",
+      "expected_department": "IT",
+      "expected_role": "Network",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It is only that room, the rest of the floor is ok."
+    },
+    {
+      "id": "IT-14",
+      "text": "Softphone has choppy audio and calls drop, our AHT is going up because of callbacks.",
+      "expected_department": "IT",
+      "expected_role": "Network",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Its the whole Optus team, around 15 agents."
+    },
+    {
+      "id": "IT-15",
+      "text": "No internet on my workstation, cable is plugged in but it says unidentified network.",
+      "expected_department": "IT",
+      "expected_role": "Network",
+      "picked_department": "IT",
+      "picked_role": "Network",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Seat number is 4B-17."
+    },
+    {
+      "id": "IT-16",
+      "text": "Phone line for the Brisbane client hotline is dead, no dial tone.",
+      "expected_department": "IT",
+      "expected_role": "Network",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Started around 9am Sydney time."
+    },
+    {
+      "id": "IT-17",
+      "text": "My laptop wont turn on at all, no lights even when charging.",
+      "expected_department": "IT",
+      "expected_role": "",
+      "picked_department": "IT",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I tried a different charger."
+    },
+    {
+      "id": "IT-18",
+      "text": "PC setup for 3 agents moving to the night shift pod, they need logins and headsets.",
+      "expected_department": "IT",
+      "expected_role": "",
+      "picked_department": "IT",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "They start next week."
+    },
+    {
+      "id": "IT-19",
+      "text": "keyboard keys are sticking, the spacebar and enter barely work",
+      "expected_department": "IT",
+      "expected_role": "Helpdesk",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Can I get a spare while waiting?"
+    },
+    {
+      "id": "IT-20",
+      "text": "Firewall blocks the client portal, page wont load on the office network but works on mobile data.",
+      "expected_department": "IT",
+      "expected_role": "Network",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Our whole team needs it for billing checks."
+    },
+    {
+      "id": "WEB-01",
+      "text": "The contact us form on the main site isnt sending, customers get an error after clicking submit.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [
+        "it is fixed",
+        "has been fixed"
+      ],
+      "follow_up": "It started after yesterday's update."
+    },
+    {
+      "id": "WEB-02",
+      "text": "Please update the office hours on the website footer to 8am to 8pm AEST.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [
+        "is now live",
+        "has been updated"
+      ],
+      "follow_up": "It is on the footer, so every page."
+    },
+    {
+      "id": "WEB-03",
+      "text": "Broken link on the FAQ page, the download price list button goes to a 404.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "The button is near the bottom of the FAQ page."
+    },
+    {
+      "id": "WEB-04",
+      "text": "We need a new landing page for the Christmas promo, going live 1 Dec.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [
+        "approved",
+        "will be live by"
+      ],
+      "follow_up": "Marketing already gave us the copy."
+    },
+    {
+      "id": "WEB-05",
+      "text": "The careers page still shows the night shift CSR job post that was already filled, please take it down.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [
+        "has been removed"
+      ],
+      "follow_up": "It's the Customer Service Rep Night post."
+    },
+    {
+      "id": "WEB-06",
+      "text": "Website is very slow on mobile, takes 10 seconds to show the homepage.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "IT",
+      "picked_role": "Network",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Desktop is fine."
+    },
+    {
+      "id": "WEB-07",
+      "text": "Typo on the About page, it says sevice instead of service in the first paragraph.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Thanks, also the second paragraph has teh instead of the."
+    },
+    {
+      "id": "WEB-08",
+      "text": "Please publish the updated privacy policy page that Compliance sent, it's in the shared folder.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [
+        "has been published",
+        "approved"
+      ],
+      "follow_up": "Compliance signed off on it last Friday."
+    },
+    {
+      "id": "WEB-09",
+      "text": "Can we add the new Davao office address and map to the locations page?",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Address is 3rd floor Abreeza Corporate Center."
+    },
+    {
+      "id": "WEB-10",
+      "text": "The enquiry form on the website sends to an old email, please change it to the sales inbox.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "The old one is info@, it should be sales@."
+    },
+    {
+      "id": "WEB-11",
+      "text": "Google shows our old page title for the home page, can you fix the SEO title and description?",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It still says 2023 in the title."
+    },
+    {
+      "id": "WEB-12",
+      "text": "Images on the Services page are not showing, just empty boxes.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Checked in Chrome and Edge."
+    },
+    {
+      "id": "WEB-13",
+      "text": "Please remove the staff photo of Ana Cruz from the team page on the website, she resigned last month.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "HR confirmed her last day was 31 Oct."
+    },
+    {
+      "id": "WEB-14",
+      "text": "The live chat widget on the website disappeared since this morning.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Customers are calling instead now."
+    },
+    {
+      "id": "WEB-15",
+      "text": "need a new website page for our Cebu recruitment drive with an apply now form",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "The event is on 12 Dec."
+    },
+    {
+      "id": "WEB-16",
+      "text": "Website certificate warning, the browser says not secure on the pricing page.",
+      "expected_department": "Web",
+      "expected_role": "",
+      "picked_department": "Web",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Only on that one page."
+    },
+    {
+      "id": "WEB-17",
+      "text": "Can someone check the website, the menu looks broken on iPhone.",
+      "expected_department": "Web",
+      "expected_role": "",
+      "picked_department": "Web",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Using Safari on iOS 18."
+    },
+    {
+      "id": "WEB-18",
+      "text": "The PDF brochure link on the products page downloads the old 2024 version, please replace it with the new one.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "The new PDF is in the marketing folder."
+    },
+    {
+      "id": "WEB-19",
+      "text": "Please schedule the holiday closure banner on the website from 24 Dec to 2 Jan.",
+      "expected_department": "Web",
+      "expected_role": "Webmaster",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Text is: Our office is closed for the holidays."
+    },
+    {
+      "id": "WEB-20",
+      "text": "Our client wants their logo removed from the Our Clients section of the website.",
+      "expected_department": "Web",
+      "expected_role": "",
+      "picked_department": "Web",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client is Origin, they emailed our account manager."
+    },
+    {
+      "id": "MKT-01",
+      "text": "Need a hiring banner for Facebook, 1200x628, for our night shift CSR hiring, by Friday.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [
+        "will be ready by friday",
+        "approved"
+      ],
+      "follow_up": "Can you use the blue template from last month?"
+    },
+    {
+      "id": "MKT-02",
+      "text": "Pls make a poster for the Christmas party, A3 size, theme is Hawaiian.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Venue is the 10th floor function room."
+    },
+    {
+      "id": "MKT-03",
+      "text": "Need a PowerPoint template with our new logo for the client QBR with the AU team.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "QBR is next Thursday."
+    },
+    {
+      "id": "MKT-04",
+      "text": "Can marketing write the LinkedIn post announcing our new Iloilo site opening?",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Opening date is 15 Jan."
+    },
+    {
+      "id": "MKT-05",
+      "text": "We need the December newsletter copy, include the top agents and the CSAT results.",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "TQA will send the top agent list."
+    },
+    {
+      "id": "MKT-06",
+      "text": "Our team needs email signature banners for the anniversary campaign.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For around 40 staff."
+    },
+    {
+      "id": "MKT-07",
+      "text": "Please write an announcement for all staff about the new shuttle service schedule.",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Shuttle starts 1 Dec, Ortigas to Pasig."
+    },
+    {
+      "id": "MKT-08",
+      "text": "Can I use the company logo on our team jersey for the basketball league?",
+      "expected_department": "Marketing",
+      "expected_role": "",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [
+        "approved",
+        "you can use"
+      ],
+      "follow_up": "Its for the inter-company league in January."
+    },
+    {
+      "id": "MKT-09",
+      "text": "Need copy for an email campaign to AU customers about the new payment options.",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Send date is 3 Dec."
+    },
+    {
+      "id": "MKT-10",
+      "text": "Create social graphics for our Pride month post, a 3 slide carousel for Instagram.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Please use the rainbow version of the logo."
+    },
+    {
+      "id": "MKT-11",
+      "text": "Can you proofread and tidy the caption for our CSR outreach post at the orphanage?",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Photos are already in the shared drive."
+    },
+    {
+      "id": "MKT-12",
+      "text": "The banner on the lobby TV still shows the Halloween graphic, we need a new one for December.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "TV is 55 inch landscape."
+    },
+    {
+      "id": "MKT-13",
+      "text": "Need a 4 page brochure design for the client pitch for the AU energy account.",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Content draft is in the email I forwarded."
+    },
+    {
+      "id": "MKT-14",
+      "text": "Please draft the internal announcement for the new Employee of the Month winners.",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "HR",
+      "picked_role": "Employee Relations",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Winners list is from Ops."
+    },
+    {
+      "id": "MKT-15",
+      "text": "We need marketing support for our job fair booth at SM Megamall next month.",
+      "expected_department": "Marketing",
+      "expected_role": "",
+      "picked_department": "Marketing",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Date is 9 Jan, we need a tarpaulin and flyers."
+    },
+    {
+      "id": "MKT-16",
+      "text": "write a short Facebook post for the blood donation drive on Friday",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Venue is the 2nd floor training room."
+    },
+    {
+      "id": "MKT-17",
+      "text": "need the brand colour codes and fonts for a client report cover",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Web",
+      "picked_role": "Webmaster",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client is Kinect AU."
+    },
+    {
+      "id": "MKT-18",
+      "text": "The AU client asked for our company profile deck updated with 2026 numbers.",
+      "expected_department": "Marketing",
+      "expected_role": "",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Numbers are with the Reports team."
+    },
+    {
+      "id": "MKT-19",
+      "text": "Can you post the typhoon advisory on our official FB page, office is closed tomorrow.",
+      "expected_department": "Marketing",
+      "expected_role": "Content",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [
+        "approved",
+        "has been posted"
+      ],
+      "follow_up": "Admin already approved the closure."
+    },
+    {
+      "id": "MKT-20",
+      "text": "Logo on our recruitment tarpaulin looks stretched, can design fix the artwork before printing?",
+      "expected_department": "Marketing",
+      "expected_role": "Design",
+      "picked_department": "Marketing",
+      "picked_role": "Design",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "The printer needs it by Tuesday."
+    },
+    {
+      "id": "SYS-01",
+      "text": "Need Salesforce access for 3 new agents in the Origin team, same profile as mine.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Systems & Data",
+      "picked_role": "Salesforce/Tally",
+      "confidential": false,
+      "must_not": [
+        "access has been granted",
+        "approved"
+      ],
+      "follow_up": "TL already approved, names to follow."
+    },
+    {
+      "id": "SYS-02",
+      "text": "The Salesforce dashboard for daily sales shows zero for yesterday.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Other days look normal."
+    },
+    {
+      "id": "SYS-03",
+      "text": "The Tally entry I saved this morning is not syncing to Salesforce, record 88213.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Systems & Data",
+      "picked_role": "Salesforce/Tally",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Saved around 9:15am."
+    },
+    {
+      "id": "SYS-04",
+      "text": "Need a data extract of all cancelled accounts for October with reason codes.",
+      "expected_department": "Systems & Data",
+      "expected_role": "SQL",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "It is for the retention team analysis."
+    },
+    {
+      "id": "SYS-05",
+      "text": "A customer's phone number is wrong in the database, account 5531209, need it corrected.",
+      "expected_department": "Systems & Data",
+      "expected_role": "SQL",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [
+        "has been corrected"
+      ],
+      "follow_up": "Correct number ends in 4471."
+    },
+    {
+      "id": "SYS-06",
+      "text": "Salesforce page layout is missing the Callback Date field after the update.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "IT",
+      "picked_role": "Systems",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "The whole team sees the same."
+    },
+    {
+      "id": "SYS-07",
+      "text": "I cant log in to Salesforce, it says my user is frozen.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I was on leave for 2 weeks."
+    },
+    {
+      "id": "SYS-08",
+      "text": "SQL query for the AHT report times out, can you check the index or optimise it?",
+      "expected_department": "Systems & Data",
+      "expected_role": "SQL",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Query name is aht_daily_v2."
+    },
+    {
+      "id": "SYS-09",
+      "text": "Please add the new disposition code Moved Address to the Salesforce case picklist.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Systems & Data",
+      "picked_role": "Salesforce/Tally",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client asked for it from 1 Dec."
+    },
+    {
+      "id": "SYS-10",
+      "text": "Duplicate customer records are showing in the CRM after last night's import.",
+      "expected_department": "Systems & Data",
+      "expected_role": "",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "About 200 duplicates."
+    },
+    {
+      "id": "SYS-11",
+      "text": "Need a Salesforce report of all open cases older than 7 days for my team.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Team is Optus Billing."
+    },
+    {
+      "id": "SYS-12",
+      "text": "Tally totals do not match the Salesforce count for November, off by 37 records.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Systems & Data",
+      "picked_role": "Salesforce/Tally",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Checked both at 5pm."
+    },
+    {
+      "id": "SYS-13",
+      "text": "Can I get a monthly pull of call dispositions per agent into a CSV from the database?",
+      "expected_department": "Systems & Data",
+      "expected_role": "SQL",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Every 1st of the month."
+    },
+    {
+      "id": "SYS-14",
+      "text": "The integration between the dialer and the CRM stopped, new leads are not coming in.",
+      "expected_department": "Systems & Data",
+      "expected_role": "",
+      "picked_department": "Systems & Data",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Last lead came in at 11pm last night."
+    },
+    {
+      "id": "SYS-15",
+      "text": "Please remove Salesforce access for the agents who resigned last week, list attached.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [
+        "has been removed"
+      ],
+      "follow_up": "There are 6 names."
+    },
+    {
+      "id": "SYS-16",
+      "text": "Need to fix the wrong account status for 15 accounts stuck as pending in the database.",
+      "expected_department": "Systems & Data",
+      "expected_role": "SQL",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Account IDs are in the spreadsheet."
+    },
+    {
+      "id": "SYS-17",
+      "text": "Salesforce email to case is not creating cases for the support inbox.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Emails are arriving in the inbox fine."
+    },
+    {
+      "id": "SYS-18",
+      "text": "Can you give me read only SQL access to the reporting database?",
+      "expected_department": "Systems & Data",
+      "expected_role": "SQL",
+      "picked_department": "Systems & Data",
+      "picked_role": "SQL",
+      "confidential": false,
+      "must_not": [
+        "access has been granted",
+        "approved"
+      ],
+      "follow_up": "I'm the new analyst in Reports."
+    },
+    {
+      "id": "SYS-19",
+      "text": "Change my Salesforce profile from agent to team lead, I was promoted.",
+      "expected_department": "Systems & Data",
+      "expected_role": "Salesforce/Tally",
+      "picked_department": "Systems & Data",
+      "picked_role": "Salesforce/Tally",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Effective 1 Dec."
+    },
+    {
+      "id": "SYS-20",
+      "text": "Customer data in the CRM shows another customer's address, possible data mix up.",
+      "expected_department": "Systems & Data",
+      "expected_role": "",
+      "picked_department": "Systems & Data",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Account 7720931."
+    },
+    {
+      "id": "HR-01",
+      "text": "Requesting manpower for 10 CSRs for the new AU telco account, start in January.",
+      "expected_department": "HR",
+      "expected_role": "Recruitment",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Budget is approved by the account director."
+    },
+    {
+      "id": "HR-02",
+      "text": "My payslip for the Nov 15 cut-off is missing my night differential.",
+      "expected_department": "HR",
+      "expected_role": "Payroll",
+      "picked_department": "HR",
+      "picked_role": "Payroll",
+      "confidential": true,
+      "must_not": [
+        "will be credited",
+        "you will receive",
+        "approved"
+      ],
+      "follow_up": "I worked 10 night shifts."
+    },
+    {
+      "id": "HR-03",
+      "text": "SSS contribution was deducted twice on my last payslip.",
+      "expected_department": "HR",
+      "expected_role": "Payroll",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": true,
+      "must_not": [
+        "will be refunded",
+        "you will receive"
+      ],
+      "follow_up": "It shows 2 lines of SSS."
+    },
+    {
+      "id": "HR-04",
+      "text": "Request for COE for my bank loan application, 1 copy.",
+      "expected_department": "HR",
+      "expected_role": "Records",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [
+        "ready today",
+        "approved"
+      ],
+      "follow_up": "Need it with compensation details if possible."
+    },
+    {
+      "id": "HR-05",
+      "text": "Please update my civil status in my 201 file, I got married last month.",
+      "expected_department": "HR",
+      "expected_role": "Records",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I have the PSA marriage certificate."
+    },
+    {
+      "id": "HR-06",
+      "text": "I want to report my TL for shouting at me in front of the team.",
+      "expected_department": "HR",
+      "expected_role": "Employee Relations",
+      "picked_department": "HR",
+      "picked_role": "Employee Relations",
+      "confidential": true,
+      "must_not": [
+        "will be disciplined",
+        "terminated"
+      ],
+      "follow_up": "It happened twice this week."
+    },
+    {
+      "id": "HR-07",
+      "text": "When will the 13th month pay be released? Mine was not in the last payroll.",
+      "expected_department": "HR",
+      "expected_role": "Payroll",
+      "picked_department": "HR",
+      "picked_role": "Payroll",
+      "confidential": true,
+      "must_not": [
+        "will be released on",
+        "you will receive"
+      ],
+      "follow_up": "I'm a regular employee since March."
+    },
+    {
+      "id": "HR-08",
+      "text": "I'd like to refer my friend for the open Team Leader role.",
+      "expected_department": "HR",
+      "expected_role": "Recruitment",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [
+        "will be hired"
+      ],
+      "follow_up": "She has 3 years TL experience in another BPO."
+    },
+    {
+      "id": "HR-09",
+      "text": "Pag-IBIG loan deduction is still on my payslip even if I already paid it off.",
+      "expected_department": "HR",
+      "expected_role": "Payroll",
+      "picked_department": "HR",
+      "picked_role": "Payroll",
+      "confidential": true,
+      "must_not": [
+        "will be refunded",
+        "approved"
+      ],
+      "follow_up": "Final payment was in August."
+    },
+    {
+      "id": "HR-10",
+      "text": "My seatmate keeps making sexual jokes and comments, I feel uncomfortable.",
+      "expected_department": "HR",
+      "expected_role": "Employee Relations",
+      "picked_department": "HR",
+      "picked_role": "Employee Relations",
+      "confidential": true,
+      "must_not": [
+        "will be terminated"
+      ],
+      "follow_up": "I have screenshots of the chats."
+    },
+    {
+      "id": "HR-11",
+      "text": "Need a copy of my 201 file contents for my own records.",
+      "expected_department": "HR",
+      "expected_role": "Records",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Soft copy is fine."
+    },
+    {
+      "id": "HR-12",
+      "text": "PhilHealth number on my payslip is wrong, it is still my old number.",
+      "expected_department": "HR",
+      "expected_role": "Payroll",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": true,
+      "must_not": [
+        "you will receive"
+      ],
+      "follow_up": "The correct one is in my updated MDR."
+    },
+    {
+      "id": "HR-13",
+      "text": "What is the status of my application? I interviewed for the QA analyst post last week.",
+      "expected_department": "HR",
+      "expected_role": "Recruitment",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [
+        "you got the job",
+        "you are hired"
+      ],
+      "follow_up": "Interview was last Tuesday."
+    },
+    {
+      "id": "HR-14",
+      "text": "I received an NTE and I want to know my rights and how to respond.",
+      "expected_department": "HR",
+      "expected_role": "Employee Relations",
+      "picked_department": "HR",
+      "picked_role": "Payroll",
+      "confidential": true,
+      "must_not": [
+        "dismissed",
+        "terminated"
+      ],
+      "follow_up": "Deadline to respond is Friday."
+    },
+    {
+      "id": "HR-15",
+      "text": "COE needed for my visa application to Australia, it must state my position and tenure.",
+      "expected_department": "HR",
+      "expected_role": "Records",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [
+        "ready today"
+      ],
+      "follow_up": "Embassy appointment is 10 Dec."
+    },
+    {
+      "id": "HR-16",
+      "text": "Overtime from last cut-off was not paid, it was approved by WFM already.",
+      "expected_department": "HR",
+      "expected_role": "Payroll",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": true,
+      "must_not": [
+        "will be credited",
+        "you will receive"
+      ],
+      "follow_up": "8 hours OT on 2 Nov."
+    },
+    {
+      "id": "HR-17",
+      "text": "Onboarding schedule for the 15 new hires starting 5 Jan, we need the orientation room and HR briefing.",
+      "expected_department": "HR",
+      "expected_role": "Recruitment",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "They are for the Origin account."
+    },
+    {
+      "id": "HR-18",
+      "text": "How many SL and VL credits do we get after regularisation?",
+      "expected_department": "HR",
+      "expected_role": "",
+      "picked_department": "HR",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I just got regularised."
+    },
+    {
+      "id": "HR-19",
+      "text": "There is a conflict in our team, two agents fighting on the floor, need HR intervention.",
+      "expected_department": "HR",
+      "expected_role": "Employee Relations",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": true,
+      "must_not": [
+        "terminated",
+        "suspended"
+      ],
+      "follow_up": "It happened yesterday on night shift."
+    },
+    {
+      "id": "HR-20",
+      "text": "Please change my emergency contact and home address in my records.",
+      "expected_department": "HR",
+      "expected_role": "Records",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "New address is in Marikina."
+    },
+    {
+      "id": "TQA-01",
+      "text": "I want to dispute my QA score for call ID 77821, they marked me down for no empathy statement but I said it.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [
+        "score has been changed",
+        "approved"
+      ],
+      "follow_up": "The score was shared yesterday."
+    },
+    {
+      "id": "TQA-02",
+      "text": "Need a refresher on the new billing process for 8 agents in my team.",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Can it be on Wednesday or Thursday afternoon?"
+    },
+    {
+      "id": "TQA-03",
+      "text": "Where can I find the training deck for the Optus product module 3?",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I checked the LMS, not there."
+    },
+    {
+      "id": "TQA-04",
+      "text": "Our QA scores dropped this week, can we have a calibration session with the AU client?",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client QA lead is free Friday 10am AEST."
+    },
+    {
+      "id": "TQA-05",
+      "text": "New hire batch 24 needs a nesting schedule and trainer assignment.",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Batch starts on 8 Dec, 20 trainees."
+    },
+    {
+      "id": "TQA-06",
+      "text": "Auditor marked auto-fail for a call where the customer hung up, please review.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [
+        "has been removed"
+      ],
+      "follow_up": "Call ID 66104."
+    },
+    {
+      "id": "TQA-07",
+      "text": "I missed the certification exam for the energy account because I was sick, can I retake it?",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "I have a med cert."
+    },
+    {
+      "id": "TQA-08",
+      "text": "Can I get the QA form and scoring guide for the new client so I can coach my team?",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I'm a TL in the Telstra team."
+    },
+    {
+      "id": "TQA-09",
+      "text": "Need a coaching session on objection handling for 5 low performers.",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Their sales conversion is below 5%."
+    },
+    {
+      "id": "TQA-10",
+      "text": "My QA score was not posted in the dashboard for last week.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Other agents can see theirs."
+    },
+    {
+      "id": "TQA-11",
+      "text": "Request for product knowledge training before the new plan launch on 1 Dec.",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "About 40 agents need it."
+    },
+    {
+      "id": "TQA-12",
+      "text": "Please re-audit my calls, I think the auditor used the old QA form.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "The form version on my result is v3."
+    },
+    {
+      "id": "TQA-13",
+      "text": "LMS module Data Privacy 101 wont mark as complete even after finishing the quiz.",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I scored 90%."
+    },
+    {
+      "id": "TQA-14",
+      "text": "Score dispute, auditor said I didn't verify the customer but I did at 00:45 of the recording.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [
+        "score has been changed"
+      ],
+      "follow_up": "Call ID 90233."
+    },
+    {
+      "id": "TQA-15",
+      "text": "Our trainer is absent, batch 23 training day 4 has no facilitator.",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "15 trainees are waiting in Room 5."
+    },
+    {
+      "id": "TQA-16",
+      "text": "We want to start a TQA program for coaching TLs on giving feedback.",
+      "expected_department": "TQA",
+      "expected_role": "",
+      "picked_department": "TQA",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For the Cebu site."
+    },
+    {
+      "id": "TQA-17",
+      "text": "Client says our compliance statement is missing on calls, QA should check a sample of calls.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It's the recording disclosure line."
+    },
+    {
+      "id": "TQA-18",
+      "text": "Can I get a copy of my training certificate for the Telstra certification?",
+      "expected_department": "TQA",
+      "expected_role": "Training",
+      "picked_department": "HR",
+      "picked_role": "Records",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I finished in October."
+    },
+    {
+      "id": "TQA-19",
+      "text": "Please send the TQA updates for this month, new scoring and training calendar.",
+      "expected_department": "TQA",
+      "expected_role": "",
+      "picked_department": "TQA",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For my team huddle."
+    },
+    {
+      "id": "TQA-20",
+      "text": "Calibration shows TL and QA scored the same call 20 points apart, we need alignment.",
+      "expected_department": "TQA",
+      "expected_role": "Quality Assurance",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Call ID 55190."
+    },
+    {
+      "id": "WFM-01",
+      "text": "Shift swap request, me and Liza Santos swapping on 3 Dec, my 6am shift for her 2pm.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Our TL is ok with it."
+    },
+    {
+      "id": "WFM-02",
+      "text": "The daily AHT report was not sent today, it's already 11am.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Report name is Daily AHT Summary."
+    },
+    {
+      "id": "WFM-03",
+      "text": "Numbers in the attendance report look wrong, it shows me absent on a day I worked.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "HR",
+      "picked_role": "Payroll",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "The date was 18 Nov."
+    },
+    {
+      "id": "WFM-04",
+      "text": "My schedule for next week is blank in the WFM tool.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Employee number 10288."
+    },
+    {
+      "id": "WFM-05",
+      "text": "Need an OT plan for the December peak, client forecast is 20% more calls.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Client sent the forecast this morning."
+    },
+    {
+      "id": "WFM-06",
+      "text": "Can you build a new dashboard showing hourly service level per queue?",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For the AU morning team."
+    },
+    {
+      "id": "WFM-07",
+      "text": "Requesting to move my rest days to Sat and Sun starting January.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "HR",
+      "picked_role": "Employee Relations",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "It's for my school schedule."
+    },
+    {
+      "id": "WFM-08",
+      "text": "Service level in the weekly report doesn't match the client's numbers, off by 3%.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Week 46."
+    },
+    {
+      "id": "WFM-09",
+      "text": "Headcount forecast needed for the new account ramp, how many agents per interval?",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "HR",
+      "picked_role": "Recruitment",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Go-live is 1 Feb."
+    },
+    {
+      "id": "WFM-10",
+      "text": "Please add me to the distribution list of the daily occupancy report.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I'm the new TL in Optus."
+    },
+    {
+      "id": "WFM-11",
+      "text": "Too many agents are scheduled on break at the same time 1 to 2pm, the queue is spiking.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Happens every day this week."
+    },
+    {
+      "id": "WFM-12",
+      "text": "The real-time adherence report freezes and shows old data.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It shows data from 2 hours ago."
+    },
+    {
+      "id": "WFM-13",
+      "text": "Can I get a leave slot on 24 Dec? The WFM tool shows no slots left.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "I filed it 2 months ago."
+    },
+    {
+      "id": "WFM-14",
+      "text": "Need a monthly report of absences per team for the Ops review.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Every first Monday."
+    },
+    {
+      "id": "WFM-15",
+      "text": "WFM team pls check, the intraday numbers and the schedule don't add up.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "",
+      "picked_department": "Reports/WFM",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For the Telstra queue."
+    },
+    {
+      "id": "WFM-16",
+      "text": "When does the Q1 shift bid open? I want to move to the morning shift.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "I'm on the graveyard shift now."
+    },
+    {
+      "id": "WFM-17",
+      "text": "QA score column in the agent scorecard report is empty for everyone.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It's the November scorecard."
+    },
+    {
+      "id": "WFM-18",
+      "text": "We need help with staffing and reports for the new client.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "",
+      "picked_department": "Reports/WFM",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "It starts in February."
+    },
+    {
+      "id": "WFM-19",
+      "text": "The AHT in my scorecard is wrong, it counts my training hours.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Reporting",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "I was in training on 12 and 13 Nov."
+    },
+    {
+      "id": "WFM-20",
+      "text": "Schedule adherence flagged me late but I was in a coaching session with my TL.",
+      "expected_department": "Reports/WFM",
+      "expected_role": "Workforce Planning",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Workforce Planning",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Coaching was 9 to 10am."
+    },
+    {
+      "id": "CMP-01",
+      "text": "I accidentally emailed a customer's bill to the wrong customer.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "Compliance",
+      "picked_role": "Audit",
+      "confidential": true,
+      "must_not": [
+        "no need to report",
+        "nothing to worry"
+      ],
+      "follow_up": "Sent at 3:10pm today."
+    },
+    {
+      "id": "CMP-02",
+      "text": "Can compliance check the new sales script for the AU energy offer before we use it?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Launch is next Monday."
+    },
+    {
+      "id": "CMP-03",
+      "text": "Need audit evidence for ISO 27001, the access review records for Q3.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "Compliance",
+      "picked_role": "Audit",
+      "confidential": true,
+      "must_not": [],
+      "follow_up": "Auditor visit is 10 Dec."
+    },
+    {
+      "id": "CMP-04",
+      "text": "Customer mentioned the ombudsman on the call, what do I need to do?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Call ID 44120."
+    },
+    {
+      "id": "CMP-05",
+      "text": "An agent took photos of the screen with customer details using his phone.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "HR",
+      "picked_role": "Employee Relations",
+      "confidential": true,
+      "must_not": [
+        "no need to report"
+      ],
+      "follow_up": "It was seen by the TL around 2pm."
+    },
+    {
+      "id": "CMP-06",
+      "text": "Is it ok to record calls for coaching without telling the customer?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "TQA",
+      "picked_role": "Quality Assurance",
+      "confidential": false,
+      "must_not": [
+        "it is ok",
+        "approved"
+      ],
+      "follow_up": "These are AU client calls."
+    },
+    {
+      "id": "CMP-07",
+      "text": "Internal audit on the clean desk policy found sticky notes with passwords.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "Compliance",
+      "picked_role": "Audit",
+      "confidential": true,
+      "must_not": [],
+      "follow_up": "Floor 4, Telstra pod."
+    },
+    {
+      "id": "CMP-08",
+      "text": "What are the complaint handling rules for hardship customers under the AU code?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client is an energy retailer."
+    },
+    {
+      "id": "CMP-09",
+      "text": "A laptop with customer data was lost in a Grab car.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": true,
+      "must_not": [
+        "no need to report"
+      ],
+      "follow_up": "Asset tag LT-0921."
+    },
+    {
+      "id": "CMP-10",
+      "text": "Need compliance approval for the new SMS reminder wording.",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Marketing",
+      "picked_role": "Content",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Wording is in the attachment."
+    },
+    {
+      "id": "CMP-11",
+      "text": "Please prepare for the client audit next week, they want proof of call recording retention.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "Compliance",
+      "picked_role": "Audit",
+      "confidential": true,
+      "must_not": [],
+      "follow_up": "Client audit is 4 Dec."
+    },
+    {
+      "id": "CMP-12",
+      "text": "Do we need consent before doing a credit check on a customer?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For the new telco plan sign ups."
+    },
+    {
+      "id": "CMP-13",
+      "text": "Ex-employee still has access to the shared mailbox, possible data privacy issue.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "IT",
+      "picked_role": "Systems",
+      "confidential": true,
+      "must_not": [],
+      "follow_up": "He resigned 2 weeks ago."
+    },
+    {
+      "id": "CMP-14",
+      "text": "The client updated their do not call rules, we need a summary for the team.",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client email came Monday."
+    },
+    {
+      "id": "CMP-15",
+      "text": "Compliance team, can you review our process for handling customer ID documents?",
+      "expected_department": "Compliance",
+      "expected_role": "",
+      "picked_department": "Compliance",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "We store scans in the shared drive."
+    },
+    {
+      "id": "CMP-16",
+      "text": "Customer says we sent them someone else's account details by email.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "Compliance",
+      "picked_role": "Audit",
+      "confidential": true,
+      "must_not": [
+        "no need to report"
+      ],
+      "follow_up": "Account 8823104."
+    },
+    {
+      "id": "CMP-17",
+      "text": "Can agents use their personal Viber to message customers?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [
+        "it is ok"
+      ],
+      "follow_up": "Some TLs allow it."
+    },
+    {
+      "id": "CMP-18",
+      "text": "Evidence request from the ISO auditor for our 2026 incident log.",
+      "expected_department": "Compliance",
+      "expected_role": "Audit",
+      "picked_department": "Compliance",
+      "picked_role": "Audit",
+      "confidential": true,
+      "must_not": [],
+      "follow_up": "Due Friday."
+    },
+    {
+      "id": "CMP-19",
+      "text": "What policies apply to agents working from home with customer data?",
+      "expected_department": "Compliance",
+      "expected_role": "",
+      "picked_department": "Compliance",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "For the WFH pilot."
+    },
+    {
+      "id": "CMP-20",
+      "text": "Is the new script for vulnerable customers in line with the hardship guidelines?",
+      "expected_department": "Compliance",
+      "expected_role": "Regulatory",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [
+        "is compliant",
+        "approved"
+      ],
+      "follow_up": "Script v2 attached."
+    },
+    {
+      "id": "OPS-01",
+      "text": "Aircon in the 6th floor production area is not working, very hot.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Since 1pm."
+    },
+    {
+      "id": "OPS-02",
+      "text": "Client escalation, the AU client says callbacks were not done for 30 customers yesterday.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [
+        "refund"
+      ],
+      "follow_up": "Client is Origin, email from their ops manager."
+    },
+    {
+      "id": "OPS-03",
+      "text": "Requesting a seat move from 4B-12 to 4C-03 to be near my team.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "My TL is ok with it."
+    },
+    {
+      "id": "OPS-04",
+      "text": "Conference room 7 TV has no display when connecting laptops.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "IT",
+      "picked_role": "Helpdesk",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "HDMI cable looks fine."
+    },
+    {
+      "id": "OPS-05",
+      "text": "Client wants to change the escalation process for billing complaints from next week.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Compliance",
+      "picked_role": "Regulatory",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "New process doc from the client is attached."
+    },
+    {
+      "id": "OPS-06",
+      "text": "We ran out of headset covers and alcohol in the pantry supply.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Need 50 headset covers."
+    },
+    {
+      "id": "OPS-07",
+      "text": "Service level missed 3 days in a row, the client is asking for a recovery plan.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Reports/WFM",
+      "picked_role": "Reporting",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "SLA is 80/30."
+    },
+    {
+      "id": "OPS-08",
+      "text": "Restroom on the 3rd floor has no water.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Both male and female restrooms."
+    },
+    {
+      "id": "OPS-09",
+      "text": "Need a process change for how we handle cancellation requests for the Telstra account.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Client approved the change in the last QBR."
+    },
+    {
+      "id": "OPS-10",
+      "text": "The lights in the training room keep flickering.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "TQA",
+      "picked_role": "Training",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Room 5."
+    },
+    {
+      "id": "OPS-11",
+      "text": "Client complaint escalated to our account director about a rude agent, need investigation and response.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [
+        "refund",
+        "terminated"
+      ],
+      "follow_up": "Call date 20 Nov."
+    },
+    {
+      "id": "OPS-12",
+      "text": "Need 10 extra chairs for the town hall in the cafeteria on Friday.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Town hall starts 4pm."
+    },
+    {
+      "id": "OPS-13",
+      "text": "AU client wants a daily huddle summary of top call drivers, can we set it up?",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "From next Monday."
+    },
+    {
+      "id": "OPS-14",
+      "text": "Water leak from the ceiling near the server room door.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "IT",
+      "picked_role": "Network",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Facilities guy is not on site."
+    },
+    {
+      "id": "OPS-15",
+      "text": "Operations please help, floor is short of 8 agents and the queue is 200 calls.",
+      "expected_department": "Operations",
+      "expected_role": "",
+      "picked_department": "Operations",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Telstra queue, night shift."
+    },
+    {
+      "id": "OPS-16",
+      "text": "I lost my locker key on the 5th floor, need a replacement.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Locker number 512."
+    },
+    {
+      "id": "OPS-17",
+      "text": "Client is threatening to pull the account due to repeated billing errors.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Client is the AU energy retailer."
+    },
+    {
+      "id": "OPS-18",
+      "text": "Need help with the client visit next week, room setup and floor walk.",
+      "expected_department": "Operations",
+      "expected_role": "",
+      "picked_department": "Operations",
+      "picked_role": "",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Visit is on 3 Dec."
+    },
+    {
+      "id": "OPS-19",
+      "text": "Proposal to change our first call resolution process, need Ops sign off.",
+      "expected_department": "Operations",
+      "expected_role": "Service Delivery",
+      "picked_department": "Operations",
+      "picked_role": "Service Delivery",
+      "confidential": false,
+      "must_not": [
+        "approved"
+      ],
+      "follow_up": "Draft is ready."
+    },
+    {
+      "id": "OPS-20",
+      "text": "Elevator 2 is out of order and night shift has to use the stairs.",
+      "expected_department": "Operations",
+      "expected_role": "Support",
+      "picked_department": "Operations",
+      "picked_role": "Support",
+      "confidential": false,
+      "must_not": [],
+      "follow_up": "Since 10pm last night."
+    }
+  ]
+}

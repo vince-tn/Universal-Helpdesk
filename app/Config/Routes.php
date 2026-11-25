@@ -13,6 +13,12 @@ $routes->group('', ['filter' => 'guest'], static function (RouteCollection $rout
     $routes->get('signup/verify', 'AuthController::verifyForm');
     $routes->post('signup/verify', 'AuthController::verify');
     $routes->post('signup/resend', 'AuthController::resend');
+
+    $routes->get('login/mfa', 'MfaController::challengeForm');
+    $routes->post('login/mfa', 'MfaController::challenge');
+
+    $routes->get('sso/login', 'SsoController::login');
+    $routes->get('sso/callback', 'SsoController::callback');
 });
 
 $routes->post('logout', 'AuthController::logout', ['filter' => 'auth']);
@@ -54,6 +60,7 @@ $routes->group('admin/users', ['filter' => 'auth:superadmin'], static function (
     $routes->post('(:num)', 'AdminUserController::update/$1');
     $routes->post('(:num)/delete', 'AdminUserController::delete/$1');
     $routes->post('(:num)/toggle', 'AdminUserController::deactivate/$1');
+    $routes->post('(:num)/mfa-reset', 'AdminUserController::resetMfa/$1');
 });
 
 $routes->group('admin/access', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
@@ -80,9 +87,24 @@ $routes->group('admin/departments', ['filter' => 'auth:superadmin,supervisor,tea
     $routes->post('guardrails/(:num)/delete', 'AdminKnowledgeController::deleteGuardrail/$1');
 });
 
-$routes->group('account', ['filter' => 'auth'], static function (RouteCollection $routes) {
+$routes->group('admin/knowledge-review', ['filter' => 'auth:superadmin,supervisor,team_leader'], static function (RouteCollection $routes) {
+    $routes->get('/', 'KnowledgeReviewController::index');
+    $routes->post('(:num)', 'KnowledgeReviewController::decide/$1');
+});
+
+$routes->group('admin/sla', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {
+    $routes->get('/', 'AdminSlaController::index');
+    $routes->post('/', 'AdminSlaController::save');
+    $routes->post('signoff', 'AdminSlaController::signoff');
+});
+
+$routes->group('account', ['filter' => 'auth'],static function (RouteCollection $routes) {
     $routes->get('/', 'AccountController::index');
     $routes->post('/', 'AccountController::update');
+    $routes->get('mfa/setup', 'MfaController::setupForm');
+    $routes->post('mfa/setup', 'MfaController::setup');
+    $routes->post('mfa/disable', 'MfaController::disable');
+    $routes->post('mfa/recovery', 'MfaController::regenerate');
 });
 
 $routes->group('rooms/manage', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {

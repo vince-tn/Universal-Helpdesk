@@ -85,6 +85,7 @@ class TicketModel extends Model
             $fields[$key] = $row[$column] ?? null;
         }
 
+        $fields['Ticket ID'] = (string) $row['id'];
         $fields['Title']  = $row['request_title'] ?? null;
         $fields['Status'] = $row['status'] ?? 'New';
 
@@ -180,6 +181,7 @@ class TicketModel extends Model
             ->whereIn('ticket_id', $ticketIds)
             ->whereIn('author_role', UserModel::STAFF_ROLES)
             ->where('is_solution', 1)
+            ->where('solution_state', TicketMessageModel::SOLUTION_APPROVED)
             ->where('is_internal', 0)
             ->orderBy('id', 'ASC')
             ->get()

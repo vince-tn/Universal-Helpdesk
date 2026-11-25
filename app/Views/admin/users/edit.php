@@ -14,6 +14,9 @@
 <?php if (session()->getFlashdata('error')): ?>
     <div class="alert alert-error"><?= icon('flag', 16) ?> <?= esc(session()->getFlashdata('error')) ?></div>
 <?php endif ?>
+<?php if (session()->getFlashdata('success')): ?>
+    <div class="alert alert-success"><?= icon('check', 16) ?> <?= esc(session()->getFlashdata('success')) ?></div>
+<?php endif ?>
 
 <div class="form-card narrow">
     <form action="/admin/users/<?= $editUser['id'] ?>" method="post">
@@ -110,6 +113,20 @@ window.UHD_DEPT_ROLES = <?= json_encode($deptRoles ?? [], JSON_HEX_TAG | JSON_HE
     fill();
 })();
 </script>
+</div>
+
+<div class="form-card narrow mfa-card">
+    <h2 class="section-title"><?= icon('shield', 16) ?> Two-step sign-in</h2>
+    <p>
+        <?= ! empty($mfaEnabled) ? 'On.' : 'Not set up.' ?>
+        <?= ! empty($mfaRequired) ? 'Required for this role.' : 'Optional for this role.' ?>
+        <?= (string) ($editUser['sso_subject'] ?? '') !== '' ? 'Linked to a Microsoft account.' : '' ?>
+    </p>
+    <form action="/admin/users/<?= (int) $editUser['id'] ?>/mfa-reset" method="post" onsubmit="return confirm('Reset two-step sign-in for this person? Their authenticator app and recovery codes stop working.');">
+        <?= csrf_field() ?>
+        <div class="field-hint">Use this when someone loses their phone. It also unlinks their Microsoft account so the next Microsoft sign in links again.</div>
+        <button type="submit" class="btn btn-secondary"><?= icon('lock', 16) ?> Reset two-step sign-in</button>
+    </form>
 </div>
 
 <?= $this->endSection() ?>

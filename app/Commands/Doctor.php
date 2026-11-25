@@ -31,6 +31,7 @@ class Doctor extends BaseCommand
         $this->webhook('ticket-chat', $config->chatWebhookUrl);
         $this->ollama();
         $this->cloud($config);
+        $this->sharedAdmin();
         $this->mail();
         $this->registration();
         $this->routing();
@@ -137,6 +138,20 @@ class Doctor extends BaseCommand
             'ollama      ' . $model . ' has not been pulled yet',
             'docker compose logs ollama-init - a first pull is a couple of GB'
         );
+    }
+
+    // flags the shared demo admin while it still opens with the default password
+    private function sharedAdmin(): void
+    {
+        $shared = (new \App\Models\UserModel())->findByEmail('admin@universalhelpdesk.local');
+
+        if ($shared !== null && (int) $shared['is_active'] === 1 && password_verify('ChangeMe123!', (string) $shared['password_hash'])) {
+            CLI::write('  !!   shared admin is open with the default password. Run helpdesk:admin --name .. --email .. --lock-shared', 'red');
+
+            return;
+        }
+
+        $this->ok('shared admin is locked or has its own password');
     }
 
     private function cloud(N8n $config): void

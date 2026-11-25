@@ -92,7 +92,12 @@ class AdminUserController extends BaseController
             $byDept[$r['dept']][] = ['id' => (int) $r['id'], 'name' => $r['name']];
         }
 
-        return view('admin/users/edit', ['editUser' => $user, 'deptRoles' => $byDept]);
+        return view('admin/users/edit', [
+            'editUser'    => $user,
+            'deptRoles'   => $byDept,
+            'mfaEnabled'  => (new \App\Libraries\Mfa())->isEnabled($user),
+            'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role']),
+        ]);
     }
 
     public function update(int $id)
@@ -220,6 +225,22 @@ class AdminUserController extends BaseController
             : '';
 
         return redirect()->to('/admin/users')->with('success', "Account for {$name} deleted." . $note);
+    }
+
+    // clears two-step sign-in and the microsoft link so the person can set both up again
+    public function resetMfa(int $id)
+    {
+        $user = $this->userModel->find($id);
+
+        if ($user === null) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        (new \App\Libraries\Mfa())->disable($id);
+        $this->userModel->update($id, ['sso_subject' => null]);
+        \App\Libraries\Activity::audit('mfa_reset', 'reset two-step sign-in for ' . $user['email']);
+
+        return redirect()->to('/admin/users/' . $id . '/edit')->with('success', "Two-step sign-in reset for {$user['name']}. They set it up again at their next sign in.");
     }
 
     public function deactivate(int $id)
