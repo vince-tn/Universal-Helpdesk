@@ -46,6 +46,23 @@ class TicketAssistant
         $this->guardrails = new Guardrails();
     }
 
+    public static function plainReply(string $text): string
+    {
+        $text = (string) preg_replace('/^[ \t]*(?:ARTICLE|CASE)[ \t]*[1-9](?![\p{L}\p{N}])[ \t]*(?:\([^)]*\)[ \t]*:?|:)[ \t]*/miu', '', $text);
+        $text = (string) preg_replace('/(?<![\p{L}\p{N}])ARTICLES?[ \t]*[1-9](?![\p{L}\p{N}])/iu', 'the guide', $text);
+        $text = (string) preg_replace('/(?<![\p{L}\p{N}])CASES?[ \t]*[1-9](?![\p{L}\p{N}])/iu', 'an earlier request', $text);
+        $text = (string) preg_replace('/(?<![\p{L}\p{N}])tickets?[ \t]*#[ \t]*[0-9]+/iu', 'an earlier ticket', $text);
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = (string) preg_replace('/[ \t]+([,.;:])/', '$1', $text);
+        $text = (string) preg_replace_callback(
+            '/(\A|[.!?]\s+|\n)(the guide|an earlier request|an earlier ticket)/u',
+            static fn ($m) => $m[1] . ucfirst($m[2]),
+            $text
+        );
+
+        return trim((string) $text);
+    }
+
     public function isEnabled(): bool
     {
         return $this->config->assistantEnabled;
@@ -88,7 +105,7 @@ class TicketAssistant
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
         }
 
-        $body = trim((string) ($output['requester_message'] ?? ''));
+        $body = self::plainReply((string) ($output['requester_message'] ?? ''));
 
         if ($body === '' && $known === '' && $article === null) {
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
@@ -231,6 +248,14 @@ class TicketAssistant
         }
 
         $department = (string) (($fields['Responsible Department'] ?? '') ?: ($fields['Submitting Department'] ?? ''));
+
+        $result['reply'] = self::plainReply($result['reply']);
+
+        if ($result['reply'] === '') {
+            $result['reply']            = $this->ungroundedReply($department);
+            $result['resolution_state'] = 'NEEDS_STAFF';
+            $result['can_self_serve']   = 'No';
+        }
 
         $actions = $result['actions'];
         foreach (['set_description', 'resolution_note'] as $key) {
