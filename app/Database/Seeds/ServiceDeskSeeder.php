@@ -106,6 +106,29 @@ class ServiceDeskSeeder extends Seeder
         ],
     ];
 
+    private const EXTRA_ARTICLES = [
+        'HR' => [
+            ['Payroll cut-off and pay dates', 'pay date, cut-off, payroll schedule, salary date', "Pay goes out on the 15th and the last working day of the month.\nChanges filed after the cut-off, 5 working days before pay day, go into the next pay run."],
+        ],
+        'TQA' => [
+            ['Disputing a QA score', 'qa score, dispute, audit result, calibration', "Send the call or audit ID and the part of the score you disagree with.\nDisputes must be raised within 3 working days of the score being shared."],
+            ['Booking a refresher training', 'refresher, retraining, coaching session', "Send the topic, the people who need it and two dates that work.\nTQA confirms the slot within 2 working days."],
+            ['Finding training materials', 'training materials, modules, slides, lms', "Training decks and recordings are in the shared TQA folder.\nIf a module is missing, reply with its name."],
+        ],
+        'Compliance' => [
+            ['Reporting a possible data privacy incident', 'data privacy, breach, leak, wrong recipient, personal data', "Stop and do not forward the data further.\nRaise a ticket straight away with what was shared, with whom and when. Do not include the personal data itself."],
+            ['Script or wording approval', 'script approval, wording, regulatory check', "Send the script or wording and where it will be used.\nAllow 3 working days for review."],
+            ['Requesting audit evidence', 'audit evidence, iso, records request', "Send the audit name, the control and the evidence needed.\nCompliance replies with what to upload and the deadline."],
+            ['Complaint handling rules', 'complaint, escalation rules, regulator', "Log every complaint in the client system the same day.\nIf a customer mentions the regulator or the ombudsman, escalate to your team leader at once."],
+        ],
+        'Operations' => [
+            ['Reporting faulty room equipment', 'room, tv, projector, conference phone, broken', "Send the room name and what is not working.\nIT or Operations checks it the same working day."],
+            ['Requesting a seat move', 'seat move, desk change, workstation', "Send your name, current seat and the seat you need, plus your team leader's okay."],
+            ['Office supplies', 'supplies, headset stock, stationery', "Send the item and quantity.\nSupplies are handed out on Tuesdays and Thursdays."],
+            ['Raising a client escalation', 'client escalation, urgent client issue', "Send the client, what happened, and the impact.\nMark work stopped as yes if service to the client is down."],
+        ],
+    ];
+
     private const GUARDRAILS = [
         'never promise an approval, a pay amount, a refund or a date on behalf of a team',
         'never ask for or repeat passwords, one time codes or full bank details',
@@ -187,7 +210,7 @@ class ServiceDeskSeeder extends Seeder
 
         $ids = array_column($db->table('departments')->get()->getResultArray(), 'id', 'name');
 
-        foreach (self::ARTICLES as $department => $articles) {
+        foreach (array_merge_recursive(self::ARTICLES, self::EXTRA_ARTICLES) as $department => $articles) {
             if (! isset($ids[$department])) {
                 continue;
             }

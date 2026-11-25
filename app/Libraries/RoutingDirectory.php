@@ -7,7 +7,9 @@ use App\Models\TicketModel;
 
 class RoutingDirectory
 {
-    public const LIMIT = 4;
+    public const LIMIT = 6;
+
+    private const PER_DEPARTMENT = 2;
 
     private const STOPWORDS = [
         'the', 'and', 'for', 'with', 'that', 'this', 'have', 'has', 'had', 'from', 'you', 'your', 'our', 'are',
@@ -112,8 +114,18 @@ class RoutingDirectory
         usort($scored, static fn ($a, $b) => $b[0] <=> $a[0]);
 
         $options = [$chosen];
-        foreach (array_slice($scored, 0, $limit - 1) as [, $i]) {
-            $options[] = $entries[$i];
+        // cap each department so one team's shared words cannot fill the list
+        $seen = [];
+        foreach ($scored as [, $i]) {
+            if (count($options) >= $limit) {
+                break;
+            }
+            $dept = strtolower($entries[$i]['department']);
+            if (($seen[$dept] ?? 0) >= self::PER_DEPARTMENT) {
+                continue;
+            }
+            $seen[$dept] = ($seen[$dept] ?? 0) + 1;
+            $options[]   = $entries[$i];
         }
 
         return $options;
