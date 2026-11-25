@@ -3,12 +3,14 @@ name: Test and release
 on:
   push:
     branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -34,7 +36,10 @@ jobs:
 
   release:
     needs: test
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
