@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use App\Libraries\Html;
 use App\Libraries\Mentions;
+use App\Libraries\Notifier;
 use App\Libraries\Org;
 use App\Libraries\PriorCases;
 use App\Libraries\RoutingDirectory;
@@ -320,6 +321,9 @@ class TicketController extends BaseController
                 ->with('error', 'Something went wrong saving your ticket. Please try again.');
         }
 
+        $raised = $this->ticketModel->getTicket($id);
+        (new Notifier())->ticketRaised($id, $raised['fields'] ?? [], $text);
+
         return redirect()->to("/tickets/{$id}")->with('success', 'Ticket submitted.');
     }
 
@@ -452,7 +456,7 @@ class TicketController extends BaseController
 
     public function updateStatus(string $id)
     {
-        $this->requireManageAccess($id);
+        $fields = $this->requireManageAccess($id);
 
         $status = $this->request->getPost('status');
         if (! in_array($status, TicketModel::STATUSES, true)) {
@@ -460,6 +464,7 @@ class TicketController extends BaseController
         }
 
         $this->ticketModel->updateStatus($id, $status);
+        (new Notifier())->statusChanged($id, $fields, $status);
 
         return redirect()->to("/tickets/{$id}")->with('success', 'Status updated.');
     }
@@ -492,6 +497,14 @@ class TicketController extends BaseController
             'due_date'    => $dueDate !== '' ? $dueDate : null,
             'assigned_to' => $assignedTo > 0 ? $assignedTo : null,
         ]);
+
+        if ($assignedTo > 0 && $assignedTo !== $current) {
+            $assignee = $this->userModel->find($assignedTo);
+
+            if ($assignee !== null) {
+                (new Notifier())->assigned($id, $fields, $assignee);
+            }
+        }
 
         $category = trim((string) $this->request->getPost('category'));
         $tat      = trim((string) $this->request->getPost('suggested_tat'));
@@ -596,6 +609,11 @@ class TicketController extends BaseController
             (string) ($fields['Request Title'] ?? $fields['Title'] ?? 'a ticket'),
             Org::ticketAudience($fields)
         );
+
+        $meta     = $this->metaModel->firstOrCreate($id);
+        $assignee = empty($meta['assigned_to']) ? null : $this->userModel->find((int) $meta['assigned_to']);
+
+        (new Notifier())->messagePosted($id, $fields, $user, $body, $assignee);
 
         $redirect = redirect()->to("/tickets/{$id}#conversation");
 

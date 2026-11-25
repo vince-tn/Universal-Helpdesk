@@ -204,6 +204,10 @@ class Doctor extends BaseCommand
             $config->SMTPPort,
             $config->SMTPHost === 'mailpit' ? ' - read the codes at http://localhost:8025' : ''
         ));
+
+        CLI::write((new \App\Libraries\Notifier())->isEnabled()
+            ? '  --   ticket emails on: raised, replied, assigned and status changes'
+            : '  --   ticket emails off - set TICKET_EMAILS=on in .env to send them', 'dark_gray');
     }
 
     private function registration(): void
