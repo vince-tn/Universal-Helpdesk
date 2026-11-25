@@ -38,6 +38,7 @@ $routes->group('tickets', ['filter' => 'auth'], static function (RouteCollection
 });
 
 $routes->get('reports', 'ReportsController::index', ['filter' => 'auth:superadmin']);
+$routes->get('reports/export', 'ReportsController::export', ['filter' => 'auth:superadmin']);
 
 $routes->group('notifications', ['filter' => 'auth'], static function (RouteCollection $routes) {
     $routes->get('/', 'NotificationController::index');

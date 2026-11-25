@@ -73,6 +73,26 @@ if (! function_exists('is_ymd_date')) {
     }
 }
 
+if (! function_exists('format_duration')) {
+    // minutes as "45 min", "3.5 hours" or "2.1 days"
+    function format_duration(?float $minutes): string
+    {
+        if ($minutes === null) {
+            return 'No data yet';
+        }
+
+        if ($minutes < 60) {
+            return max(0, (int) round($minutes)) . ' min';
+        }
+
+        if ($minutes < 2880) {
+            return round($minutes / 60, 1) . ' hours';
+        }
+
+        return round($minutes / 1440, 1) . ' days';
+    }
+}
+
 if (! function_exists('ticket_department')) {
 
     function ticket_department(array $fields): string
