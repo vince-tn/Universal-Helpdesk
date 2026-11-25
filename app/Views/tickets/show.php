@@ -61,7 +61,7 @@
             <div class="ai-tags-head">
                 <span class="badge-ai"><?= icon('sparkle', 11) ?> AI</span>
                 <span>Tagged automatically at intake</span>
-                <span class="pill pill-source-<?= strtolower($f['AI Source'] ?? 'local') === 'gemini' ? 'gemini' : 'local' ?>">
+                <span class="pill pill-source-<?= in_array(strtolower($f['AI Source'] ?? 'local'), ['gemini', 'openrouter'], true) ? 'gemini' : 'local' ?>">
                     <?= esc($f['AI Source'] ?? 'Local') ?>
                 </span>
                 <?php if ($needsReview): ?>

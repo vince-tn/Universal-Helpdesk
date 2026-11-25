@@ -41,8 +41,27 @@ class N8n extends BaseConfig
         return match ($mode) {
             'on', 'true', '1', 'yes'  => true,
             'off', 'false', '0', 'no' => false,
-            default                   => trim((string) (env('GEMINI_API_KEY') ?: '')) !== '',
+            default                   => $this->cloudKey() !== '',
         };
+    }
+
+    // openrouter when picked, gemini otherwise
+    public function cloudProvider(): string
+    {
+        return strtolower(trim((string) (env('AI_CLOUD_PROVIDER') ?: 'gemini'))) === 'openrouter' ? 'openrouter' : 'gemini';
+    }
+
+    private function cloudKey(): string
+    {
+        $key = $this->cloudProvider() === 'openrouter' ? 'OPENROUTER_API_KEY' : 'GEMINI_API_KEY';
+
+        return trim((string) (env($key) ?: ''));
+    }
+
+    // confidential teams never leave the box when this is on
+    public function confidentialLocalOnly(): bool
+    {
+        return $this->truthy('CONFIDENTIAL_LOCAL_ONLY', true);
     }
 
     private function truthy(string $key, bool $default): bool

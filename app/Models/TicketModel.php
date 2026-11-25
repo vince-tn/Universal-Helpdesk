@@ -268,7 +268,7 @@ class TicketModel extends Model
 
     public function replaceClassification(string $id, array $output, string $aiSource = 'Local'): bool
     {
-        $row = ['ai_source' => in_array($aiSource, ['Local', 'Gemini'], true) ? $aiSource : 'Local'];
+        $row = ['ai_source' => in_array($aiSource, ['Local', 'Gemini', 'OpenRouter'], true) ? $aiSource : 'Local'];
 
         foreach (self::CLASSIFIER_MAP as $key => $column) {
             $value = $output[$key] ?? null;
@@ -310,7 +310,7 @@ class TicketModel extends Model
             'request_body'          => $submission['Request'] ?? null,
 
             'request_html'          => ($submission['Request HTML'] ?? '') !== '' ? $submission['Request HTML'] : null,
-            'ai_source'             => in_array($aiSource, ['Local', 'Gemini'], true) ? $aiSource : 'Local',
+            'ai_source'             => in_array($aiSource, ['Local', 'Gemini', 'OpenRouter'], true) ? $aiSource : 'Local',
             'status'                => 'New',
         ];
 

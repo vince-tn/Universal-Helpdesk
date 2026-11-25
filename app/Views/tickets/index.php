@@ -23,7 +23,7 @@
         };
     }
     function sourcePillClass(string $source): string {
-        return $source === 'Gemini' ? 'pill-source-gemini' : 'pill-source-local';
+        return in_array($source, ['Gemini', 'OpenRouter'], true) ? 'pill-source-gemini' : 'pill-source-local';
     }
 
     function sortLink(string $field, string $label, string $currentSort, array $params): string {

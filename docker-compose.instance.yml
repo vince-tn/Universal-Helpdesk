@@ -32,6 +32,7 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
       - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/free}
       - OPENROUTER_FALLBACK_MODEL=${OPENROUTER_FALLBACK_MODEL:-google/gemma-4-31b-it:free}
+      - BRAND_NAME=${BRAND_NAME:-Service Desk}
 
   ollama:
     profiles: ["disabled"]
