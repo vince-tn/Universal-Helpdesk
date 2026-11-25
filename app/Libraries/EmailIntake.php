@@ -115,6 +115,9 @@ class EmailIntake
         if (in_array($from, $this->ownAddresses, true)) {
             return ['skipped', null, 'sent by the help desk itself'];
         }
+        if (! MailParsing::authenticated((array) ($message['internetMessageHeaders'] ?? []))) {
+            return ['skipped', null, 'sender could not be verified (no dmarc, spf and dkim pass)'];
+        }
 
         $account = (new UserModel())->findByEmail($from);
 

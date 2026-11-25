@@ -466,6 +466,13 @@ class TicketAssistant
             return [];
         }
 
+        // a resolve by the assistant runs the same clock, log and notice as a person would
+        if (isset($changes['status'])) {
+            (new \App\Libraries\Sla())->onStatusChange($ticketId, $status, 'Resolved');
+            \App\Libraries\Activity::ticket($ticketId, 'status', $status, 'Resolved', ['id' => null, 'name' => self::AUTHOR]);
+            (new \App\Libraries\Notifier())->statusChanged($ticketId, $fields, $status, 'Resolved');
+        }
+
         log_message('info', 'Assistant updated ticket {id}: {fields}', [
             'id'     => $ticketId,
             'fields' => implode(', ', array_keys($changes)),

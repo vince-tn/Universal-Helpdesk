@@ -83,6 +83,10 @@ class KnowledgeReview
             return [true, "Answer on #{$ticketId} rejected. The assistant will not reuse it."];
         }
 
+        if ($action === 'article' && (int) ($fields['Confidential'] ?? 0) === 1) {
+            return [false, 'This answer is from a confidential ticket, so it cannot become a shared article. Approve it without saving an article.'];
+        }
+
         if ($action === 'article') {
             $departmentId = (new DepartmentModel())->idFor(ticket_department($fields));
 

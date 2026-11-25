@@ -86,6 +86,12 @@ class SsoController extends BaseController
             return redirect()->to('/login')->with('error', 'That Microsoft account is not the one linked to ' . $email . '. Contact your administrator.');
         }
 
+        if ($linked === '' && ($user['role'] ?? '') !== \App\Models\UserModel::ROLE_REQUESTER && ! $sso->tenantIsGuid()) {
+            Activity::audit('sso_link_refused', 'staff account ' . $email . ' needs a fixed tenant to link', null, $user);
+
+            return redirect()->to('/login')->with('error', 'Staff accounts can use Microsoft sign in once the administrator sets the company tenant. Use your email and password.');
+        }
+
         if ($linked === '') {
             $users->update((int) $user['id'], ['sso_subject' => $subject]);
         }

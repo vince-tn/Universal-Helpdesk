@@ -67,7 +67,7 @@ class TicketIntake
 
         if ($internal) {
             Activity::ticket($id, 'note', null, null, $user);
-        } elseif ($isRequester && in_array($status, ['Resolved', 'Closed'], true)) {
+        } elseif ($isRequester && $status === 'Resolved') {
             $this->changeStatus($id, $fields, $status, 'Reopened', $user);
         } elseif ($isRequester && $status === 'Awaiting Requester') {
             $this->changeStatus($id, $fields, $status, 'In Progress', $user);
@@ -82,7 +82,9 @@ class TicketIntake
             $user,
             $id,
             (string) ($fields['Request Title'] ?? $fields['Title'] ?? 'a ticket'),
-            Org::ticketAudience($fields)
+            $internal
+                ? array_values(array_filter(Org::ticketAudience($fields), static fn ($u) => ($u['role'] ?? '') !== \App\Models\UserModel::ROLE_REQUESTER))
+                : Org::ticketAudience($fields)
         );
     }
 

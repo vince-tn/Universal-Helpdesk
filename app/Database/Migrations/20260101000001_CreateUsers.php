@@ -56,13 +56,16 @@ class CreateUsers extends Migration
         $this->forge->addUniqueKey('email');
         $this->forge->createTable('users');
 
+        // branded copies start with the shared admin locked, create a named one with helpdesk:admin
+        $branded = strtolower((string) (env('BRAND') ?: 'chikiting')) !== 'chikiting';
+
         $this->db->table('users')->insert([
             'name'          => 'Super Admin',
             'email'         => 'admin@universalhelpdesk.local',
-            'password_hash' => password_hash('ChangeMe123!', PASSWORD_DEFAULT),
+            'password_hash' => password_hash($branded ? bin2hex(random_bytes(24)) : 'ChangeMe123!', PASSWORD_DEFAULT),
             'role'          => 'superadmin',
             'department'    => null,
-            'is_active'     => 1,
+            'is_active'     => $branded ? 0 : 1,
             'created_at'    => date('Y-m-d H:i:s'),
             'updated_at'    => date('Y-m-d H:i:s'),
         ]);

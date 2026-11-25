@@ -76,12 +76,12 @@ class Approvals
     {
         $step = $this->current($ticketId);
 
-        if ($step === null || ! $this->canDecide($user, $fields, $step)) {
+        if ($step === null || ($fields['Status'] ?? '') !== 'Pending Approval' || ! $this->canDecide($user, $fields, $step)) {
             return null;
         }
 
         $db = \Config\Database::connect();
-        $db->table('ticket_approvals')->where('id', $step['id'])->update([
+        $db->table('ticket_approvals')->where('id', $step['id'])->where('status', 'pending')->update([
             'status'     => $approve ? 'approved' : 'rejected',
             'decided_by' => $user['id'],
             'decided_at' => date('Y-m-d H:i:s'),
@@ -93,7 +93,12 @@ class Approvals
 
         $tickets = new TicketModel();
 
+        if ($db->affectedRows() !== 1) {
+            return null;
+        }
+
         if (! $approve) {
+            $db->table('ticket_approvals')->where('ticket_id', $ticketId)->where('status', 'pending')->update(['status' => 'skipped']);
             $tickets->update((int) $ticketId, ['approval_state' => 'rejected', 'status' => 'Cancelled']);
             (new Sla())->onStatusChange($ticketId, 'Pending Approval', 'Cancelled');
             (new Notifier())->statusChanged($ticketId, $fields, 'Pending Approval', 'Cancelled');

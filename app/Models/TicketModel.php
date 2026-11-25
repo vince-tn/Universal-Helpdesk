@@ -85,6 +85,7 @@ class TicketModel extends Model
             $fields[$key] = $row[$column] ?? null;
         }
 
+        $fields['Ticket ID'] = (string) $row['id'];
         $fields['Title']  = $row['request_title'] ?? null;
         $fields['Status'] = $row['status'] ?? 'New';
 

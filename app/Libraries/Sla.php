@@ -64,7 +64,7 @@ class Sla
             $data['paused_at'] = $now;
         }
 
-        if ($to === 'Resolved') {
+        if ($to === 'Resolved' || ($to === 'Closed' && empty($meta['resolved_at']))) {
             $data['resolved_at'] = $now;
         }
 
@@ -98,8 +98,15 @@ class Sla
 
         $due = strtotime($meta['due_at']);
 
+        if ($status === 'Cancelled') {
+            return 'none';
+        }
+
         if (in_array($status, self::DONE, true)) {
-            $end = strtotime((string) ($meta['resolved_at'] ?? '')) ?: time();
+            $end = strtotime((string) ($meta['resolved_at'] ?? ''));
+            if ($end === false) {
+                return 'none';
+            }
 
             return $end <= $due ? 'met' : 'breached';
         }

@@ -215,6 +215,8 @@ class Notifier
 
     private function link(string $ticketId): string
     {
-        return rtrim((string) config('App')->baseURL, '/') . '/tickets/' . $ticketId;
+        $base = (string) (env('app_baseURL') ?: env('APP_URL') ?: config('App')->baseURL);
+
+        return rtrim($base, '/') . '/tickets/' . $ticketId;
     }
 }

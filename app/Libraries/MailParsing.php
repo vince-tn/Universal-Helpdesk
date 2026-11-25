@@ -156,6 +156,25 @@ final class MailParsing
     }
 
     // no-reply senders, bounces and auto replies must never make tickets
+    // true when exchange marked the mail internal or dmarc, or spf and dkim, passed
+    public static function authenticated(array $headers): bool
+    {
+        $results = '';
+        foreach ($headers as $h) {
+            $name  = strtolower((string) ($h['name'] ?? ''));
+            $value = strtolower((string) ($h['value'] ?? ''));
+            if ($name === 'x-ms-exchange-organization-authas' && trim($value) === 'internal') {
+                return true;
+            }
+            if ($name === 'authentication-results') {
+                $results .= ' ' . $value;
+            }
+        }
+
+        return str_contains($results, 'dmarc=pass')
+            || (str_contains($results, 'spf=pass') && str_contains($results, 'dkim=pass'));
+    }
+
     public static function isAutomated(string $from, array $headers): bool
     {
         $local = strtolower((string) strstr(trim($from), '@', true));

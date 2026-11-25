@@ -803,6 +803,10 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'Message cannot be empty.');
         }
 
+        if (in_array((string) ($fields['Status'] ?? ''), ['Closed', 'Cancelled'], true)) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'This ticket is closed. Raise a new ticket if it comes back.');
+        }
+
         $internal = $this->canManage($fields, $user) && $this->request->getPost('is_internal') !== null;
 
         $isSolution = ! $internal
