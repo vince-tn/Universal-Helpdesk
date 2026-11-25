@@ -2159,3 +2159,20 @@ a.rg-title:hover { text-decoration: underline; }
   .room-grid thead th { min-width: 140px; }
   .room-grid .rg-time { width: 60px; min-width: 60px; padding: 0 6px; }
 }
+
+/* two-step sign-in and microsoft sign in */
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: var(--ink-3); font-size: 13px; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; border-top: 1px solid var(--line); }
+.auth-card .auth-sso { display: flex; text-decoration: none; }
+.mfa-card { margin-top: 20px; }
+.mfa-card p { color: var(--ink-2); margin: 0 0 14px; }
+.mfa-card form .btn { margin-top: 10px; }
+.mfa-code-input { font-family: var(--font-mono); letter-spacing: 0.2em; }
+.mfa-setup-grid { display: grid; grid-template-columns: auto 1fr; gap: 32px; align-items: start; }
+.mfa-qr { display: inline-block; padding: 14px; margin: 12px 0; background: var(--cream); border: 1px solid var(--line); border-radius: var(--radius); }
+.mfa-qr img, .mfa-qr canvas { display: block; }
+.mfa-secret { font-family: var(--font-mono); font-size: 15px; color: var(--ink); background: var(--paper-tint); border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 10px 12px; margin-top: 6px; word-break: break-all; }
+.mfa-codes { columns: 2; gap: 24px; margin: 0 0 20px; padding-left: 22px; font-family: var(--font-mono); font-size: 15px; color: var(--ink); line-height: 2; }
+@media (max-width: 720px) {
+  .mfa-setup-grid { grid-template-columns: 1fr; gap: 18px; }
+}

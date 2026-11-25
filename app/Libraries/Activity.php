@@ -24,9 +24,9 @@ class Activity
         }
     }
 
-    public static function audit(string $action, string $detail = '', ?string $ticketId = null): void
+    public static function audit(string $action, string $detail = '', ?string $ticketId = null, ?array $actor = null): void
     {
-        $user = current_user();
+        $user = $actor ?? current_user();
 
         try {
             \Config\Database::connect()->table('audit_log')->insert([

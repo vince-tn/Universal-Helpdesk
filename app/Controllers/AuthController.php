@@ -3,6 +3,9 @@
 namespace App\Controllers;
 
 use App\Libraries\EmailVerifier;
+use App\Libraries\EntraSso;
+use App\Libraries\LoginSession;
+use App\Libraries\Mfa;
 use App\Libraries\SignupPolicy;
 use App\Models\UserModel;
 use Config\Access;
@@ -12,8 +15,9 @@ class AuthController extends BaseController
 
     private const PENDING_KEY = 'pending_signup_email';
 
-    private const LOGIN_MAX_FAILURES = 5;
-    private const LOGIN_LOCK_SECONDS = 900;
+    private const LOGIN_MAX_FAILURES    = 5;
+    private const LOGIN_MAX_IP_FAILURES = 10;
+    private const LOGIN_LOCK_SECONDS    = 900;
 
     protected UserModel $userModel;
     protected EmailVerifier $verifier;
@@ -28,7 +32,7 @@ class AuthController extends BaseController
 
     public function loginForm()
     {
-        return view('auth/login');
+        return view('auth/login', ['ssoAvailable' => (new EntraSso())->available()]);
     }
 
     public function login()
@@ -38,11 +42,13 @@ class AuthController extends BaseController
 
         $lockKey  = 'login_fail_' . md5(strtolower($email));
         $failures = (int) (cache($lockKey) ?? 0);
+        $ipKey    = 'login_fail_ip_' . md5((string) $this->request->getIPAddress());
+        $ipFails  = (int) (cache($ipKey) ?? 0);
 
-        if ($failures >= self::LOGIN_MAX_FAILURES) {
+        if ($failures >= self::LOGIN_MAX_FAILURES || $ipFails >= self::LOGIN_MAX_IP_FAILURES) {
             return redirect()->back()->withInput()->with(
                 'error',
-                'Too many failed attempts for that account. Wait ' . intdiv(self::LOGIN_LOCK_SECONDS, 60)
+                'Too many failed attempts. Wait ' . intdiv(self::LOGIN_LOCK_SECONDS, 60)
                     . ' minutes and try again.'
             );
         }
@@ -51,6 +57,7 @@ class AuthController extends BaseController
 
         if ($user === null || ! $this->userModel->verifyPassword($user, $password)) {
             cache()->save($lockKey, $failures + 1, self::LOGIN_LOCK_SECONDS);
+            cache()->save($ipKey, $ipFails + 1, self::LOGIN_LOCK_SECONDS);
 
             return redirect()->back()->withInput()->with('error', 'Invalid email or password.');
         }
@@ -61,18 +68,19 @@ class AuthController extends BaseController
 
         cache()->delete($lockKey);
 
-        session()->regenerate(true);
+        // password is right, but enrolled users still owe the second step
+        if ((new Mfa())->isEnabled($user)) {
+            session()->regenerate(true);
+            session()->set('mfa_pending', ['id' => (int) $user['id'], 'at' => time()]);
 
-        session()->set([
-            'isLoggedIn' => true,
-            'user' => [
-                'id'         => $user['id'],
-                'name'       => $user['name'],
-                'email'      => $user['email'],
-                'role'       => $user['role'],
-                'department' => $user['department'],
-            ],
-        ]);
+            return redirect()->to('/login/mfa');
+        }
+
+        LoginSession::start($user, LoginSession::METHOD_PASSWORD);
+
+        if (Mfa::requiredFor((string) $user['role'])) {
+            return redirect()->to('/account/mfa/setup')->with('error', 'Your role needs two-step sign-in. Set it up to continue.');
+        }
 
         return redirect()->to('/tickets')->with('success', 'Welcome back, ' . $user['name'] . '.');
     }

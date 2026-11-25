@@ -48,6 +48,7 @@ if [ ! -f .env ]; then
         echo "MAIL_FROM_NAME='$5'"
         echo "MYSQL_PASSWORD=$(openssl rand -hex 18)"
         echo "MYSQL_ROOT_PASSWORD=$(openssl rand -hex 18)"
+        echo "MFA_KEY=$(openssl rand -hex 32)"
         echo "OPENROUTER_API_KEY="
         echo "OPENROUTER_MODEL=openrouter/free"
         echo "CONFIDENTIAL_LOCAL_ONLY=on"

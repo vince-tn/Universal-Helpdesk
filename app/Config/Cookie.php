@@ -23,4 +23,15 @@ class Cookie extends BaseConfig
     public string $samesite = 'Lax';
 
     public bool $raw = false;
+
+    public function __construct()
+    {
+        parent::__construct();
+
+        $this->httponly = true;
+        $this->samesite = 'Lax';
+
+        // secure only over https, the office lan copy is plain http
+        $this->secure = PHP_SAPI !== 'cli' && \App\Libraries\Https::isSecure();
+    }
 }

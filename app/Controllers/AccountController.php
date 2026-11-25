@@ -10,8 +10,14 @@ class AccountController extends BaseController
     public function index()
     {
         $user = (new UserModel())->find((int) current_user()['id']);
+        $mfa  = new \App\Libraries\Mfa();
 
-        return view('account/index', ['account' => $user]);
+        return view('account/index', [
+            'account'     => $user,
+            'mfaEnabled'  => $mfa->isEnabled($user),
+            'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role']),
+            'mfaCodes'    => $mfa->recoveryLeft($user),
+        ]);
     }
 
     public function update()
