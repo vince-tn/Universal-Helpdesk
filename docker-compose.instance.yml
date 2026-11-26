@@ -68,6 +68,7 @@ services:
       TS_STATE_DIR: /var/lib/tailscale
       TS_SERVE_CONFIG: /config/funnel.json
       TS_USERSPACE: "true"
+      TS_EXTRA_ARGS: ${TS_EXTRA_ARGS:---timeout=0}
     volumes:
       - ${TS_DIR:?set TS_DIR}/state:/var/lib/tailscale
       - ${TS_DIR}/config:/config
