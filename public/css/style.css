@@ -2435,7 +2435,7 @@ input[type="number"], input[type="url"], input[type="tel"], input[type="search"]
 
 /* mfa setup: centred two panel card */
 .mfa-header, .mfa-setup { max-width: 980px; margin-left: auto; margin-right: auto; }
-.mfa-header { text-align: center; justify-content: center; }
+.mfa-header, .mfa-header h1 { text-align: center; justify-content: center; }
 .mfa-header .subtitle { margin-left: auto; margin-right: auto; }
 .mfa-setup { padding: 0; overflow: hidden; }
 .mfa-setup .mfa-setup-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; align-items: stretch; }
