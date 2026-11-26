@@ -84,7 +84,7 @@ class MfaController extends BaseController
             return redirect()->to('/account')->with('success', 'Two-step sign-in is already on.');
         }
 
-        $data = ['required' => Mfa::requiredFor((string) $user['role']), 'unavailable' => ! $this->mfa->canStoreSecrets()];
+        $data = ['required' => Mfa::requiredFor((string) $user['role'], (string) ($user['email'] ?? '')), 'unavailable' => ! $this->mfa->canStoreSecrets()];
 
         if ($data['unavailable']) {
             log_message('critical', 'mfa setup blocked: set encryption.key or MFA_KEY in the server env');
@@ -157,7 +157,7 @@ class MfaController extends BaseController
             return redirect()->to('/account');
         }
 
-        if (Mfa::requiredFor((string) $user['role'])) {
+        if (Mfa::requiredFor((string) $user['role'], (string) ($user['email'] ?? ''))) {
             return redirect()->to('/account')->with('error', 'Your role must keep two-step sign-in on. If you lose your phone, a super admin can reset it.');
         }
 

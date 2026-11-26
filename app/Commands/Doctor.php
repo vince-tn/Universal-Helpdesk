@@ -32,6 +32,7 @@ class Doctor extends BaseCommand
         $this->ollama();
         $this->cloud($config);
         $this->sharedAdmin();
+        $this->mfaExempt();
         $this->mail();
         $this->registration();
         $this->routing();
@@ -165,6 +166,14 @@ class Doctor extends BaseCommand
         }
 
         $this->ok('shared admin is locked or has its own password');
+    }
+
+    // accounts that skip two-step sign-in are shown so nobody forgets them
+    private function mfaExempt(): void
+    {
+        foreach (\App\Libraries\Mfa::exemptList() as $email) {
+            CLI::write('  !!   ' . $email . ' skips two-step sign-in (MFA_EXEMPT_EMAILS)', 'red');
+        }
     }
 
     private function cloud(N8n $config): void

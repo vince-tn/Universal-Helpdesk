@@ -78,7 +78,7 @@ class AuthController extends BaseController
 
         LoginSession::start($user, LoginSession::METHOD_PASSWORD);
 
-        if (Mfa::requiredFor((string) $user['role'])) {
+        if (Mfa::requiredFor((string) $user['role'], (string) $user['email'])) {
             return redirect()->to('/account/mfa/setup')->with('error', 'Your role needs two-step sign-in. Set it up to continue.');
         }
 

@@ -14,9 +14,22 @@ class Mfa
 
     private const RECOVERY_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
-    public static function requiredFor(string $role): bool
+    public static function requiredFor(string $role, string $email = ''): bool
     {
-        return in_array($role, self::REQUIRED_ROLES, true);
+        return in_array($role, self::REQUIRED_ROLES, true) && ! self::exempt($email);
+    }
+
+    // accounts listed in MFA_EXEMPT_EMAILS are never forced into two-step sign-in
+    public static function exempt(string $email): bool
+    {
+        $list = array_filter(array_map(static fn ($e) => strtolower(trim($e)), explode(',', (string) (env('MFA_EXEMPT_EMAILS') ?: ''))));
+
+        return $email !== '' && in_array(strtolower(trim($email)), $list, true);
+    }
+
+    public static function exemptList(): array
+    {
+        return array_values(array_filter(array_map('trim', explode(',', (string) (env('MFA_EXEMPT_EMAILS') ?: '')))));
     }
 
     public function isEnabled(?array $user): bool
