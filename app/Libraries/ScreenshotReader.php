@@ -158,24 +158,52 @@ class ScreenshotReader
             return '';
         }
 
+        foreach (self::modelsToTry($this->config->imageModel, $this->config->imageFallbacks) as $i => $model) {
+            if ($i > 0) {
+                sleep(2);
+            }
+
+            $notes = $this->ask($key, $model, $images, $requestText);
+
+            if ($notes !== '') {
+                return $notes;
+            }
+        }
+
+        return '';
+    }
+
+    public static function modelsToTry(string $primary, array $fallbacks): array
+    {
+        $models = array_map('trim', array_merge([$primary], $fallbacks));
+
+        return array_values(array_unique(array_filter($models, static fn ($m) => $m !== '')));
+    }
+
+    private function ask(string $key, string $model, array $images, string $requestText): string
+    {
         try {
             $response = \Config\Services::curlrequest([], null, null, false)->post($this->config->openRouterUrl . '/chat/completions', [
                 'headers'         => ['Authorization' => 'Bearer ' . $key],
-                'json'            => self::requestBody($this->config->imageModel, $images, $requestText),
+                'json'            => self::requestBody($model, $images, $requestText),
                 'timeout'         => $this->config->imageTimeout,
                 'connect_timeout' => 10,
                 'http_errors'     => false,
             ]);
         } catch (\Throwable $e) {
-            log_message('error', 'Reading the ticket screenshots failed: {message}', ['message' => $e->getMessage()]);
+            log_message('error', 'Reading the ticket screenshots with {model} failed: {message}', [
+                'model'   => $model,
+                'message' => $e->getMessage(),
+            ]);
 
             return '';
         }
 
         if ($response->getStatusCode() !== 200) {
-            log_message('error', 'Reading the ticket screenshots returned HTTP {code}: {body}', [
-                'code' => $response->getStatusCode(),
-                'body' => substr((string) $response->getBody(), 0, 300),
+            log_message('error', 'Reading the ticket screenshots with {model} returned HTTP {code}: {body}', [
+                'model' => $model,
+                'code'  => $response->getStatusCode(),
+                'body'  => substr((string) $response->getBody(), 0, 300),
             ]);
 
             return '';
@@ -184,7 +212,7 @@ class ScreenshotReader
         $notes = self::clean(self::replyText(json_decode((string) $response->getBody(), true)));
 
         if ($notes === '') {
-            log_message('error', 'Reading the ticket screenshots returned no text');
+            log_message('error', 'Reading the ticket screenshots with {model} returned no text', ['model' => $model]);
         }
 
         return $notes;

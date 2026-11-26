@@ -21,7 +21,9 @@ class N8n extends BaseConfig
 
     public string $imageModel = '@preset/image-processing';
 
-    public int $imageTimeout = 60;
+    public array $imageFallbacks = ['inclusionai/ling-3.2-flash:free', 'google/gemma-4-26b-a4b-it:free'];
+
+    public int $imageTimeout = 45;
 
     public function __construct()
     {
@@ -40,6 +42,12 @@ class N8n extends BaseConfig
         $this->assistantEnabled = $this->truthy('AI_ASSISTANT', true);
 
         $this->imageModel = trim((string) (env('OPENROUTER_IMAGE_MODEL') ?: $this->imageModel));
+
+        $fallbacks = env('OPENROUTER_IMAGE_FALLBACKS');
+
+        if (is_string($fallbacks) && trim($fallbacks) !== '') {
+            $this->imageFallbacks = array_values(array_filter(array_map('trim', explode(',', $fallbacks))));
+        }
     }
 
     public function imagesEnabled(): bool

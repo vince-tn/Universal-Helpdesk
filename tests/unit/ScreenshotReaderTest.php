@@ -145,6 +145,24 @@ final class ScreenshotReaderTest extends CIUnitTestCase
         $this->assertSame('', $reader->notesFor('1', '<img src="/uploads/tickets/' . self::A . '">', '', 'text', false));
     }
 
+    public function testThePresetIsTriedFirstThenEachFallbackOnce(): void
+    {
+        $this->assertSame(
+            ['@preset/image-processing', 'inclusionai/ling-3.2-flash:free', 'google/gemma-4-26b-a4b-it:free'],
+            ScreenshotReader::modelsToTry(' @preset/image-processing ', [
+                'inclusionai/ling-3.2-flash:free',
+                '',
+                'google/gemma-4-26b-a4b-it:free',
+                '@preset/image-processing',
+            ])
+        );
+    }
+
+    public function testNoFallbacksMeansOnlyThePreset(): void
+    {
+        $this->assertSame(['@preset/image-processing'], ScreenshotReader::modelsToTry('@preset/image-processing', []));
+    }
+
     public function testScreenshotsAreOnlyReadThroughOpenRouter(): void
     {
         $this->assertTrue(N8n::imagesFor(true, '@preset/image-processing', true, N8n::PROVIDER_OPENROUTER));
