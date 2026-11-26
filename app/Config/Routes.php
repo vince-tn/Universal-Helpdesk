@@ -38,6 +38,11 @@ $routes->group('tickets', ['filter' => 'auth'], static function (RouteCollection
     $routes->post('(:segment)/assist', 'TicketController::assist/$1');
     $routes->post('(:segment)/classify', 'TicketController::classify/$1');
     $routes->post('(:segment)/approval', 'TicketController::approval/$1');
+    $routes->post('(:segment)/merge', 'TicketController::merge/$1');
+    $routes->post('(:segment)/link', 'TicketController::link/$1');
+    $routes->post('(:segment)/not-duplicate', 'TicketController::dismissDuplicate/$1');
+    $routes->post('(:segment)/watchers', 'TicketController::addWatchers/$1');
+    $routes->post('(:segment)/watchers/(:num)/delete', 'TicketController::removeWatcher/$1/$2');
     $routes->get('(:segment)/feedback', 'TicketController::feedback/$1');
     $routes->get('(:segment)/updates', 'TicketController::updates/$1');
     $routes->get('(:segment)', 'TicketController::show/$1');

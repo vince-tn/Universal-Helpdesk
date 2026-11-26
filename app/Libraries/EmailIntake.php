@@ -138,7 +138,7 @@ class EmailIntake
         if ($ticketId !== null) {
             $ticket = (new TicketModel())->getTicket((string) $ticketId);
 
-            if ($ticket !== null && Org::canViewTicket($sender, $ticket['fields'])) {
+            if ($ticket !== null && Org::canReplyTicket($sender, $ticket['fields'])) {
                 return $this->reply((string) $ticketId, $ticket['fields'], $sender, $body);
             }
         }

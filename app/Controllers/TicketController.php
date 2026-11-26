@@ -16,6 +16,10 @@ use App\Libraries\RoutingDirectory;
 use App\Libraries\ScreenshotReader;
 use App\Libraries\TicketAssistant;
 use App\Libraries\TicketIntake;
+use App\Libraries\AutoAssign;
+use App\Libraries\Duplicates;
+use App\Libraries\SignupPolicy;
+use App\Libraries\Watchers;
 use App\Models\N8nService;
 use App\Models\TicketModel;
 use App\Models\TicketMetaModel;
@@ -123,7 +127,7 @@ class TicketController extends BaseController
                 $open = in_array($f['Status'] ?? 'New', TicketModel::OPEN_STATUSES, true);
 
                 return match ($view) {
-                    'mine'       => strcasecmp((string) ($f['Requester Email'] ?? ''), (string) $user['email']) === 0,
+                    'mine'       => Watchers::isRequesterSide($user, $f),
                     'assigned'   => (int) ($t['meta']['assigned_to'] ?? 0) === (int) $user['id'] && $open,
                     'team'       => $open && in_array(strtolower(resolve_base_department($t['department'] ?? '')), Org::ticketDepartments($user), true),
                     'unassigned' => $open && empty($t['meta']['assigned_to']),
@@ -380,6 +384,12 @@ class TicketController extends BaseController
             return redirect()->back()->withInput()->with('error', $error);
         }
 
+        [$requestedFor, $watchers, $error] = $this->requestPeople($user);
+
+        if ($error !== null) {
+            return redirect()->back()->withInput()->with('error', $error);
+        }
+
         $submission = [
             'Requester Name'        => $user['name'],
             'Requester Email'       => $user['email'],
@@ -398,7 +408,7 @@ class TicketController extends BaseController
                 ->with('error', 'Something went wrong saving your ticket. Please try again.');
         }
 
-        (new TicketIntake())->afterCreate($id, [
+        $created = (new TicketIntake())->afterCreate($id, [
             'department'     => $department,
             'role'           => $role,
             'service'        => $service,
@@ -407,9 +417,59 @@ class TicketController extends BaseController
             'people'         => $people,
             'stopped'        => $stopped,
             'needed_by'      => $neededBy,
+            'requested_for'  => $requestedFor,
+            'watchers'       => $watchers,
         ]);
 
-        return redirect()->to("/tickets/{$id}")->with('success', "Ticket #{$id} submitted. We emailed you a copy.");
+        $done = "Ticket #{$id} submitted. We emailed you a copy.";
+
+        if (! empty($created['_skipped_watchers'])) {
+            $done .= ' Not copied, as this ticket is confidential: ' . implode(', ', $created['_skipped_watchers']) . '.';
+        }
+
+        return redirect()->to("/tickets/{$id}")->with('success', $done);
+    }
+
+    // reads request for and watchers from the form, returns email, users and an error
+    private function requestPeople(array $user): array
+    {
+        $for = strtolower(trim((string) $this->request->getPost('requested_for')));
+
+        if ($for === strtolower((string) $user['email'])) {
+            $for = '';
+        }
+
+        if ($for !== '') {
+            if (filter_var($for, FILTER_VALIDATE_EMAIL) === false || mb_strlen($for) > 190) {
+                return ['', [], 'The "Request for" email is not a valid address.'];
+            }
+
+            $person = $this->userModel->findByEmail($for);
+
+            if ($person !== null && (int) ($person['is_active'] ?? 0) !== 1) {
+                return ['', [], 'The person in "Request for" no longer has an active account.'];
+            }
+            if ($person === null && ! (new SignupPolicy())->allows($for)) {
+                return ['', [], 'The "Request for" email must belong to a colleague.'];
+            }
+        }
+
+        $parsed = Watchers::parse((string) $this->request->getPost('watchers'));
+
+        if ($parsed['invalid'] !== []) {
+            return ['', [], 'These are not email addresses: ' . implode(', ', array_slice($parsed['invalid'], 0, 5)) . '.'];
+        }
+        if ($parsed['too_many']) {
+            return ['', [], 'You can copy up to ' . Watchers::MAX . ' people.'];
+        }
+
+        [$watchers, $missing] = Watchers::resolve($parsed['emails']);
+
+        if ($missing !== []) {
+            return ['', [], 'No active account for: ' . implode(', ', array_slice($missing, 0, 5)) . '. Only colleagues with an account can be copied.'];
+        }
+
+        return [$for, $watchers, null];
     }
 
     public function classify(string $id)
@@ -499,6 +559,7 @@ class TicketController extends BaseController
             $output['responsible_department'] = $route['department'];
             $this->ticketModel->update((int) $id, ['is_confidential' => $this->isConfidential($route['department'], $route['role']) ? 1 : 0]);
             Activity::ticket($id, 'routed', $route['reason'] ?? '', $route['to'], ['id' => null, 'name' => 'Assistant']);
+            (new AutoAssign())->afterReroute($id, $this->ticketModel->getTicket($id)['fields'] ?? []);
         }
 
         $stored = $this->assistant->opening(
@@ -554,7 +615,149 @@ class TicketController extends BaseController
             'feedback'   => \Config\Database::connect()->table('ticket_feedback')->where('ticket_id', $id)->get()->getRowArray(),
             'awaitingAi' => $this->ticketModel->awaitsClassification($fields),
             'teams'      => $this->canManage($fields, $user) ? (new RoutingDirectory())->entries() : [],
+            'canReply'   => Org::canReplyTicket($user, $fields),
+            'watchers'   => Watchers::forTicket($id),
+            'requestedFor' => ($fields['Requested For'] ?? '') !== '' ? $this->userModel->findByEmail((string) $fields['Requested For']) : null,
+            'links'      => $this->related(Duplicates::links($id), $user),
+            'duplicate'  => $this->canManage($fields, $user) ? $this->duplicateOf($fields, $user) : null,
         ]);
+    }
+
+    // linked tickets the viewer may open, with title and status
+    private function related(array $ids, array $user): array
+    {
+        $out = [];
+
+        foreach ($ids as $linked) {
+            $t = $this->ticketModel->getTicket((string) $linked);
+
+            if ($t !== null && $this->canAccess($t['fields'], $user)) {
+                $out[] = ['id' => (string) $linked, 'title' => (string) ($t['fields']['Request Title'] ?? ''), 'status' => (string) ($t['fields']['Status'] ?? 'New')];
+            }
+        }
+
+        return $out;
+    }
+
+    // the open ticket this one probably repeats, if staff can manage it too
+    private function duplicateOf(array $fields, array $user): ?array
+    {
+        $target = (int) ($fields['Duplicate Of'] ?? 0);
+
+        if ($target <= 0 || ! in_array((string) ($fields['Status'] ?? 'New'), TicketModel::OPEN_STATUSES, true)) {
+            return null;
+        }
+
+        $t = $this->ticketModel->getTicket((string) $target);
+
+        if ($t === null || ! in_array((string) ($t['fields']['Status'] ?? 'New'), TicketModel::OPEN_STATUSES, true)) {
+            return null;
+        }
+
+        return [
+            'id'        => (string) $target,
+            'title'     => (string) ($t['fields']['Request Title'] ?? ''),
+            'canMerge'  => $this->canManage($t['fields'], $user),
+        ];
+    }
+
+    // merge this ticket into another open one
+    public function merge(string $id)
+    {
+        $fields   = $this->requireManageAccess($id);
+        $targetId = (string) (int) ltrim(trim((string) $this->request->getPost('target_id')), '#');
+        $target   = $targetId === '0' ? null : $this->ticketModel->getTicket($targetId);
+        $user     = current_user();
+
+        $error = match (true) {
+            $target === null || $targetId === $id         => 'Enter the number of another ticket.',
+            ! $this->canManage($target['fields'], $user)    => 'You can only merge into a ticket you manage.',
+            ! in_array((string) ($fields['Status'] ?? 'New'), TicketModel::OPEN_STATUSES, true) => 'This ticket is already closed.',
+            ! in_array((string) ($target['fields']['Status'] ?? 'New'), TicketModel::OPEN_STATUSES, true) => 'Ticket #' . $targetId . ' is closed. Merge into an open ticket.',
+            default => null,
+        };
+
+        if ($error !== null) {
+            return redirect()->to("/tickets/{$id}")->with('error', $error);
+        }
+
+        (new Duplicates())->merge($id, $fields, $targetId, $target['fields'], $user);
+
+        return redirect()->to("/tickets/{$targetId}")->with('success', "Ticket #{$id} merged into this one and closed.");
+    }
+
+    // link or unlink two related tickets
+    public function link(string $id)
+    {
+        $this->requireManageAccess($id);
+        $targetId = (string) (int) ltrim(trim((string) $this->request->getPost('target_id')), '#');
+        $target   = $targetId === '0' ? null : $this->ticketModel->getTicket($targetId);
+        $user     = current_user();
+
+        if ($target === null || $targetId === $id) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'Enter the number of another ticket.');
+        }
+        if (! $this->canManage($target['fields'], $user)) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'You can only link tickets you manage.');
+        }
+
+        if ($this->request->getPost('unlink') !== null) {
+            Duplicates::unlink($id, $targetId, $user);
+
+            return redirect()->to("/tickets/{$id}")->with('success', "Unlinked from #{$targetId}.");
+        }
+
+        $done = Duplicates::link($id, $targetId, $user);
+
+        return redirect()->to("/tickets/{$id}")->with('success', $done ? "Linked to #{$targetId}." : "Already linked to #{$targetId}.");
+    }
+
+    // clears the possible duplicate notice
+    public function dismissDuplicate(string $id)
+    {
+        $this->requireManageAccess($id);
+        $this->ticketModel->update((int) $id, ['duplicate_of' => null]);
+        Activity::ticket($id, 'not_duplicate');
+
+        return redirect()->to("/tickets/{$id}")->with('success', 'Marked as not a duplicate.');
+    }
+
+    // staff add watchers by email
+    public function addWatchers(string $id)
+    {
+        $fields = $this->requireManageAccess($id);
+        $parsed = Watchers::parse((string) $this->request->getPost('watchers'));
+
+        if ($parsed['emails'] === [] && $parsed['invalid'] === []) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'Enter at least one email.');
+        }
+        if ($parsed['invalid'] !== []) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'These are not email addresses: ' . implode(', ', array_slice($parsed['invalid'], 0, 5)) . '.');
+        }
+        if ($parsed['too_many'] || Watchers::count($id) + count($parsed['emails']) > Watchers::MAX) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'A ticket can have up to ' . Watchers::MAX . ' watchers.');
+        }
+
+        [$users, $missing] = Watchers::resolve($parsed['emails']);
+
+        if ($missing !== []) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'No active account for: ' . implode(', ', array_slice($missing, 0, 5)) . '.');
+        }
+
+        $skipped = Watchers::add($id, $fields, $users, current_user());
+
+        return redirect()->to("/tickets/{$id}")->with(
+            $skipped === [] ? 'success' : 'error',
+            $skipped === [] ? 'Watchers updated.' : 'Not added, as this ticket is confidential or full: ' . implode(', ', $skipped) . '.'
+        );
+    }
+
+    public function removeWatcher(string $id, string $userId)
+    {
+        $this->requireManageAccess($id);
+        Watchers::remove($id, (int) $userId, current_user());
+
+        return redirect()->to("/tickets/{$id}")->with('success', 'Watcher removed.');
     }
 
     private function requireManageAccess(string $id): array
@@ -736,6 +939,7 @@ class TicketController extends BaseController
             $name = $assignedTo > 0 ? (string) ($this->userModel->find($assignedTo)['name'] ?? '') : '';
             Activity::ticket($id, 'assigned', null, $name);
             if ($assignedTo > 0) {
+                AutoAssign::touch($assignedTo);
                 (new Notifier())->assigned($id, $fields, $assignedTo);
             }
         }
@@ -793,6 +997,7 @@ class TicketController extends BaseController
         $this->ticketModel->applyRoute($id, $department, $role, 'moved by ' . $user['name'] . ' from ' . RoutingDirectory::label($current));
         $this->ticketModel->update((int) $id, ['is_confidential' => $this->isConfidential($department, $role) ? 1 : 0]);
         Activity::ticket($id, 'team', RoutingDirectory::label($current), RoutingDirectory::label($target));
+        (new AutoAssign())->run($id, $this->ticketModel->getTicket($id)['fields'] ?? []);
 
         return RoutingDirectory::label($target);
     }
@@ -818,6 +1023,10 @@ class TicketController extends BaseController
 
         if (in_array((string) ($fields['Status'] ?? ''), ['Closed', 'Cancelled'], true)) {
             return redirect()->to("/tickets/{$id}")->with('error', 'This ticket is closed. Raise a new ticket if it comes back.');
+        }
+
+        if (! Org::canReplyTicket($user, $fields)) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'You are watching this ticket. Only the requester and the team can reply.');
         }
 
         $internal = $this->canManage($fields, $user) && $this->request->getPost('is_internal') !== null;

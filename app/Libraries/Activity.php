@@ -67,6 +67,12 @@ class Activity
             'routed'    => 'the assistant routed it to ' . $to . ($from !== '' ? ' (' . $from . ')' : ''),
             'reopened'  => 'reopened the ticket',
             'feedback'  => 'rated the help ' . $to . ' out of 5',
+            'merged'    => 'merged it into ' . $to,
+            'merged_from' => 'merged ' . $to . ' into this ticket',
+            'linked'    => 'linked it to ' . $to,
+            'unlinked'  => 'unlinked it from ' . $to,
+            'not_duplicate' => 'marked it as not a duplicate',
+            'watchers'  => 'changed watchers: ' . $to,
             default     => $e['event'] . ($to !== '' ? ': ' . $to : ''),
         };
     }

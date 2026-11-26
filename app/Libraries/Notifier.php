@@ -58,6 +58,15 @@ class Notifier
             . brand_name()
         );
 
+        $requester = trim((string) ($fields['Requester'] ?? '')) ?: 'A colleague';
+        $for       = strtolower(trim((string) ($fields['Requested For'] ?? '')));
+
+        foreach (Watchers::followerEmails($ticketId, $fields) as $email) {
+            $lead = $email === $for ? "{$requester} raised a ticket for you." : "{$requester} copied you on a ticket.";
+            $this->mail($email, "[#{$ticketId}] {$title}", "{$lead}\n\nTicket #{$ticketId}: {$title}\nTrack it here: " . $this->link($ticketId) . "\n\n" . brand_name());
+            $this->pushEmail($email, $ticketId, "{$lead} #{$ticketId}: {$title}", 'created');
+        }
+
         $this->staff($ticketId, $fields, 'created', 'New ticket #' . $ticketId . ': ' . $title, "A new ticket is waiting for your team.\n\n" . $title . "\n" . $this->link($ticketId));
     }
 
@@ -77,12 +86,18 @@ class Notifier
     public function replied(string $ticketId, array $fields, array $author, bool $internal): void
     {
         $title     = $this->title($fields);
-        $requester = strtolower((string) ($fields['Requester Email'] ?? ''));
-        $byRequester = strtolower((string) ($author['email'] ?? '')) === $requester;
+        $requester   = strtolower((string) ($fields['Requester Email'] ?? ''));
+        $authorEmail = strtolower((string) ($author['email'] ?? ''));
+        $byRequester = Watchers::isRequesterSide($author, $fields);
 
-        if (! $byRequester && ! $internal) {
-            $this->mail($requester, "[#{$ticketId}] New reply: {$title}", ($author['name'] ?? 'The team') . " replied to your ticket.\n\nRead and reply: " . $this->link($ticketId));
-            $this->pushEmail($requester, $ticketId, ($author['name'] ?? 'The team') . " replied on #{$ticketId}", 'reply');
+        if (! $internal) {
+            foreach (array_merge([$requester], Watchers::followerEmails($ticketId, $fields)) as $email) {
+                if ($email === '' || $email === $authorEmail) {
+                    continue;
+                }
+                $this->mail($email, "[#{$ticketId}] New reply: {$title}", ($author['name'] ?? 'The team') . " replied on ticket #{$ticketId}.\n\nRead it here: " . $this->link($ticketId));
+                $this->pushEmail($email, $ticketId, ($author['name'] ?? 'The team') . " replied on #{$ticketId}", 'reply');
+            }
         }
 
         $assignee = (int) ((new TicketMetaModel())->firstOrCreate($ticketId)['assigned_to'] ?? 0);
@@ -106,6 +121,21 @@ class Notifier
 
         $this->mail((string) ($fields['Requester Email'] ?? ''), "[#{$ticketId}] Status: {$to}", "Your ticket \"{$title}\" moved from {$from} to {$to}.{$extra}\n\n" . $this->link($ticketId));
         $this->pushEmail((string) ($fields['Requester Email'] ?? ''), $ticketId, "Ticket #{$ticketId} is now {$to}", 'status');
+
+        foreach (Watchers::followerEmails($ticketId, $fields) as $email) {
+            $this->mail($email, "[#{$ticketId}] Status: {$to}", "Ticket \"{$title}\" moved from {$from} to {$to}.\n\n" . $this->link($ticketId));
+            $this->pushEmail($email, $ticketId, "Ticket #{$ticketId} is now {$to}", 'status');
+        }
+    }
+
+    public function merged(string $ticketId, array $fields, string $targetId): void
+    {
+        $title = $this->title($fields);
+
+        foreach (array_merge([strtolower((string) ($fields['Requester Email'] ?? ''))], Watchers::followerEmails($ticketId, $fields)) as $email) {
+            $this->mail($email, "[#{$ticketId}] Merged into #{$targetId}", "Ticket #{$ticketId} \"{$title}\" was a repeat of #{$targetId}, so we merged them. Follow it here:\n\n" . $this->link($targetId));
+            $this->pushEmail($email, $targetId, "Ticket #{$ticketId} was merged into #{$targetId}", 'status');
+        }
     }
 
     public function approvalNeeded(string $ticketId, array $fields, array $approvers): void

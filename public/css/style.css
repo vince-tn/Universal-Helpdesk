@@ -2456,3 +2456,14 @@ input[type="number"], input[type="url"], input[type="tel"], input[type="search"]
   .mfa-scan { border-right: none; border-bottom: 1px solid var(--line-soft); padding: 24px 18px; }
   .mfa-confirm { padding: 24px 18px; }
 }
+
+/* ticket people, related tickets and duplicate notice */
+.dup-strip { align-items: center; flex-wrap: wrap; margin: 0 0 18px; border-style: solid; border-color: var(--amber-tx); background: var(--paper-tint); }
+.dup-strip .dup-text { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; color: var(--ink); }
+.people-list { list-style: none; margin: 0 0 14px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.people-list li { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-width: 0; }
+.people-list .k { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ink-3); min-width: 92px; }
+.people-list .v { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
+.people-x { margin: 0; }
+.people-x .chip-x { border: none; background: none; cursor: pointer; padding: 0; }
+.related-form .row-actions .btn { flex: 1; width: auto; }

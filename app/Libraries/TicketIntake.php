@@ -24,10 +24,12 @@ class TicketIntake
         $stopped    = (string) ($in['stopped'] ?? '');
         $neededBy   = trim((string) ($in['needed_by'] ?? ''));
         $actor      = $in['actor'] ?? null;
+        $for        = strtolower(trim((string) ($in['requested_for'] ?? '')));
 
         $category = $service['category'] ?? 'Common Request';
 
         $tickets->update((int) $id, [
+            'requested_for'        => $for !== '' ? mb_substr($for, 0, 190) : null,
             'requester_department' => $own !== '' ? mb_substr($own, 0, 100) : null,
             'service_key'          => $service['service_key'] ?? null,
             'service_fields'       => $answers === [] ? null : json_encode($answers),
@@ -54,7 +56,14 @@ class TicketIntake
             (new Approvals())->start($id, $fields, (string) ($service['approval_chain'] ?: 'supervisor'));
         }
 
+        $skipped = ($in['watchers'] ?? []) === [] ? [] : Watchers::add($id, $fields, $in['watchers'], $actor);
+
+        (new AutoAssign())->run($id, $fields);
+        (new Duplicates())->detect($id, $fields);
+
         (new Notifier())->created($id, $fields);
+
+        $fields['_skipped_watchers'] = $skipped;
 
         return $fields;
     }
@@ -63,7 +72,7 @@ class TicketIntake
     public function afterReply(string $id, array $fields, array $user, string $body, bool $internal): array
     {
         $status      = (string) ($fields['Status'] ?? 'New');
-        $isRequester = strcasecmp((string) ($fields['Requester Email'] ?? ''), (string) ($user['email'] ?? '')) === 0;
+        $isRequester = Watchers::isRequesterSide($user, $fields);
 
         if ($internal) {
             Activity::ticket($id, 'note', null, null, $user);
