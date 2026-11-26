@@ -52,7 +52,7 @@ class AuthFilter implements FilterInterface
         }
 
         // roles that need mfa finish setup before anything else, sso already counts
-        if (! $enrolled && Mfa::requiredFor($role) && Mfa::canStoreSecrets() && $session->get('auth_method') !== LoginSession::METHOD_SSO) {
+        if (! $enrolled && Mfa::requiredFor($role) && (new Mfa())->canStoreSecrets() && $session->get('auth_method') !== LoginSession::METHOD_SSO) {
             $path = trim($request->getPath(), '/');
 
             if (! in_array($path, ['account/mfa/setup', 'logout'], true)) {
