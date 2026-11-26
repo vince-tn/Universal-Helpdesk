@@ -31,6 +31,8 @@ $routes->group('tickets', ['filter' => 'auth'], static function (RouteCollection
     $routes->post('/', 'TicketController::store');
     $routes->post('attachments', 'AttachmentController::store');
     $routes->get('export', 'TicketController::export');
+    $routes->post('bulk', 'TicketController::bulk');
+    $routes->post('(:segment)/messages/(:num)/rate', 'TicketController::rateAnswer/$1/$2');
     $routes->post('(:segment)/status', 'TicketController::updateStatus/$1');
     $routes->post('(:segment)/meta', 'TicketController::updateMeta/$1');
     $routes->post('(:segment)/messages', 'TicketController::postMessage/$1');

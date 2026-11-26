@@ -57,5 +57,14 @@ $kindLabel = match ($kind) {
                 Filed and tagged automatically. No action is expected from you — the assigned team takes it from here.
             </div>
         <?php endif ?>
+
+        <?php if ($isAi && ! empty($msg['can_rate'])): $vote = $msg['my_vote'] ?? null; ?>
+            <form class="ai-vote" method="post" action="/tickets/<?= esc(rawurlencode((string) ($msg['ticket_id'] ?? ''))) ?>/messages/<?= (int) ($msg['id'] ?? 0) ?>/rate" data-ai-vote>
+                <?= csrf_field() ?>
+                <span class="ai-vote-label" data-ai-vote-label><?= $vote === null ? 'Did this help?' : 'Thanks for the feedback.' ?></span>
+                <button type="submit" name="helpful" value="1" class="ai-vote-btn<?= $vote === 1 ? ' is-picked' : '' ?>" aria-pressed="<?= $vote === 1 ? 'true' : 'false' ?>"><?= icon('check', 12) ?> This helped</button>
+                <button type="submit" name="helpful" value="0" class="ai-vote-btn<?= $vote === 0 ? ' is-picked' : '' ?>" aria-pressed="<?= $vote === 0 ? 'true' : 'false' ?>">Not helpful</button>
+            </form>
+        <?php endif ?>
     </div>
 </div>

@@ -27,11 +27,18 @@
         return in_array($source, ['Gemini', 'OpenRouter'], true) ? 'pill-source-gemini' : 'pill-source-local';
     }
 
-    function sortLink(string $field, string $label, string $currentSort, array $params): string {
-        $next = $currentSort === "{$field}_desc" ? "{$field}_asc" : "{$field}_desc";
-        $qs = http_build_query(array_merge($params, ['sort' => $next]));
-        $active = str_starts_with($currentSort, $field);
-        return '<a href="?' . esc($qs) . '">' . esc($label) . ($active ? icon('sort', 13) : '') . '</a>';
+    // sortable header with an arrow for the current direction
+    function sortHeader(string $field, string $label, string $currentSort, array $params): string {
+        $state = $currentSort === "{$field}_asc" ? 'ascending' : ($currentSort === "{$field}_desc" ? 'descending' : 'none');
+        $next  = $state === 'descending' ? "{$field}_asc" : "{$field}_desc";
+        $qs    = http_build_query(array_merge(array_filter($params, static fn ($v) => $v !== ''), ['sort' => $next]));
+        $arrow = match ($state) {
+            'ascending'  => icon('sort-asc', 13),
+            'descending' => icon('sort-desc', 13),
+            default      => icon('sort', 13),
+        };
+        return '<th aria-sort="' . $state . '"><a class="sort-link' . ($state === 'none' ? '' : ' is-active') . '" href="?' . esc($qs) . '" title="Sort by ' . esc(strtolower($label)) . '">'
+            . esc($label) . '<span class="sort-arrow" aria-hidden="true">' . $arrow . '</span></a></th>';
     }
 
     $baseParams = ['q' => $q, 'status' => $status, 'category' => $category, 'priority' => $priority, 'department' => $department, 'view' => $view];
@@ -40,6 +47,7 @@
         ? ['' => 'All my tickets']
         : ['' => 'All', 'assigned' => 'Assigned to me', 'team' => "My team's queue", 'unassigned' => 'Unassigned', 'breaching' => 'SLA at risk', 'approval' => 'Waiting approval', 'mine' => 'Raised by me'];
     $exportParams = array_merge($baseParams, ['sort' => $sort]);
+    $showBulk     = ! empty($canBulk) && in_array(true, array_map(static fn ($t) => ! empty($t['can_manage']), $tickets), true);
 ?>
 
 <div class="page-header">
@@ -98,7 +106,7 @@
     </nav>
 <?php endif ?>
 
-<form class="toolbar" method="get" action="/tickets">
+<form class="toolbar" method="get" action="/tickets" data-instant>
     <input type="hidden" name="view" value="<?= esc($view) ?>">
     <div class="search-field">
         <?= icon('search', 16) ?>
@@ -139,6 +147,42 @@
 
 <div class="result-count"><?= $totalFound ?> ticket<?= $totalFound === 1 ? '' : 's' ?> found</div>
 
+<?php if ($showBulk): ?>
+<form class="bulk-bar" id="bulk-form" method="post" action="/tickets/bulk" data-bulk>
+    <?= csrf_field() ?>
+    <input type="hidden" name="return" value="<?= esc(http_build_query(array_merge($baseParams, ['sort' => $sort, 'page' => $page]))) ?>">
+    <label class="bulk-all"><input type="checkbox" data-bulk-all> Select all on this page</label>
+    <span class="bulk-count" data-bulk-count aria-live="polite">Tick tickets to change them together</span>
+    <select name="action" data-bulk-action aria-label="Bulk action">
+        <option value="">Choose an action</option>
+        <option value="assign">Assign to</option>
+        <option value="status">Set status</option>
+        <option value="priority">Set priority</option>
+        <option value="close">Close</option>
+    </select>
+    <select name="assign_to" data-bulk-for="assign" aria-label="Assign to">
+        <option value="">Pick a person</option>
+        <?php foreach ($bulkStaff as $sid => $sname): ?>
+            <option value="<?= (int) $sid ?>"><?= esc($sname) ?></option>
+        <?php endforeach ?>
+    </select>
+    <select name="status" data-bulk-for="status" aria-label="New status">
+        <option value="">Pick a status</option>
+        <?php foreach (\App\Models\TicketModel::STATUSES as $opt): ?>
+            <option value="<?= esc($opt) ?>"><?= esc($opt) ?></option>
+        <?php endforeach ?>
+    </select>
+    <input type="text" name="note" maxlength="2000" data-bulk-for="resolved" placeholder="What fixed it (needed for Resolved)" aria-label="Resolution note">
+    <select name="priority" data-bulk-for="priority" aria-label="New priority">
+        <option value="">Pick a priority</option>
+        <?php foreach (priorities() as $opt): ?>
+            <option value="<?= esc($opt) ?>"><?= esc($opt) ?></option>
+        <?php endforeach ?>
+    </select>
+    <button type="submit" class="btn btn-sm" data-bulk-submit>Apply to selected</button>
+</form>
+<?php endif ?>
+
 <div class="card">
     <?php if (empty($tickets)): ?>
         <div class="empty-state">
@@ -149,21 +193,21 @@
         <table class="ticket-table">
             <thead>
                 <tr>
-                    <th><?= sortLink('title', 'Title', $sort, $baseParams) ?></th>
+                    <?= sortHeader('title', 'Title', $sort, $baseParams) ?>
                     <th>Department <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
                     <th class="col-optional">Category <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
                     <th class="col-optional">Requester</th>
-                    <th><?= sortLink('priority', 'Priority', $sort, $baseParams) ?></th>
+                    <?= sortHeader('priority', 'Priority', $sort, $baseParams) ?>
                     <th>Status</th>
                     <th>SLA</th>
                     <th>Assigned</th>
-                    <th><?= sortLink('created', 'Created', $sort, $baseParams) ?></th>
+                    <?= sortHeader('created', 'Created', $sort, $baseParams) ?>
                 </tr>
             </thead>
             <tbody>
                 <?php foreach ($tickets as $t): $f = $t['fields']; $m = $t['meta']; ?>
                     <tr class="ticket-row" onclick="window.location='/tickets/<?= esc($t['id'] ?? '') ?>'">
-                        <td><a class="ticket-title" href="/tickets/<?= esc($t['id'] ?? '') ?>"><?= esc($f['Request Title'] ?? $f['Title'] ?? 'Untitled') ?></a></td>
+                        <td><?php if ($showBulk && ! empty($t['can_manage'])): ?><label class="bulk-pick" onclick="event.stopPropagation()"><input type="checkbox" name="ids[]" value="<?= esc($t['id'] ?? '') ?>" form="bulk-form" data-bulk-pick aria-label="Select ticket #<?= esc($t['id'] ?? '') ?>"></label><?php endif ?><a class="ticket-title" href="/tickets/<?= esc($t['id'] ?? '') ?>"><?= esc($f['Request Title'] ?? $f['Title'] ?? 'Untitled') ?></a></td>
                         <td><?= $t['department'] ? '<span class="badge-outline">' . esc($t['department']) . '</span>' : '<span class="cell-muted">—</span>' ?></td>
                         <td class="cell-muted col-optional"><?= esc($f['Category'] ?? '') ?></td>
                         <td class="cell-muted col-optional"><?= esc($f['Requester'] ?? '') ?></td>
@@ -196,5 +240,66 @@
         <?php endfor ?>
     </div>
 <?php endif ?>
+
+<script>
+(function () {
+    // filters apply on change, search after a short pause
+    var form = document.querySelector('form[data-instant]');
+    if (form) {
+        var key = 'tickets-search-focus';
+        form.querySelectorAll('select').forEach(function (s) {
+            s.addEventListener('change', function () { form.submit(); });
+        });
+        var q = form.querySelector('input[name="q"]');
+        if (q) {
+            var start = q.value, timer = null;
+            var go = function () {
+                if (q.value.trim() === start.trim()) return;
+                try { sessionStorage.setItem(key, '1'); } catch (e) {}
+                form.submit();
+            };
+            q.addEventListener('input', function () { clearTimeout(timer); timer = setTimeout(go, 600); });
+            q.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { try { sessionStorage.setItem(key, '1'); } catch (err) {} }
+            });
+            var refocus = false;
+            try { refocus = sessionStorage.getItem(key) === '1'; sessionStorage.removeItem(key); } catch (e) {}
+            if (refocus) { q.focus(); var n = q.value.length; q.setSelectionRange(n, n); }
+        }
+    }
+
+    // bulk bar: selection count and only the fields the action needs
+    var bulk = document.querySelector('form[data-bulk]');
+    if (!bulk) return;
+    var picks  = Array.prototype.slice.call(document.querySelectorAll('[data-bulk-pick]'));
+    var all    = bulk.querySelector('[data-bulk-all]');
+    var count  = bulk.querySelector('[data-bulk-count]');
+    var action = bulk.querySelector('[data-bulk-action]');
+    var status = bulk.querySelector('select[name="status"]');
+    var submit = bulk.querySelector('[data-bulk-submit]');
+
+    function selected() { return picks.filter(function (p) { return p.checked; }).length; }
+    function sync() {
+        var n = selected();
+        count.textContent = n === 0 ? 'Tick tickets to change them together' : n + ' selected';
+        all.checked = n > 0 && n === picks.length;
+        all.indeterminate = n > 0 && n < picks.length;
+        submit.disabled = n === 0 || !action.value;
+        bulk.querySelectorAll('[data-bulk-for]').forEach(function (el) {
+            var f = el.getAttribute('data-bulk-for');
+            el.hidden = f === 'resolved' ? !(action.value === 'status' && status.value === 'Resolved') : f !== action.value;
+        });
+    }
+    all.addEventListener('change', function () { picks.forEach(function (p) { p.checked = all.checked; }); sync(); });
+    picks.forEach(function (p) { p.addEventListener('change', sync); });
+    action.addEventListener('change', sync);
+    status.addEventListener('change', sync);
+    bulk.addEventListener('submit', function (e) {
+        if (action.value === 'close' && !window.confirm('Close ' + selected() + ' ticket(s)?')) { e.preventDefault(); return; }
+        submit.classList.add('is-busy');
+    });
+    sync();
+})();
+</script>
 
 <?= $this->endSection() ?>

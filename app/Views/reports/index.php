@@ -175,6 +175,20 @@
     </div>
 </div>
 
+<h2 class="report-section-title">AI self help</h2>
+<div class="report-kpis">
+    <div class="stat-card accent-done">
+        <div class="value<?= $deflectionPct === null ? ' is-text' : '' ?>"><?= esc($pct($deflectionPct)) ?></div>
+        <div class="label">AI deflection</div>
+        <div class="sub"><?= $deflectedCount ?> of <?= $plural($resolvedCount, 'resolved ticket') ?> fixed by the assistant's answer, with no staff reply</div>
+    </div>
+    <div class="stat-card">
+        <div class="value<?= $aiHelpfulPct === null ? ' is-text' : '' ?>"><?= esc($pct($aiHelpfulPct)) ?></div>
+        <div class="label">Answers rated helpful</div>
+        <div class="sub"><?= $aiVotes > 0 ? $aiHelpful . ' of ' . $plural($aiVotes, 'vote') : 'No votes in this range yet' ?></div>
+    </div>
+</div>
+
 <h2 class="report-section-title">Open backlog by age</h2>
 <div class="report-kpis">
     <?php foreach ($ageing as $bucket => $count): ?>

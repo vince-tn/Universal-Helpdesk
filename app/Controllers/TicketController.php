@@ -3,7 +3,9 @@
 namespace App\Controllers;
 
 use App\Libraries\Activity;
+use App\Libraries\AiDeflection;
 use App\Libraries\Approvals;
+use App\Libraries\BulkTickets;
 use App\Libraries\ExportGuard;
 use App\Libraries\Html;
 use App\Libraries\KnowledgeReview;
@@ -20,6 +22,7 @@ use App\Libraries\AutoAssign;
 use App\Libraries\Duplicates;
 use App\Libraries\SignupPolicy;
 use App\Libraries\Watchers;
+use App\Models\AiFeedbackModel;
 use App\Models\N8nService;
 use App\Models\TicketModel;
 use App\Models\TicketMetaModel;
@@ -185,6 +188,9 @@ class TicketController extends BaseController
         $page        = min($page, $totalPages);
         $pageTickets = array_slice($tickets, ($page - 1) * $perPage, $perPage);
 
+        $canBulk   = BulkTickets::canUse($user);
+        $bulkStaff = $canBulk ? $this->bulkStaff($pageTickets, $user) : [];
+
         $statusCounts = array_fill_keys(TicketModel::STATUSES, 0);
         foreach ($allScoped as $t) {
             $s = $t['fields']['Status'] ?? 'New';
@@ -208,7 +214,144 @@ class TicketController extends BaseController
             'page'          => $page,
             'totalPages'    => $totalPages,
             'totalFound'    => $totalFound,
+            'canBulk'       => $canBulk,
+            'bulkStaff'     => $bulkStaff,
         ]));
+    }
+
+    // marks which page rows the user can manage and lists who they can assign
+    private function bulkStaff(array &$pageTickets, array $user): array
+    {
+        $staff = [];
+        $seen  = [];
+
+        foreach ($pageTickets as &$t) {
+            $fields          = $t['fields'] ?? [];
+            $t['can_manage'] = $this->canManage($fields, $user);
+
+            if (! $t['can_manage']) {
+                continue;
+            }
+
+            $key = (int) ($fields['Confidential'] ?? 0) === 1 ? 'c:' . ($t['id'] ?? '') : 'd:' . strtolower(resolve_base_department($t['department'] ?? ''));
+
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            foreach (Org::assignableStaff($fields) as $s) {
+                $staff[(int) $s['id']] = (string) $s['name'];
+            }
+        }
+        unset($t);
+
+        asort($staff, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return $staff;
+    }
+
+    public function bulk()
+    {
+        $user = current_user();
+
+        if (! BulkTickets::canUse($user)) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $back = '/tickets' . $this->bulkReturnQuery();
+        $ids  = array_values(array_unique(array_filter(
+            array_map(static fn ($v) => is_scalar($v) ? trim((string) $v) : '', (array) ($this->request->getPost('ids') ?? [])),
+            static fn ($v) => preg_match('/^[A-Za-z0-9_-]{1,100}$/', $v) === 1
+        )));
+
+        if ($ids === []) {
+            return redirect()->to($back)->with('error', 'Tick at least one ticket first.');
+        }
+        if (count($ids) > BulkTickets::MAX) {
+            return redirect()->to($back)->with('error', 'Pick up to ' . BulkTickets::MAX . ' tickets at a time.');
+        }
+
+        $action = (string) $this->request->getPost('action');
+        $value  = match ($action) {
+            'assign'   => (string) $this->request->getPost('assign_to'),
+            'status'   => (string) $this->request->getPost('status'),
+            'priority' => (string) $this->request->getPost('priority'),
+            default    => '',
+        };
+        $note = trim((string) $this->request->getPost('note'));
+
+        $error = BulkTickets::requestError($action, $value, $note);
+        if ($error !== null) {
+            return redirect()->to($back)->with('error', $error);
+        }
+
+        [$kind, $target] = BulkTickets::normalise($action, $value);
+
+        $super   = Org::isSuperadmin($user);
+        $name    = $kind === 'assign' ? (string) ($this->userModel->find((int) $target)['name'] ?? '') : '';
+        $updated = 0;
+        $skipped = [];
+
+        foreach ($ids as $id) {
+            $ticket = $this->ticketModel->getTicket($id);
+
+            if ($ticket === null) {
+                $skipped['missing'] = ($skipped['missing'] ?? 0) + 1;
+
+                continue;
+            }
+
+            $fields = $ticket['fields'] ?? $ticket;
+            $manage = $this->canManage($fields, $user);
+            $meta   = $manage ? $this->metaModel->firstOrCreate($id) : [];
+            $state  = [
+                'can_manage'  => $manage,
+                'status'      => (string) ($fields['Status'] ?? 'New'),
+                'assigned_to' => (int) ($meta['assigned_to'] ?? 0),
+                'priority'    => (string) ($meta['priority'] ?? 'Medium'),
+                'assignable'  => $manage && $kind === 'assign' ? array_column(Org::assignableStaff($fields), 'id') : [],
+            ];
+
+            $reason = BulkTickets::skipReason($kind, $target, $state, $super);
+
+            if ($reason !== null) {
+                $skipped[$reason] = ($skipped[$reason] ?? 0) + 1;
+
+                continue;
+            }
+
+            if ($kind === 'status') {
+                $this->applyStatus($id, $fields, $state['status'], $target, $note);
+            } elseif ($kind === 'priority') {
+                $this->applyPriority($id, $fields, $state['priority'], $target);
+            } else {
+                $this->applyAssignee($id, $fields, (int) $target, $name);
+            }
+
+            $updated++;
+        }
+
+        $summary = BulkTickets::summary($updated, $skipped);
+        Activity::audit('bulk_update', $kind . ' to ' . ($kind === 'assign' ? $name : $target) . ': ' . $summary);
+
+        return redirect()->to($back)->with($updated > 0 ? 'success' : 'error', $summary);
+    }
+
+    // keeps the dashboard filters, sort and page after a bulk change
+    private function bulkReturnQuery(): string
+    {
+        parse_str((string) $this->request->getPost('return'), $query);
+
+        $keep = [];
+        foreach (['q', 'status', 'category', 'priority', 'department', 'view', 'sort', 'page'] as $key) {
+            $v = $query[$key] ?? '';
+            if (is_scalar($v) && (string) $v !== '') {
+                $keep[$key] = mb_substr((string) $v, 0, 200);
+            }
+        }
+
+        return $keep === [] ? '' : '?' . http_build_query($keep);
     }
 
     public function export()
@@ -530,7 +673,7 @@ class TicketController extends BaseController
             return $this->response->setJSON([
                 'ok'      => true,
                 'changed' => false,
-                'message' => $stored === null ? null : $this->renderMessage($stored),
+                'message' => $stored === null ? null : $this->renderMessage($stored, $fields),
             ]);
         }
 
@@ -574,7 +717,7 @@ class TicketController extends BaseController
         return $this->response->setJSON([
             'ok'      => true,
             'changed' => true,
-            'message' => $stored === null ? null : $this->renderMessage($stored),
+            'message' => $stored === null ? null : $this->renderMessage($stored, $fields),
         ]);
     }
 
@@ -605,7 +748,7 @@ class TicketController extends BaseController
             'meta'       => $meta,
             'staff'      => Org::assignableStaff($fields),
             'assignedTo' => $assignedTo,
-            'messages'   => $this->messageModel->forTicket($id, $this->canManage($fields, $user)),
+            'messages'   => $this->withVotes($this->messageModel->forTicket($id, $this->canManage($fields, $user)), $fields, $user),
             'canManage'  => $this->canManage($fields, $user),
             'events'     => Activity::forTicket($id),
             'approvals'  => (new Approvals())->forTicket($id),
@@ -806,10 +949,9 @@ class TicketController extends BaseController
             if (mb_strlen($note) < 10) {
                 return redirect()->back()->with('error', 'Add a short resolution note (what fixed it) before resolving.');
             }
-            $this->ticketModel->update((int) $id, ['resolution_note' => mb_substr($note, 0, 2000)]);
         }
 
-        $this->changeStatus($id, $fields, $from, $status);
+        $this->applyStatus($id, $fields, $from, $status, $note);
 
         return redirect()->to("/tickets/{$id}")->with('success', 'Status updated.');
     }
@@ -817,6 +959,38 @@ class TicketController extends BaseController
     private function changeStatus(string $id, array $fields, string $from, string $to): void
     {
         (new TicketIntake())->changeStatus($id, $fields, $from, $to);
+    }
+
+    // shared by single and bulk status changes
+    private function applyStatus(string $id, array $fields, string $from, string $to, string $note): void
+    {
+        if ($to === 'Resolved') {
+            $this->ticketModel->update((int) $id, ['resolution_note' => mb_substr($note, 0, 2000)]);
+        }
+
+        $this->changeStatus($id, $fields, $from, $to);
+    }
+
+    // shared by single and bulk assignment
+    private function applyAssignee(string $id, array $fields, int $assignedTo, ?string $name = null): void
+    {
+        $this->metaModel->updateForTicket($id, ['assigned_to' => $assignedTo > 0 ? $assignedTo : null]);
+
+        $name ??= $assignedTo > 0 ? (string) ($this->userModel->find($assignedTo)['name'] ?? '') : '';
+        Activity::ticket($id, 'assigned', null, $name);
+
+        if ($assignedTo > 0) {
+            AutoAssign::touch($assignedTo);
+            (new Notifier())->assigned($id, $fields, $assignedTo);
+        }
+    }
+
+    // bulk priority change, same log and sla restamp as the ticket page
+    private function applyPriority(string $id, array $fields, string $from, string $priority): void
+    {
+        $this->metaModel->updateForTicket($id, ['priority' => $priority]);
+        Activity::ticket($id, 'priority', $from, $priority);
+        (new Sla())->stamp($id, (string) ($fields['CreatedAt'] ?? date('Y-m-d H:i:s')), (string) ($fields['Category'] ?? 'Common Request'), $priority);
     }
 
     public function sendSurvey(string $id, array $fields): void
@@ -918,10 +1092,7 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'That person does not handle this team\'s tickets.');
         }
 
-        $update = [
-            'priority'    => $priority,
-            'assigned_to' => $assignedTo > 0 ? $assignedTo : null,
-        ];
+        $update = ['priority' => $priority];
 
         if ($dueDate !== '' && $dueDate !== (string) ($before['due_date'] ?? '')) {
             $update['due_date'] = $dueDate;
@@ -936,12 +1107,7 @@ class TicketController extends BaseController
         }
 
         if ($assignedTo !== $current) {
-            $name = $assignedTo > 0 ? (string) ($this->userModel->find($assignedTo)['name'] ?? '') : '';
-            Activity::ticket($id, 'assigned', null, $name);
-            if ($assignedTo > 0) {
-                AutoAssign::touch($assignedTo);
-                (new Notifier())->assigned($id, $fields, $assignedTo);
-            }
+            $this->applyAssignee($id, $fields, $assignedTo);
         }
 
         $category = trim((string) $this->request->getPost('category'));
@@ -1129,7 +1295,7 @@ class TicketController extends BaseController
 
         return $this->response->setJSON([
             'ok'      => true,
-            'message' => $this->renderMessage($result['message']),
+            'message' => $this->renderMessage($result['message'], $fields),
 
             'changed' => array_keys($result['changes']),
             'state'   => $result['state'],
@@ -1161,7 +1327,7 @@ class TicketController extends BaseController
             'messages' => array_values(array_map(fn ($m) => [
                 'id'   => (int) $m['id'],
                 'role' => (string) $m['author_role'],
-                'html' => $this->renderMessage($m),
+                'html' => $this->renderMessage($m, $fields),
             ], $newer)),
         ]);
     }
@@ -1173,9 +1339,73 @@ class TicketController extends BaseController
             && ! in_array($fields['Status'] ?? 'New', ['Closed', 'Cancelled', 'Pending Approval'], true);
     }
 
-    private function renderMessage(array $message): string
+    private function renderMessage(array $message, ?array $fields = null): string
     {
+        if ($fields !== null && ($user = current_user()) !== null) {
+            $message = $this->withVotes([$message], $fields, $user)[0];
+        }
+
         return render_message($message);
+    }
+
+    // adds the requester's vote buttons to assistant answers
+    private function withVotes(array $messages, array $fields, array $user): array
+    {
+        if (! $this->assistant->isRequester($fields, $user)) {
+            return $messages;
+        }
+
+        $ids = [];
+        foreach ($messages as $m) {
+            if (AiDeflection::rateable($m)) {
+                $ids[] = (int) $m['id'];
+            }
+        }
+
+        $votes = (new AiFeedbackModel())->votesBy((int) $user['id'], $ids);
+
+        foreach ($messages as &$m) {
+            if (AiDeflection::rateable($m)) {
+                $m['can_rate'] = true;
+                $m['my_vote']  = $votes[(int) $m['id']] ?? null;
+            }
+        }
+        unset($m);
+
+        return $messages;
+    }
+
+    public function rateAnswer(string $id, string $messageId)
+    {
+        $ticket = $this->ticketModel->getTicket($id);
+        $user   = current_user();
+        $fields = $ticket === null ? [] : ($ticket['fields'] ?? $ticket);
+
+        if ($ticket === null || ! $this->canAccess($fields, $user) || ! $this->assistant->isRequester($fields, $user)) {
+            return $this->rateResult($id, false, 'Only the person who raised the ticket can rate answers.', 404);
+        }
+
+        $message = $this->messageModel->find((int) $messageId);
+
+        if ($message === null || (string) $message['ticket_id'] !== (string) $id || ! AiDeflection::rateable($message)) {
+            return $this->rateResult($id, false, 'That answer cannot be rated.', 422);
+        }
+
+        $helpful = (string) $this->request->getPost('helpful') === '1';
+        $saved   = (new AiFeedbackModel())->vote((int) $message['id'], (int) $user['id'], $helpful);
+
+        return $saved
+            ? $this->rateResult($id, true, 'Thanks for the feedback.', 200, $helpful)
+            : $this->rateResult($id, false, 'Your feedback could not be saved. Please try again.', 500);
+    }
+
+    private function rateResult(string $id, bool $ok, string $text, int $status, ?bool $helpful = null)
+    {
+        if ($this->request->isAJAX()) {
+            return $this->response->setStatusCode($status)->setJSON(['ok' => $ok, 'message' => $text, 'helpful' => $helpful]);
+        }
+
+        return redirect()->to('/tickets/' . rawurlencode($id) . '#conversation')->with($ok ? 'success' : 'error', $text);
     }
 
     private function assistNoop(): \CodeIgniter\HTTP\ResponseInterface
