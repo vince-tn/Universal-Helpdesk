@@ -379,6 +379,16 @@ class TicketAssistant
             ];
         }
 
+        $department = (string) (($fields['Responsible Department'] ?? '') ?: ($fields['Submitting Department'] ?? ''));
+
+        $notes = (new ScreenshotReader())->notesFor(
+            $ticketId,
+            (string) ($fields['Request HTML'] ?? ''),
+            (string) ($fields['Image Notes'] ?? ''),
+            (string) ($fields['Request'] ?? ''),
+            $this->n8n->cloudAllowed($department)
+        );
+
         return [
             'ticket_id' => $ticketId,
             'ticket'    => [
@@ -390,7 +400,7 @@ class TicketAssistant
                 'requester'              => $fields['Requester'] ?? '',
                 'description'            => mb_substr((string) ($fields['Description'] ?? ''), 0, self::REQUEST_CHARS),
                 'request_body'           => mb_substr((string) ($fields['Request'] ?? ''), 0, self::REQUEST_CHARS)
-                    . ScreenshotReader::notesBlock((string) ($fields['Image Notes'] ?? '')),
+                    . ScreenshotReader::notesBlock($notes),
                 'expected_deliverable'   => $fields['Expected Deliverable'] ?? '',
                 'requirements_needed'    => $fields['Requirements Needed'] ?? '',
                 'closure_criteria'       => $fields['Closure Criteria'] ?? '',
