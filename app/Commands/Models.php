@@ -38,7 +38,7 @@ class Models extends BaseCommand
 
         CLI::write(count($models) . ' models, ' . count($vision) . ' take image input, ' . count($flagged) . ' flagged as may train on data (excluded)', 'yellow');
         CLI::write('text router: ' . OpenRouter::textModel() . ' with data_collection=deny');
-        CLI::write('image model now: ' . (OpenRouter::visionModel() ?: 'none'));
+        CLI::write('image model now: ' . (OpenRouter::visionModel() ?: 'none') . ', vetted fallback: ' . (Settings::get('openrouter_image_fallback') ?: 'none'));
 
         if (CLI::getOption('all')) {
             foreach ($flagged as $m) {
@@ -79,9 +79,9 @@ class Models extends BaseCommand
         CLI::write('best passing image model: ' . $picked, 'green');
 
         if (CLI::getOption('apply')) {
-            Settings::set('openrouter_vision_model', $picked);
-            Activity::audit('vision_model', 'image model set to ' . $picked, null, ['id' => null, 'name' => 'System']);
-            CLI::write('saved as the image model', 'green');
+            Settings::set('openrouter_image_fallback', $picked);
+            Activity::audit('vision_model', 'image fallback set to ' . $picked, null, ['id' => null, 'name' => 'System']);
+            CLI::write('saved as the image fallback after the image-processing preset', 'green');
         }
     }
 

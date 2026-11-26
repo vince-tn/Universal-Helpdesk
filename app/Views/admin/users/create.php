@@ -67,6 +67,13 @@
             </select>
         </div>
 
+
+        <div class="form-group checkbox-row">
+            <input type="checkbox" id="can_edit_knowledge" name="can_edit_knowledge" value="1" <?= old('can_edit_knowledge') ? 'checked' : '' ?>>
+            <label for="can_edit_knowledge">May edit their department's AI knowledge</label>
+        </div>
+        <div class="field-hint">Only adds anything for an agent. Supervisors and team leaders already edit the guides for the departments they run.</div>
+
         <button type="submit" class="btn"><?= icon('check', 16) ?> Create account</button>
     </form>
 </div>

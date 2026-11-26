@@ -131,6 +131,19 @@ class Doctor extends BaseCommand
         if (str_contains($body, '"' . $model . '"')) {
             $this->ok('ollama      ' . $model . ' is on disk');
 
+            $search = new \App\Libraries\Embeddings($url);
+
+            if (! $search->enabled()) {
+                CLI::write('  --   guide search: word matching only (KNOWLEDGE_SEARCH=text)', 'dark_gray');
+            } elseif (str_contains($body, '"' . $search->model() . '"')) {
+                $this->ok('search      guides are matched by meaning (' . $search->model() . ')');
+            } else {
+                $this->fail(
+                    'search      ' . $search->model() . ' has not been pulled - guides fall back to word matching',
+                    'docker compose logs ollama-init'
+                );
+            }
+
             return;
         }
 
@@ -157,14 +170,29 @@ class Doctor extends BaseCommand
     private function cloud(N8n $config): void
     {
         if ($config->cloudEnabled()) {
-            $this->ok('cloud model enabled - ' . ((new \Config\N8n())->cloudProvider() === 'openrouter' ? 'OpenRouter' : 'Gemini') . ' answers first, Ollama takes over if it fails');
-            $this->ok('text router ' . \App\Libraries\OpenRouter::textModel() . ', image model ' . (\App\Libraries\OpenRouter::visionModel() ?: 'not set, run helpdesk:models --apply'));
-            CLI::write('  --   classification and chat go through n8n; keep training off in the OpenRouter account privacy settings', 'dark_gray');
+            $this->ok('cloud model enabled - ' . $config->cloudLabel() . ' answers first, Ollama takes over if it fails');
+            CLI::write('  --   text router ' . (string) (env('OPENROUTER_MODEL') ?: 'not set'), 'dark_gray');
+
+            CLI::write($config->imagesEnabled()
+                ? '  --   screenshots are read by ' . $config->imageModel
+                : '  --   screenshots are not sent to any model', 'dark_gray');
+
+            try {
+                $local = (new \App\Models\DepartmentModel())->localOnlyNames();
+
+                CLI::write($local === []
+                    ? '  --   every department may use the cloud model'
+                    : '  --   local-only departments (nothing leaves the server): ' . implode(', ', $local), 'dark_gray');
+            } catch (\Throwable $e) {
+                CLI::write('  --   could not read the per-department cloud settings', 'dark_gray');
+            }
+
+            CLI::write('  --   confidential tickets ' . ($config->confidentialLocalOnly() ? 'stay on the local model' : 'may use the cloud model'), 'dark_gray');
 
             return;
         }
 
-        CLI::write('  --   cloud model off - running local-only. Set ' . ($config->cloudProvider() === 'openrouter' ? 'OPENROUTER_API_KEY' : 'GEMINI_API_KEY') . ' in .env to enable.', 'dark_gray');
+        CLI::write('  --   cloud model off - running local-only. Set OPENROUTER_API_KEY or GEMINI_API_KEY in .env to enable.', 'dark_gray');
     }
 
     private function mail(): void
@@ -198,6 +226,10 @@ class Doctor extends BaseCommand
             $config->SMTPPort,
             $config->SMTPHost === 'mailpit' ? ' - read the codes at http://localhost:8025' : ''
         ));
+
+        CLI::write((new \App\Libraries\Notifier())->isEnabled()
+            ? '  --   ticket emails on: raised, replied, assigned and status changes'
+            : '  --   ticket emails off - set TICKET_EMAILS=on in .env to send them', 'dark_gray');
     }
 
     private function registration(): void

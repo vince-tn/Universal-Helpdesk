@@ -30,24 +30,40 @@ final class ClientIpTest extends CIUnitTestCase
     public function testVisitorsThroughTheTunnelKeepTheirOwnAddress(): void
     {
         $this->assertSame('203.0.113.9', $this->ipFor([
-            'REMOTE_ADDR'           => '172.18.0.8',
-            'HTTP_CF_CONNECTING_IP' => '203.0.113.9',
+            'REMOTE_ADDR'          => '172.18.0.8',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.9',
+        ]));
+    }
+
+    public function testVisitorsThroughTheTailscaleSidecarKeepTheirOwnAddress(): void
+    {
+        $this->assertSame('203.0.113.9', $this->ipFor([
+            'REMOTE_ADDR'          => '127.0.0.1',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.9',
+        ]));
+    }
+
+    public function testOnlyTheFirstAddressInTheChainIsUsed(): void
+    {
+        $this->assertSame('203.0.113.9', $this->ipFor([
+            'REMOTE_ADDR'          => '172.18.0.8',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.9, 198.51.100.7',
         ]));
     }
 
     public function testOfficeVisitorsCannotClaimAnotherAddress(): void
     {
         $this->assertSame('192.168.52.40', $this->ipFor([
-            'REMOTE_ADDR'           => '192.168.52.40',
-            'HTTP_CF_CONNECTING_IP' => '203.0.113.9',
+            'REMOTE_ADDR'          => '192.168.52.40',
+            'HTTP_X_FORWARDED_FOR' => '203.0.113.9',
         ]));
     }
 
     public function testAGarbledHeaderFallsBackToTheConnection(): void
     {
         $this->assertSame('172.18.0.8', $this->ipFor([
-            'REMOTE_ADDR'           => '172.18.0.8',
-            'HTTP_CF_CONNECTING_IP' => 'not-an-ip',
+            'REMOTE_ADDR'          => '172.18.0.8',
+            'HTTP_X_FORWARDED_FOR' => 'not-an-ip',
         ]));
     }
 }

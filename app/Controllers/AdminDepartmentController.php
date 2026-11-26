@@ -81,6 +81,7 @@ class AdminDepartmentController extends BaseController
             $data = [
                 'name'           => $name,
                 'is_active'      => (int) ($fields['is_active'] ?? 1) === 1 ? 1 : 0,
+                'allow_cloud_ai' => (int) ($fields['allow_cloud_ai'] ?? 1) === 1 ? 1 : 0,
                 'team_leader_id' => $this->leaderFor((int) ($fields['team_leader_id'] ?? 0), $current),
             ];
 

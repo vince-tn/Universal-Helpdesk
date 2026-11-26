@@ -10,7 +10,7 @@ class DepartmentModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'handles', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order', 'is_confidential'];
+    protected $allowedFields = ['name', 'handles', 'allow_cloud_ai', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order', 'is_confidential'];
 
     public const HANDLES_MAX = 150;
 
@@ -35,6 +35,30 @@ class DepartmentModel extends Model
         $row  = $name === '' ? null : $this->findByName($name);
 
         return $row === null ? null : (int) $row['id'];
+    }
+
+    public function allowsCloud(string $ticketDepartment): bool
+    {
+        $name = resolve_base_department($ticketDepartment);
+
+        if ($name === '') {
+            return true;
+        }
+
+        return self::rowAllowsCloud($this->findByName($name));
+    }
+
+    public static function rowAllowsCloud(?array $department): bool
+    {
+        return $department === null || (int) ($department['allow_cloud_ai'] ?? 1) === 1;
+    }
+
+    public function localOnlyNames(): array
+    {
+        return array_column(
+            array_filter($this->allOrdered(), static fn ($d) => (int) ($d['allow_cloud_ai'] ?? 1) !== 1),
+            'name'
+        );
     }
 
     public function findByName(string $name): ?array

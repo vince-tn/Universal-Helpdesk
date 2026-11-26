@@ -7,11 +7,13 @@ use App\Libraries\Approvals;
 use App\Libraries\ExportGuard;
 use App\Libraries\Html;
 use App\Libraries\KnowledgeReview;
+use App\Libraries\Mentions;
 use App\Libraries\Notifier;
 use App\Libraries\Sla;
 use App\Libraries\Org;
 use App\Libraries\PriorCases;
 use App\Libraries\RoutingDirectory;
+use App\Libraries\ScreenshotReader;
 use App\Libraries\TicketAssistant;
 use App\Libraries\TicketIntake;
 use App\Models\N8nService;
@@ -436,21 +438,26 @@ class TicketController extends BaseController
             $session->close();
         }
 
-        $text  = (string) ($fields['Request'] ?? '');
-        $prior = $this->ticketModel->similarResolved($text, $id);
+        $text       = (string) ($fields['Request'] ?? '');
+        $department = (string) ($fields['Submitting Department'] ?? '');
+        $prior      = $this->ticketModel->similarResolved($text, $id);
+
+        $notes = (new ScreenshotReader())->notesFor(
+            $id,
+            (string) ($fields['Request HTML'] ?? ''),
+            (string) ($fields['Image Notes'] ?? ''),
+            $text,
+            $this->n8nService->cloudAllowed($department) && (int) ($fields['Confidential'] ?? 0) !== 1
+        );
+
+        $text .= ScreenshotReader::notesBlock($notes);
 
         $localOnly = (int) ($fields['Confidential'] ?? 0) === 1;
-
-        // screenshots are read by the image model first so the classifier sees the error text too
-        $reading = (new \App\Libraries\AttachmentVision())->readTicket($id, (string) ($fields['Request HTML'] ?? ''), $localOnly);
-        if ($reading !== '') {
-            $text .= "\n\nAttached screenshot shows:\n" . $reading;
-        }
 
         $result = $this->n8nService->classify([
             'Requester Name'        => $fields['Requester'] ?? '',
             'Requester Email'       => $fields['Requester Email'] ?? '',
-            'Submitting Department' => $fields['Submitting Department'] ?? '',
+            'Submitting Department' => $department,
             'Submitting Role'       => $fields['Submitting Role'] ?? '',
             'Request'               => $text,
         ], $this->priorCases->context($prior), $localOnly);

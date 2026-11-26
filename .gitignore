@@ -39,6 +39,8 @@ Vagrantfile
 /writable/uploads/*
 !/writable/uploads/index.html
 
+/writable/guides/
+
 /writable/debugbar/*
 !/writable/debugbar/index.html
 

@@ -2,6 +2,7 @@
 
 namespace App\Libraries;
 
+use App\Models\KnowledgeCitationModel;
 use App\Models\N8nService;
 use App\Models\TicketMessageModel;
 use App\Models\TicketMetaModel;
@@ -43,6 +44,23 @@ class TicketAssistant
         $this->messages   = new TicketMessageModel();
         $this->meta       = new TicketMetaModel();
         $this->guardrails = new Guardrails();
+    }
+
+    public static function plainReply(string $text): string
+    {
+        $text = (string) preg_replace('/^[ \t]*(?:ARTICLE|CASE)[ \t]*[1-9](?![\p{L}\p{N}])[ \t]*(?:\([^)]*\)[ \t]*:?|:)[ \t]*/miu', '', $text);
+        $text = (string) preg_replace('/(?<![\p{L}\p{N}])ARTICLES?[ \t]*[1-9](?![\p{L}\p{N}])/iu', 'the guide', $text);
+        $text = (string) preg_replace('/(?<![\p{L}\p{N}])CASES?[ \t]*[1-9](?![\p{L}\p{N}])/iu', 'an earlier request', $text);
+        $text = (string) preg_replace('/(?<![\p{L}\p{N}])tickets?[ \t]*#[ \t]*[0-9]+/iu', 'an earlier ticket', $text);
+        $text = (string) preg_replace('/[ \t]{2,}/', ' ', $text);
+        $text = (string) preg_replace('/[ \t]+([,.;:])/', '$1', $text);
+        $text = (string) preg_replace_callback(
+            '/(\A|[.!?]\s+|\n)(the guide|an earlier request|an earlier ticket)/u',
+            static fn ($m) => $m[1] . ucfirst($m[2]),
+            $text
+        );
+
+        return trim((string) $text);
     }
 
     public function isEnabled(): bool
@@ -87,7 +105,7 @@ class TicketAssistant
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
         }
 
-        $body = trim((string) ($output['requester_message'] ?? ''));
+        $body = self::plainReply((string) ($output['requester_message'] ?? ''));
 
         if ($body === '' && $known === '' && $article === null) {
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
@@ -108,7 +126,7 @@ class TicketAssistant
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
         }
 
-        return $this->say($ticketId, $notice . $body, $kind, $this->confidenceOf($output));
+        return $this->say($ticketId, $notice . $body, $kind, $this->confidenceOf($output), $article);
     }
 
     // strips internal ids, placeholder lines and empty asks from a reply
@@ -147,7 +165,7 @@ class TicketAssistant
             $body = $this->guideBody($department, $guide);
 
             if ($this->guardrails->blockedPhrase($department, $body) === null) {
-                return $this->say($ticketId, $notice . $body, TicketMessageModel::KIND_GUIDE);
+                return $this->say($ticketId, $notice . $body, TicketMessageModel::KIND_GUIDE, null, $guide);
             }
         }
 
@@ -265,6 +283,14 @@ class TicketAssistant
 
         $department = (string) (($fields['Responsible Department'] ?? '') ?: ($fields['Submitting Department'] ?? ''));
 
+        $result['reply'] = self::plainReply($result['reply']);
+
+        if ($result['reply'] === '') {
+            $result['reply']            = $this->ungroundedReply($department);
+            $result['resolution_state'] = 'NEEDS_STAFF';
+            $result['can_self_serve']   = 'No';
+        }
+
         $actions = $result['actions'];
         foreach (['set_description', 'resolution_note'] as $key) {
             if ($this->guardrails->blockedPhrase($department, (string) ($actions[$key] ?? '')) !== null) {
@@ -291,10 +317,12 @@ class TicketAssistant
             $result['can_self_serve']   = 'No';
         }
 
-        $kind = $this->replyKind($result, $grounded);
+        $kind  = $this->replyKind($result, $grounded);
+        $cited = null;
 
         if ($offersSteps && $grounded) {
             $result['reply'] = $this->withSources($result['reply'], $department, $priorFix, $article);
+            $cited           = $article;
         }
 
         $topic   = $this->guardrails->handoffTopic($department, $message);
@@ -310,7 +338,8 @@ class TicketAssistant
             $result['resolution_state'] = $resolved ? $result['resolution_state'] : 'NEEDS_STAFF';
             $result['can_self_serve']   = 'No';
 
-            $kind = $this->replyKind($result, false);
+            $cited = null;
+            $kind  = $this->replyKind($result, false);
         }
 
         $result['reply'] = self::clean($result['reply']);
@@ -323,7 +352,8 @@ class TicketAssistant
             $ticketId,
             $result['reply'],
             $kind,
-            $this->confidenceOf(['confidence' => $result['confidence']])
+            $this->confidenceOf(['confidence' => $result['confidence']]),
+            $cited
         );
 
         if ($stored === null) {
@@ -389,6 +419,16 @@ class TicketAssistant
             ];
         }
 
+        $department = (string) (($fields['Responsible Department'] ?? '') ?: ($fields['Submitting Department'] ?? ''));
+
+        $notes = (new ScreenshotReader())->notesFor(
+            $ticketId,
+            (string) ($fields['Request HTML'] ?? ''),
+            (string) ($fields['Image Notes'] ?? ''),
+            (string) ($fields['Request'] ?? ''),
+            $this->n8n->cloudAllowed($department)
+        );
+
         return [
             'ticket_id' => $ticketId,
             'ticket'    => [
@@ -399,7 +439,8 @@ class TicketAssistant
                 'submitting_department'  => $fields['Submitting Department'] ?? '',
                 'requester'              => $fields['Requester'] ?? '',
                 'description'            => mb_substr((string) ($fields['Description'] ?? ''), 0, self::REQUEST_CHARS),
-                'request_body'           => mb_substr((string) ($fields['Request'] ?? ''), 0, self::REQUEST_CHARS),
+                'request_body'           => mb_substr((string) ($fields['Request'] ?? ''), 0, self::REQUEST_CHARS)
+                    . ScreenshotReader::notesBlock($notes),
                 'expected_deliverable'   => $fields['Expected Deliverable'] ?? '',
                 'requirements_needed'    => $fields['Requirements Needed'] ?? '',
                 'closure_criteria'       => $fields['Closure Criteria'] ?? '',
@@ -485,7 +526,8 @@ class TicketAssistant
         string $ticketId,
         string $body,
         string $kind = TicketMessageModel::KIND_MESSAGE,
-        ?string $confidence = null
+        ?string $confidence = null,
+        ?array $article = null
     ): ?array {
         $id = $this->messages->post($ticketId, null, self::AUTHOR, self::ROLE, $body, $kind, $confidence);
 
@@ -493,6 +535,10 @@ class TicketAssistant
             log_message('error', 'Could not store the assistant message on ticket {id}', ['id' => $ticketId]);
 
             return null;
+        }
+
+        if ($article !== null && ($article['id'] ?? null) !== null) {
+            (new KnowledgeCitationModel())->record((int) $id, $ticketId, (int) $article['id']);
         }
 
         return [

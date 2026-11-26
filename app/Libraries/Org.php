@@ -57,6 +57,40 @@ class Org
         return [];
     }
 
+    public static function knowledgeOnlyDepartment(?array $user): ?array
+    {
+        if ($user === null || self::canOpenAdmin($user)) {
+            return null;
+        }
+
+        if ((int) ($user['can_edit_knowledge'] ?? 0) !== 1) {
+            return null;
+        }
+
+        $own = trim((string) ($user['department'] ?? ''));
+
+        return $own === '' ? null : (new DepartmentModel())->findByName($own);
+    }
+
+    public static function canEditKnowledge(?array $user, ?int $departmentId): bool
+    {
+        if (self::isSuperadmin($user)) {
+            return true;
+        }
+
+        if ($departmentId === null) {
+            return false;
+        }
+
+        if (self::canManageDepartment($user, $departmentId)) {
+            return true;
+        }
+
+        $own = self::knowledgeOnlyDepartment($user);
+
+        return $own !== null && (int) $own['id'] === $departmentId;
+    }
+
     public static function canManageDepartment(?array $user, int $departmentId): bool
     {
         foreach (self::manageableDepartments($user) as $d) {

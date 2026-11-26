@@ -20,7 +20,7 @@ class OpenRouter
     // the model used to read image attachments, saved setting first, then env
     public static function visionModel(): string
     {
-        return Settings::get('openrouter_vision_model') ?: trim((string) (env('OPENROUTER_VISION_MODEL') ?: ''));
+        return trim((string) config(\Config\N8n::class)->imageModel);
     }
 
     public static function textModel(): string

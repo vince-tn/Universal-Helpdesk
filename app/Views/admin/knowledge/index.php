@@ -159,6 +159,12 @@
         <form action="/admin/departments/knowledge/<?= (int) $a['id'] ?>/delete" method="post"
               onsubmit="return confirm('Delete this article?')" class="row-actions">
             <?= csrf_field() ?>
+            <a href="/admin/departments/knowledge/<?= (int) $a['id'] ?>/history" class="btn-link">
+                History<?= ($revisions[(int) $a['id']] ?? 0) > 0 ? ' (' . (int) $revisions[(int) $a['id']] . ')' : '' ?>
+            </a>
+            <?php if (($citedCount[(int) $a['id']] ?? 0) > 0): ?>
+                <span class="badge-outline">quoted on <?= (int) $citedCount[(int) $a['id']] ?> ticket<?= (int) $citedCount[(int) $a['id']] === 1 ? '' : 's' ?></span>
+            <?php endif ?>
             <button type="submit" class="btn-link is-danger">Delete article</button>
         </form>
     </section>

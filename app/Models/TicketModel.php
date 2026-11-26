@@ -14,7 +14,7 @@ class TicketModel extends Model
     protected $updatedField  = 'updated_at';
     protected $allowedFields = [
         'requester', 'requester_email', 'submitting_department', 'submitting_role', 'classified_at', 'request_body', 'request_html',
-        'request_title', 'category', 'responsible_department', 'responsible_role', 'routing_note', 'description',
+        'image_notes', 'request_title', 'category', 'responsible_department', 'responsible_role', 'routing_note', 'description',
         'expected_deliverable', 'suggested_tat', 'requirements_needed',
         'closure_criteria', 'ai_source', 'matched_catalogue_key',
         'needs_human_review', 'status', 'ai_updated_at', 'ai_resolution_note',
@@ -29,6 +29,8 @@ class TicketModel extends Model
 
     public const OPEN_STATUSES = ['New', 'In Progress', 'Awaiting Requester', 'On Hold', 'Pending Approval', 'Reopened'];
 
+    public const AI_SOURCES = ['Local', 'Gemini', 'OpenRouter'];
+
     private const ASSISTANT_WRITABLE = ['status', 'description', 'ai_resolution_note', 'ai_updated_at'];
 
     private const FIELD_MAP = [
@@ -39,6 +41,7 @@ class TicketModel extends Model
         'classified_at'          => 'Classified At',
         'request_body'           => 'Request',
         'request_html'           => 'Request HTML',
+        'image_notes'            => 'Image Notes',
         'request_title'          => 'Request Title',
         'category'               => 'Category',
         'responsible_department' => 'Responsible Department',
@@ -286,7 +289,7 @@ class TicketModel extends Model
 
     public function replaceClassification(string $id, array $output, string $aiSource = 'Local'): bool
     {
-        $row = ['ai_source' => in_array($aiSource, ['Local', 'Gemini', 'OpenRouter'], true) ? $aiSource : 'Local'];
+        $row = ['ai_source' => in_array($aiSource, self::AI_SOURCES, true) ? $aiSource : 'Local'];
 
         foreach (self::CLASSIFIER_MAP as $key => $column) {
             $value = $output[$key] ?? null;
@@ -309,6 +312,13 @@ class TicketModel extends Model
         return $this->update((int) $id, $row);
     }
 
+    public function saveImageNotes(string $id, string $notes): bool
+    {
+        $notes = trim($notes);
+
+        return $notes !== '' && $this->update((int) $id, ['image_notes' => mb_substr($notes, 0, 2000)]);
+    }
+
     public function applyRoute(string $id, string $department, string $role, ?string $note): bool
     {
         return $this->update((int) $id, [
@@ -328,7 +338,7 @@ class TicketModel extends Model
             'request_body'          => $submission['Request'] ?? null,
 
             'request_html'          => ($submission['Request HTML'] ?? '') !== '' ? $submission['Request HTML'] : null,
-            'ai_source'             => in_array($aiSource, ['Local', 'Gemini', 'OpenRouter'], true) ? $aiSource : 'Local',
+            'ai_source'             => in_array($aiSource, self::AI_SOURCES, true) ? $aiSource : 'Local',
             'status'                => 'New',
         ];
 

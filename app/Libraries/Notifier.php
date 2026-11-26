@@ -9,6 +9,38 @@ use App\Models\UserModel;
 // in-app and email notices for ticket events, mail goes through a queue
 class Notifier
 {
+    public const EXCERPT_CHARS = 300;
+
+    // emails go out unless TICKET_EMAILS is set to off and the mailer is set up
+    public function isEnabled(): bool
+    {
+        $raw = strtolower(trim((string) (env('TICKET_EMAILS') ?: 'on')));
+
+        return ! in_array($raw, ['off', '0', 'false', 'no'], true) && (new Mailer())->isConfigured();
+    }
+
+    public static function subjectFor(string $event, string $ticketId, string $title): string
+    {
+        $title = trim($title) === '' ? 'your request' : trim($title);
+
+        $lead = match ($event) {
+            'raised'   => 'Logged',
+            'replied'  => 'New reply on',
+            'assigned' => 'Assigned to you',
+            'status'   => 'Status changed on',
+            default    => 'Update on',
+        };
+
+        return mb_substr($lead . ' ticket #' . $ticketId . ': ' . $title, 0, 160);
+    }
+
+    public static function excerpt(string $text, int $max = self::EXCERPT_CHARS): string
+    {
+        $flat = trim((string) preg_replace('/\s+/u', ' ', $text));
+
+        return mb_strlen($flat) > $max ? rtrim(mb_substr($flat, 0, $max)) . '...' : $flat;
+    }
+
     public function created(string $ticketId, array $fields): void
     {
         $meta     = (new TicketMetaModel())->firstOrCreate($ticketId);
@@ -182,7 +214,7 @@ class Notifier
     {
         $to = trim($to);
 
-        if ($to === '' || ! filter_var($to, FILTER_VALIDATE_EMAIL) || str_ends_with($to, '.local')) {
+        if ($to === '' || ! filter_var($to, FILTER_VALIDATE_EMAIL) || str_ends_with($to, '.local') || ! $this->isEnabled()) {
             return;
         }
 

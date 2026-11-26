@@ -27,6 +27,16 @@ else
     echo "[ollama-init] could not preload $MODEL - the first ticket will load it"
 fi
 
+if [ -n "${EMBED_MODEL:-}" ]; then
+    if ollama list | awk 'NR > 1 { print $1 }' | grep -qx "$EMBED_MODEL"; then
+        echo "[ollama-init] $EMBED_MODEL is already here"
+    elif ollama pull "$EMBED_MODEL"; then
+        echo "[ollama-init] $EMBED_MODEL is ready"
+    else
+        echo "[ollama-init] could not pull $EMBED_MODEL - guide search uses word matching until it is"
+    fi
+fi
+
 if [ "${OLLAMA_INIT_STAY:-no}" = "yes" ]; then
     exec sleep infinity
 fi

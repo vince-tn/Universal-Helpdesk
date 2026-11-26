@@ -25,6 +25,7 @@ final class LoginSession
                 'email'      => $user['email'],
                 'role'       => $user['role'],
                 'department' => $user['department'],
+                'can_edit_knowledge' => (int) ($user['can_edit_knowledge'] ?? 0),
             ],
         ]);
     }
