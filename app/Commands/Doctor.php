@@ -22,7 +22,7 @@ class Doctor extends BaseCommand
     {
         $config = new N8n();
 
-        CLI::write('Chikiting System - health check', 'yellow');
+        CLI::write(brand_name() . ' - health check', 'yellow');
         CLI::newLine();
 
         $this->database();
@@ -31,6 +31,7 @@ class Doctor extends BaseCommand
         $this->webhook('ticket-chat', $config->chatWebhookUrl);
         $this->ollama();
         $this->cloud($config);
+        $this->sharedAdmin();
         $this->mail();
         $this->registration();
         $this->routing();
@@ -152,10 +153,25 @@ class Doctor extends BaseCommand
         );
     }
 
+    // flags the shared demo admin while it still opens with the default password
+    private function sharedAdmin(): void
+    {
+        $shared = (new \App\Models\UserModel())->findByEmail('admin@universalhelpdesk.local');
+
+        if ($shared !== null && (int) $shared['is_active'] === 1 && password_verify('ChangeMe123!', (string) $shared['password_hash'])) {
+            CLI::write('  !!   shared admin is open with the default password. Run helpdesk:admin --name .. --email .. --lock-shared', 'red');
+
+            return;
+        }
+
+        $this->ok('shared admin is locked or has its own password');
+    }
+
     private function cloud(N8n $config): void
     {
         if ($config->cloudEnabled()) {
             $this->ok('cloud model enabled - ' . $config->cloudLabel() . ' answers first, Ollama takes over if it fails');
+            CLI::write('  --   text router ' . (string) (env('OPENROUTER_MODEL') ?: 'not set'), 'dark_gray');
 
             CLI::write($config->imagesEnabled()
                 ? '  --   screenshots are read by ' . $config->imageModel
@@ -170,6 +186,8 @@ class Doctor extends BaseCommand
             } catch (\Throwable $e) {
                 CLI::write('  --   could not read the per-department cloud settings', 'dark_gray');
             }
+
+            CLI::write('  --   confidential tickets ' . ($config->confidentialLocalOnly() ? 'stay on the local model' : 'may use the cloud model'), 'dark_gray');
 
             return;
         }

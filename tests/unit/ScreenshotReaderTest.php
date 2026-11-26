@@ -87,6 +87,21 @@ final class ScreenshotReaderTest extends CIUnitTestCase
         $this->assertStringEndsWith('...', $clean);
     }
 
+    public function testFreeModelsAreNeverTried(): void
+    {
+        $this->assertSame(
+            ['@preset/image-processing', 'google/gemini-flash-lite'],
+            ScreenshotReader::trainingSafe(['@preset/image-processing', 'inclusionai/ling-3.2-flash:free', 'google/gemini-flash-lite', 'x/y:FREE'])
+        );
+    }
+
+    public function testTheRequestRefusesProvidersThatKeepData(): void
+    {
+        $body = ScreenshotReader::requestBody('@preset/image-processing', [['mime' => 'image/png', 'bytes' => 'x']], '');
+
+        $this->assertSame('deny', $body['provider']['data_collection']);
+    }
+
     public function testTheRequestSendsEveryImageToTheImageModel(): void
     {
         $body = ScreenshotReader::requestBody('@preset/image-processing', [

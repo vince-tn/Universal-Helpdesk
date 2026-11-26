@@ -60,7 +60,7 @@ class EmailVerifier
 
         $sent = $this->mailer->send(
             $email,
-            'Your Chikiting System verification code',
+            'Your ' . brand_name() . ' verification code',
             $this->body($code)
         );
 
@@ -243,13 +243,13 @@ class EmailVerifier
         $minutes = $this->config->codeTtlMinutes;
 
         return implode("\n", [
-            'Your Chikiting System verification code is:',
+            'Your ' . brand_name() . ' verification code is:',
             '',
             '    ' . $code,
             '',
             "It is good for {$minutes} minutes and can only be used once.",
             '',
-            'If you did not try to create a Chikiting System account, you can ignore this',
+            'If you did not try to create a ' . brand_name() . ' account, you can ignore this',
             'message - nothing has been created and nobody can finish the signup',
             'without this code.',
         ]);

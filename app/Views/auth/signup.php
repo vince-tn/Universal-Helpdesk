@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Sign up — Chikiting System</title>
+    <title>Sign up — <?= esc(brand_name()) ?></title>
     <?= theme_head() ?>
     <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
+    <?= brand_css() ?>
 </head>
 <body>
     <div class="auth-shell">
         <?= theme_toggle('auth-theme') ?>
         <div class="auth-wrap">
-            <div class="auth-brand"><?= brand_mark(34) ?> Chikiting System</div>
+            <div class="auth-brand"><?= brand_lockup(34) ?></div>
 
             <div class="auth-card">
                 <div class="step-rail" aria-label="Step 1 of 2">

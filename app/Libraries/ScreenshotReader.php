@@ -96,6 +96,7 @@ class ScreenshotReader
             'messages'    => [['role' => 'user', 'content' => $content]],
             'temperature' => 0,
             'max_tokens'  => 500,
+            'provider'    => ['data_collection' => 'deny', 'allow_fallbacks' => true],
         ];
     }
 
@@ -158,7 +159,10 @@ class ScreenshotReader
             return '';
         }
 
-        foreach (self::modelsToTry($this->config->imageModel, $this->config->imageFallbacks) as $i => $model) {
+        $vetted = \App\Libraries\Settings::get('openrouter_image_fallback');
+        $chain  = self::trainingSafe(self::modelsToTry($this->config->imageModel, array_merge($this->config->imageFallbacks, $vetted === '' ? [] : [$vetted])));
+
+        foreach ($chain as $i => $model) {
             if ($i > 0) {
                 sleep(2);
             }
@@ -178,6 +182,12 @@ class ScreenshotReader
         $models = array_map('trim', array_merge([$primary], $fallbacks));
 
         return array_values(array_unique(array_filter($models, static fn ($m) => $m !== '')));
+    }
+
+    // free endpoints may train on prompts, so they never see ticket screenshots
+    public static function trainingSafe(array $models): array
+    {
+        return array_values(array_filter($models, static fn ($m) => ! str_ends_with(strtolower(trim((string) $m)), ':free')));
     }
 
     private function ask(string $key, string $model, array $images, string $requestText): string

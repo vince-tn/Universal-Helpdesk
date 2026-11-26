@@ -88,3 +88,4 @@ _modules/*
 
 /results/
 /phpunit.xml
+/writable/reports/*

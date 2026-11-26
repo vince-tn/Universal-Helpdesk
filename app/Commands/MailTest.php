@@ -33,7 +33,7 @@ class MailTest extends BaseCommand
 
         $sent = (new Mailer())->send(
             $to,
-            'Chikiting System test message',
+            brand_name() . ' test message',
             "If you are reading this, mail delivery works.\n"
         );
 

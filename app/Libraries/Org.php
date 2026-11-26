@@ -138,6 +138,10 @@ class Org
             return true;
         }
 
+        if ((int) ($fields['Confidential'] ?? 0) === 1) {
+            return self::inConfidentialCircle($user, $fields);
+        }
+
         $department = strtolower(resolve_base_department(ticket_department($fields)));
 
         return $department !== '' && in_array($department, self::ticketDepartments($user), true);
@@ -151,6 +155,39 @@ class Org
 
         return self::canManageTicket($user, $fields)
             || strcasecmp((string) ($fields['Requester Email'] ?? ''), (string) ($user['email'] ?? '')) === 0;
+    }
+
+    // leads of the team, the assignee and the matching sub-team staff for a confidential ticket
+    public static function inConfidentialCircle(?array $user, array $fields): bool
+    {
+        if ($user === null || ($user['role'] ?? '') === UserModel::ROLE_REQUESTER) {
+            return false;
+        }
+
+        [$department, $leaderId, $supervisorId] = self::departmentLeads($fields);
+        $id = (int) ($user['id'] ?? 0);
+
+        if ($id > 0 && ($id === $leaderId || $id === $supervisorId)) {
+            return true;
+        }
+
+        $ticketId = (string) ($fields['Ticket ID'] ?? '');
+        if ($ticketId !== '' && (int) ((new \App\Models\TicketMetaModel())->where('ticket_id', $ticketId)->first()['assigned_to'] ?? 0) === $id) {
+            return true;
+        }
+
+        if ($department === '' || strtolower(trim((string) ($user['department'] ?? ''))) !== $department) {
+            return false;
+        }
+
+        $role = trim((string) (($fields['Routing Note'] ?? '') !== '' ? ($fields['Responsible Role'] ?? '') : ($fields['Submitting Role'] ?? '')));
+        if ($role === '' || empty($user['department_role_id'])) {
+            return false;
+        }
+
+        $mine = \Config\Database::connect()->table('department_roles')->where('id', (int) $user['department_role_id'])->get()->getRowArray();
+
+        return $mine !== null && strcasecmp((string) $mine['name'], $role) === 0;
     }
 
     private static function departmentLeads(array $fields): array
@@ -178,11 +215,35 @@ class Org
 
         $scoped = [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR];
 
+        if ((int) ($fields['Confidential'] ?? 0) === 1) {
+            return array_values(array_filter(
+                (new UserModel())->whereIn('role', $scoped)->where('is_active', 1)->orderBy('name', 'ASC')->findAll(),
+                static fn ($u) => self::inConfidentialCircle($u, $fields)
+            ));
+        }
+
         return array_values(array_filter(
             (new UserModel())->whereIn('role', $scoped)->where('is_active', 1)->orderBy('name', 'ASC')->findAll(),
             static fn ($u) => strtolower(trim((string) $u['department'])) === $department
                 || ($leaderId > 0 && (int) $u['id'] === $leaderId)
                 || ($supervisorId > 0 && (int) $u['id'] === $supervisorId)
+        ));
+    }
+
+    // team leaders and supervisors who can approve answers for the ticket's department
+    public static function knowledgeReviewers(array $fields): array
+    {
+        [$department, $leaderId, $supervisorId] = self::departmentLeads($fields);
+
+        if ($department === '') {
+            return [];
+        }
+
+        return array_values(array_filter(
+            (new UserModel())->whereIn('role', [UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR])->where('is_active', 1)->findAll(),
+            static fn ($u) => ($u['role'] === UserModel::ROLE_TEAM_LEADER
+                    && (($leaderId > 0 && (int) $u['id'] === $leaderId) || strtolower(trim((string) $u['department'])) === $department))
+                || ($u['role'] === UserModel::ROLE_SUPERVISOR && $supervisorId > 0 && (int) $u['id'] === $supervisorId)
         ));
     }
 
@@ -193,6 +254,15 @@ class Org
         $requester = strtolower(trim((string) ($fields['Requester Email'] ?? '')));
 
         $scoped = [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR];
+
+        if ((int) ($fields['Confidential'] ?? 0) === 1) {
+            return array_values(array_filter(
+                (new UserModel())->where('is_active', 1)->orderBy('name', 'ASC')->findAll(),
+                static fn ($u) => $u['role'] === UserModel::ROLE_SUPERADMIN
+                    || ($requester !== '' && strtolower((string) $u['email']) === $requester)
+                    || self::inConfidentialCircle($u, $fields)
+            ));
+        }
 
         return array_values(array_filter(
             (new UserModel())->where('is_active', 1)->orderBy('name', 'ASC')->findAll(),

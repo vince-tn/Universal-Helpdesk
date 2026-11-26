@@ -23,7 +23,7 @@
                     <span class="notif-body">
                         <span class="notif-actor"><?= esc($n['actor_name'] ?? 'Someone') ?></span>
                         <span class="notif-text"><?= esc($n['body']) ?></span>
-                        <span class="notif-time"><?= esc(date('M j, g:i A', strtotime((string) $n['created_at']))) ?></span>
+                        <span class="notif-time"><?= esc(date('j M, g:i A', strtotime((string) $n['created_at'])) . ' ' . brand()->timezoneLabel) ?></span>
                     </span>
                 </a>
             <?php endforeach ?>

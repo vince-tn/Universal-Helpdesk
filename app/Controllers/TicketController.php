@@ -2,14 +2,20 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Activity;
+use App\Libraries\Approvals;
+use App\Libraries\ExportGuard;
 use App\Libraries\Html;
+use App\Libraries\KnowledgeReview;
 use App\Libraries\Mentions;
 use App\Libraries\Notifier;
+use App\Libraries\Sla;
 use App\Libraries\Org;
 use App\Libraries\PriorCases;
 use App\Libraries\RoutingDirectory;
 use App\Libraries\ScreenshotReader;
 use App\Libraries\TicketAssistant;
+use App\Libraries\TicketIntake;
 use App\Models\N8nService;
 use App\Models\TicketModel;
 use App\Models\TicketMetaModel;
@@ -70,6 +76,7 @@ class TicketController extends BaseController
         foreach ($tickets as &$t) {
             $id   = (string) ($t['id'] ?? '');
             $meta = $metaById[$id] ?? ['priority' => 'Medium', 'due_date' => null, 'assigned_to' => null];
+            $sla  = new Sla();
 
             $t['department'] = ticket_department($t['fields'] ?? []);
             $t['meta'] = [
@@ -77,6 +84,8 @@ class TicketController extends BaseController
                 'due_date'      => $meta['due_date'] ?? null,
                 'assigned_to'   => $meta['assigned_to'] ?? null,
                 'assigned_name' => isset($meta['assigned_to']) ? ($agentNames[$meta['assigned_to']] ?? null) : null,
+                'due_at'        => $meta['due_at'] ?? null,
+                'sla'           => $sla->state($meta, (string) ($t['fields']['Status'] ?? 'New'), $t['fields']['CreatedAt'] ?? null),
             ];
         }
         unset($t);
@@ -107,6 +116,24 @@ class TicketController extends BaseController
         if ($priority !== '') {
             $tickets = array_values(array_filter($tickets, fn ($t) => ($t['meta']['priority'] ?? 'Medium') === $priority));
         }
+        $view = $filters['view'] ?? '';
+        if ($view !== '') {
+            $tickets = array_values(array_filter($tickets, function ($t) use ($view, $user) {
+                $f    = $t['fields'] ?? [];
+                $open = in_array($f['Status'] ?? 'New', TicketModel::OPEN_STATUSES, true);
+
+                return match ($view) {
+                    'mine'       => strcasecmp((string) ($f['Requester Email'] ?? ''), (string) $user['email']) === 0,
+                    'assigned'   => (int) ($t['meta']['assigned_to'] ?? 0) === (int) $user['id'] && $open,
+                    'team'       => $open && in_array(strtolower(resolve_base_department($t['department'] ?? '')), Org::ticketDepartments($user), true),
+                    'unassigned' => $open && empty($t['meta']['assigned_to']),
+                    'breaching'  => $open && in_array($t['meta']['sla'] ?? '', ['at_risk', 'breached'], true),
+                    'approval'   => ($f['Status'] ?? '') === 'Pending Approval',
+                    default      => true,
+                };
+            }));
+        }
+
         if ($department !== '' && $user['role'] === UserModel::ROLE_SUPERADMIN) {
             $tickets = array_values(array_filter($tickets, fn ($t) => strcasecmp(resolve_base_department($t['department'] ?? ''), $department) === 0));
         }
@@ -122,6 +149,7 @@ class TicketController extends BaseController
             'category'   => (string) ($this->request->getGet('category') ?? ''),
             'priority'   => (string) ($this->request->getGet('priority') ?? ''),
             'department' => (string) ($this->request->getGet('department') ?? ''),
+            'view'       => (string) ($this->request->getGet('view') ?? ''),
         ];
     }
 
@@ -146,14 +174,14 @@ class TicketController extends BaseController
         $sorters['priority_asc'] = fn ($a, $b) => $sorters['priority_desc']($b, $a);
         usort($tickets, $sorters[$sort] ?? $sorters['created_desc']);
 
-        $perPage     = 8;
+        $perPage     = 15;
         $page        = max(1, (int) ($this->request->getGet('page') ?? 1));
         $totalFound  = count($tickets);
         $totalPages  = max(1, (int) ceil($totalFound / $perPage));
         $page        = min($page, $totalPages);
         $pageTickets = array_slice($tickets, ($page - 1) * $perPage, $perPage);
 
-        $statusCounts = ['New' => 0, 'In Progress' => 0, 'Resolved' => 0, 'Closed' => 0];
+        $statusCounts = array_fill_keys(TicketModel::STATUSES, 0);
         foreach ($allScoped as $t) {
             $s = $t['fields']['Status'] ?? 'New';
             if (isset($statusCounts[$s])) {
@@ -181,7 +209,12 @@ class TicketController extends BaseController
 
     public function export()
     {
-        $user    = current_user();
+        $user = current_user();
+
+        if (! ExportGuard::allowed($user)) {
+            return redirect()->to('/tickets')->with('error', 'Only super admins and supervisors can export ticket data.');
+        }
+
         $tickets = $this->applyFilters($this->enrichedScopedTickets($user), $user, $this->requestFilters());
 
         $rows = array_map(function ($t) {
@@ -205,7 +238,10 @@ class TicketController extends BaseController
         }, $tickets);
 
         $format   = strtolower((string) ($this->request->getGet('format') ?? 'csv'));
+        $format   = in_array($format, ['json', 'xls'], true) ? $format : 'csv';
         $filename = 'tickets_export_' . date('Y-m-d_His');
+
+        ExportGuard::log($user, 'raw ticket export, format ' . $format . ', ' . count($rows) . ' rows, filters ' . http_build_query(array_filter($this->requestFilters())));
 
         return match ($format) {
             'json' => $this->response
@@ -269,9 +305,17 @@ class TicketController extends BaseController
             static fn ($d) => (int) $d['is_active'] === 1
         );
 
+        $services = \Config\Database::connect()->table('services')->where('is_active', 1)
+            ->orderBy('sort_order', 'ASC')->get()->getResultArray();
+        $activeNames = array_map('strtolower', array_column($active, 'name'));
+        $services    = array_values(array_filter($services, static fn ($s) => in_array(strtolower($s['department']), $activeNames, true)));
+
         return view('tickets/create', [
-            'user'  => current_user(),
-            'roles' => array_values($active),
+            'user'        => current_user(),
+            'roles'       => array_values($active),
+            'services'    => $services,
+            'departments' => departments(),
+            'room'        => (int) ($this->request->getGet('room') ?? 0),
         ]);
     }
 
@@ -290,9 +334,41 @@ class TicketController extends BaseController
         $department = (string) $this->request->getPost('submitting_department');
         $role       = trim((string) $this->request->getPost('submitting_role'));
 
+        $service = $this->service(trim((string) $this->request->getPost('service_key')));
+        $answers = [];
+
+        if ($service !== null) {
+            $department = $service['department'];
+            $role       = (string) ($service['role'] ?? '');
+
+            foreach (json_decode((string) $service['fields_json'], true) ?: [] as $field) {
+                $value = trim((string) ($this->request->getPost('svc')[$field['key']] ?? ''));
+
+                if ($value === '' && ! empty($field['required'])) {
+                    return redirect()->back()->withInput()->with('error', 'Please fill in "' . $field['label'] . '".');
+                }
+                if ($value !== '') {
+                    $answers[$field['label']] = mb_substr($value, 0, 300);
+                }
+            }
+
+            if ($answers !== []) {
+                $lines = ['Request type: ' . $service['name']];
+                foreach ($answers as $label => $value) {
+                    $lines[] = $label . ': ' . $value;
+                }
+                $text = implode("\n", $lines) . "\n\n" . $text;
+            }
+        }
+
+        $ownDepartment = trim((string) $this->request->getPost('requester_department')) ?: trim((string) ($user['department'] ?? ''));
+        $people        = (string) $this->request->getPost('people_affected');
+        $stopped       = (string) $this->request->getPost('work_stopped');
+        $neededBy      = trim((string) $this->request->getPost('needed_by'));
+
         $error = match (true) {
             ! in_array($department, departments(), true)
-                => 'Choose the department you are raising this from.',
+                => 'Choose what you need help with, or the team that should handle it.',
             mb_strlen($text) < 10
                 => 'Please describe your request in a bit more detail - at least a sentence.',
             mb_strlen($text) > 5000
@@ -322,10 +398,18 @@ class TicketController extends BaseController
                 ->with('error', 'Something went wrong saving your ticket. Please try again.');
         }
 
-        $raised = $this->ticketModel->getTicket($id);
-        (new Notifier())->ticketRaised($id, $raised['fields'] ?? [], $text);
+        (new TicketIntake())->afterCreate($id, [
+            'department'     => $department,
+            'role'           => $role,
+            'service'        => $service,
+            'answers'        => $answers,
+            'own_department' => $ownDepartment,
+            'people'         => $people,
+            'stopped'        => $stopped,
+            'needed_by'      => $neededBy,
+        ]);
 
-        return redirect()->to("/tickets/{$id}")->with('success', 'Ticket submitted.');
+        return redirect()->to("/tickets/{$id}")->with('success', "Ticket #{$id} submitted. We emailed you a copy.");
     }
 
     public function classify(string $id)
@@ -363,10 +447,12 @@ class TicketController extends BaseController
             (string) ($fields['Request HTML'] ?? ''),
             (string) ($fields['Image Notes'] ?? ''),
             $text,
-            $this->n8nService->cloudAllowed($department)
+            $this->n8nService->cloudAllowed($department) && (int) ($fields['Confidential'] ?? 0) !== 1
         );
 
         $text .= ScreenshotReader::notesBlock($notes);
+
+        $localOnly = (int) ($fields['Confidential'] ?? 0) === 1;
 
         $result = $this->n8nService->classify([
             'Requester Name'        => $fields['Requester'] ?? '',
@@ -374,7 +460,7 @@ class TicketController extends BaseController
             'Submitting Department' => $department,
             'Submitting Role'       => $fields['Submitting Role'] ?? '',
             'Request'               => $text,
-        ], $this->priorCases->context($prior));
+        ], $this->priorCases->context($prior), $localOnly);
 
         if ($result === null) {
             $stored = $this->messageModel->hasAssistantMessage($id)
@@ -391,12 +477,28 @@ class TicketController extends BaseController
         $output = $result['output'] ?? [];
 
         $this->ticketModel->replaceClassification($id, $output, $result['ai_source'] ?? 'Local');
-        $this->metaModel->updateForTicket($id, TicketMetaModel::fromClassification($output));
+
+        $meta = $this->metaModel->firstOrCreate($id);
+
+        if (empty($meta['people_affected'])) {
+            $this->metaModel->updateForTicket($id, TicketMetaModel::fromClassification($output));
+        }
+
+        $service = $this->service((string) ($fields['Service Key'] ?? ''));
+        if ($service !== null) {
+            $this->ticketModel->update((int) $id, ['category' => $service['category']]);
+        }
+
+        $fresh = $this->ticketModel->getTicket($id)['fields'] ?? [];
+        $meta  = $this->metaModel->firstOrCreate($id);
+        (new Sla())->stamp($id, (string) ($fresh['CreatedAt'] ?? date('Y-m-d H:i:s')), (string) ($fresh['Category'] ?? 'Common Request'), (string) ($meta['priority'] ?? 'Medium'));
 
         $route = (new RoutingDirectory())->reroute($id, $result['routing'] ?? [], $output, $text);
 
         if ($route !== null) {
             $output['responsible_department'] = $route['department'];
+            $this->ticketModel->update((int) $id, ['is_confidential' => $this->isConfidential($route['department'], $route['role']) ? 1 : 0]);
+            Activity::ticket($id, 'routed', $route['reason'] ?? '', $route['to'], ['id' => null, 'name' => 'Assistant']);
         }
 
         $stored = $this->assistant->opening(
@@ -442,8 +544,14 @@ class TicketController extends BaseController
             'meta'       => $meta,
             'staff'      => Org::assignableStaff($fields),
             'assignedTo' => $assignedTo,
-            'messages'   => $this->messageModel->forTicket($id),
+            'messages'   => $this->messageModel->forTicket($id, $this->canManage($fields, $user)),
             'canManage'  => $this->canManage($fields, $user),
+            'events'     => Activity::forTicket($id),
+            'approvals'  => (new Approvals())->forTicket($id),
+            'canApprove' => ($step = (new Approvals())->current($id)) !== null && (new Approvals())->canDecide($user, $fields, $step),
+            'slaState'   => (new Sla())->state($meta, (string) ($fields['Status'] ?? 'New'), $fields['CreatedAt'] ?? null),
+            'canned'     => $this->canManage($fields, $user) ? $this->canned($fields) : [],
+            'feedback'   => \Config\Database::connect()->table('ticket_feedback')->where('ticket_id', $id)->get()->getRowArray(),
             'awaitingAi' => $this->ticketModel->awaitsClassification($fields),
             'teams'      => $this->canManage($fields, $user) ? (new RoutingDirectory())->entries() : [],
         ]);
@@ -470,15 +578,117 @@ class TicketController extends BaseController
     {
         $fields = $this->requireManageAccess($id);
 
-        $status = $this->request->getPost('status');
+        $status = (string) $this->request->getPost('status');
         if (! in_array($status, TicketModel::STATUSES, true)) {
             return redirect()->back()->with('error', 'Invalid status.');
         }
 
-        $this->ticketModel->updateStatus($id, $status);
-        (new Notifier())->statusChanged($id, $fields, $status);
+        $from = (string) ($fields['Status'] ?? 'New');
+        if ($from === $status) {
+            return redirect()->to("/tickets/{$id}");
+        }
+
+        if ($from === 'Pending Approval' && ! Org::isSuperadmin(current_user())) {
+            return redirect()->back()->with('error', 'This ticket is waiting for approval. It moves on once it is approved or rejected.');
+        }
+
+        $note = trim((string) $this->request->getPost('resolution_note'));
+
+        if ($status === 'Resolved') {
+            $meta = $this->metaModel->firstOrCreate($id);
+
+            if (empty($meta['assigned_to'])) {
+                return redirect()->back()->with('error', 'Assign the ticket to someone before resolving it.');
+            }
+            if (mb_strlen($note) < 10) {
+                return redirect()->back()->with('error', 'Add a short resolution note (what fixed it) before resolving.');
+            }
+            $this->ticketModel->update((int) $id, ['resolution_note' => mb_substr($note, 0, 2000)]);
+        }
+
+        $this->changeStatus($id, $fields, $from, $status);
 
         return redirect()->to("/tickets/{$id}")->with('success', 'Status updated.');
+    }
+
+    private function changeStatus(string $id, array $fields, string $from, string $to): void
+    {
+        (new TicketIntake())->changeStatus($id, $fields, $from, $to);
+    }
+
+    public function sendSurvey(string $id, array $fields): void
+    {
+        (new TicketIntake())->sendSurvey($id, $fields);
+    }
+
+    public function feedback(string $id)
+    {
+        $db    = \Config\Database::connect();
+        $row   = $db->table('ticket_feedback')->where('ticket_id', $id)->get()->getRowArray();
+        $token = (string) $this->request->getGet('t');
+        $score = (int) $this->request->getGet('r');
+
+        if ($row === null || $token === '' || ! hash_equals((string) $row['token'], $token) || $score < 1 || $score > 5) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'That feedback link is not valid any more.');
+        }
+
+        $db->table('ticket_feedback')->where('id', $row['id'])->update(['rating' => $score, 'token' => null, 'created_at' => date('Y-m-d H:i:s')]);
+        Activity::ticket($id, 'feedback', null, (string) $score);
+
+        return redirect()->to("/tickets/{$id}")->with('success', 'Thanks for rating the help.');
+    }
+
+    public function approval(string $id)
+    {
+        $ticket = $this->ticketModel->getTicket($id);
+        if ($ticket === null) {
+            throw \CodeIgniter\Exceptions\PageNotFoundException::forPageNotFound();
+        }
+
+        $fields  = $ticket['fields'];
+        $approve = $this->request->getPost('decision') === 'approve';
+        $note    = trim((string) $this->request->getPost('note'));
+
+        if (! $approve && mb_strlen($note) < 5) {
+            return redirect()->back()->with('error', 'Add a short reason when rejecting.');
+        }
+
+        $result = (new Approvals())->decide($id, $fields, current_user(), $approve, $note);
+
+        if ($result === null) {
+            return redirect()->back()->with('error', 'You cannot approve this step.');
+        }
+
+        return redirect()->to("/tickets/{$id}")->with('success', $approve ? 'Approved.' : 'Rejected. The requester has been told.');
+    }
+
+    // impact and urgency matrix from the two intake questions
+    public static function priorityFrom(string $people, string $stopped): ?string
+    {
+        return TicketIntake::priorityFrom($people, $stopped);
+    }
+
+    private function service(string $key): ?array
+    {
+        if ($key === '') {
+            return null;
+        }
+
+        return \Config\Database::connect()->table('services')->where(['service_key' => $key, 'is_active' => 1])->get()->getRowArray();
+    }
+
+    private function isConfidential(string $department, string $role): bool
+    {
+        return TicketIntake::isConfidential($department, $role);
+    }
+
+    private function canned(array $fields): array
+    {
+        $departmentId = (new \App\Models\DepartmentModel())->idFor(ticket_department($fields));
+
+        return \Config\Database::connect()->table('canned_responses')
+            ->groupStart()->where('department_id', null)->orWhere('department_id', $departmentId)->groupEnd()
+            ->orderBy('title', 'ASC')->get()->getResultArray();
     }
 
     public function updateMeta(string $id)
@@ -497,40 +707,49 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'That due date is not a real date.');
         }
 
-        $current = (int) ($this->metaModel->firstOrCreate($id)['assigned_to'] ?? 0);
+        $before  = $this->metaModel->firstOrCreate($id);
+        $current = (int) ($before['assigned_to'] ?? 0);
 
         if ($assignedTo > 0 && $assignedTo !== $current
             && ! in_array($assignedTo, array_map('intval', array_column(Org::assignableStaff($fields), 'id')), true)) {
             return redirect()->back()->with('error', 'That person does not handle this team\'s tickets.');
         }
 
-        $this->metaModel->updateForTicket($id, [
+        $update = [
             'priority'    => $priority,
-            'due_date'    => $dueDate !== '' ? $dueDate : null,
             'assigned_to' => $assignedTo > 0 ? $assignedTo : null,
-        ]);
+        ];
 
-        if ($assignedTo > 0 && $assignedTo !== $current) {
-            $assignee = $this->userModel->find($assignedTo);
+        if ($dueDate !== '' && $dueDate !== (string) ($before['due_date'] ?? '')) {
+            $update['due_date'] = $dueDate;
+            $update['due_at']   = $dueDate . ' 17:00:00';
+            Activity::ticket($id, 'due', $before['due_date'] ?? null, format_day($dueDate));
+        }
 
-            if ($assignee !== null) {
-                (new Notifier())->assigned($id, $fields, $assignee);
+        $this->metaModel->updateForTicket($id, $update);
+
+        if ($priority !== ($before['priority'] ?? 'Medium')) {
+            Activity::ticket($id, 'priority', $before['priority'] ?? null, $priority);
+        }
+
+        if ($assignedTo !== $current) {
+            $name = $assignedTo > 0 ? (string) ($this->userModel->find($assignedTo)['name'] ?? '') : '';
+            Activity::ticket($id, 'assigned', null, $name);
+            if ($assignedTo > 0) {
+                (new Notifier())->assigned($id, $fields, $assignedTo);
             }
         }
 
         $category = trim((string) $this->request->getPost('category'));
-        $tat      = trim((string) $this->request->getPost('suggested_tat'));
 
-        $tags = [];
-        if (in_array($category, ticket_categories(), true)) {
-            $tags['category'] = $category;
-        }
-        if ($tat !== '' && mb_strlen($tat) <= 100) {
-            $tags['suggested_tat'] = $tat;
+        if (in_array($category, ticket_categories(), true) && $category !== (string) ($fields['Category'] ?? '')) {
+            $this->ticketModel->update((int) $id, ['category' => $category]);
+            Activity::ticket($id, 'category', $fields['Category'] ?? null, $category);
         }
 
-        if ($tags !== []) {
-            $this->ticketModel->update((int) $id, $tags);
+        if (($dueDate === '' || $dueDate === (string) ($before['due_date'] ?? ''))
+            && ($priority !== ($before['priority'] ?? 'Medium') || (in_array($category, ticket_categories(), true) && $category !== (string) ($fields['Category'] ?? '')))) {
+            (new Sla())->stamp($id, (string) ($fields['CreatedAt'] ?? date('Y-m-d H:i:s')), in_array($category, ticket_categories(), true) ? $category : (string) ($fields['Category'] ?? 'Common Request'), $priority);
         }
 
         $moved = $this->moveToTeam($id, $fields, (string) $this->request->getPost('owning_team'));
@@ -572,6 +791,8 @@ class TicketController extends BaseController
 
         $user = current_user();
         $this->ticketModel->applyRoute($id, $department, $role, 'moved by ' . $user['name'] . ' from ' . RoutingDirectory::label($current));
+        $this->ticketModel->update((int) $id, ['is_confidential' => $this->isConfidential($department, $role) ? 1 : 0]);
+        Activity::ticket($id, 'team', RoutingDirectory::label($current), RoutingDirectory::label($target));
 
         return RoutingDirectory::label($target);
     }
@@ -595,9 +816,18 @@ class TicketController extends BaseController
             return redirect()->back()->with('error', 'Message cannot be empty.');
         }
 
-        $isSolution = $this->canManage($fields, $user)
+        if (in_array((string) ($fields['Status'] ?? ''), ['Closed', 'Cancelled'], true)) {
+            return redirect()->to("/tickets/{$id}")->with('error', 'This ticket is closed. Raise a new ticket if it comes back.');
+        }
+
+        $internal = $this->canManage($fields, $user) && $this->request->getPost('is_internal') !== null;
+
+        $isSolution = ! $internal
+            && $this->canManage($fields, $user)
             && $this->request->getPost('is_solution') !== null
             && mb_strlen($body) >= 25;
+
+        $selfApproved = $isSolution && KnowledgeReview::canReview($user, ticket_department($fields));
 
         $messageId = $this->messageModel->post(
             $id,
@@ -607,25 +837,21 @@ class TicketController extends BaseController
             $body,
             TicketMessageModel::KIND_MESSAGE,
             null,
-            $isSolution
+            $isSolution,
+            $internal
         );
 
         if ($messageId === false) {
             return redirect()->back()->with('error', 'Your message could not be saved. Please try again.');
         }
 
-        $mentioned = (new Mentions())->notify(
-            $body,
-            $user,
-            $id,
-            (string) ($fields['Request Title'] ?? $fields['Title'] ?? 'a ticket'),
-            Org::ticketAudience($fields)
-        );
+        if ($selfApproved) {
+            $this->messageModel->reviewSolution((int) $messageId, TicketMessageModel::SOLUTION_APPROVED, (int) $user['id']);
+        } elseif ($isSolution) {
+            (new Notifier())->solutionPending($id, $fields, $user);
+        }
 
-        $meta     = $this->metaModel->firstOrCreate($id);
-        $assignee = empty($meta['assigned_to']) ? null : $this->userModel->find((int) $meta['assigned_to']);
-
-        (new Notifier())->messagePosted($id, $fields, $user, $body, $assignee);
+        $mentioned = (new TicketIntake())->afterReply($id, $fields, $user, $body, $internal);
 
         $redirect = redirect()->to("/tickets/{$id}#conversation");
 
@@ -633,11 +859,13 @@ class TicketController extends BaseController
             $redirect = $redirect->with('success', 'Notified ' . implode(', ', array_column($mentioned, 'name')) . '.');
         }
 
-        if ($isSolution) {
+        if ($selfApproved) {
             $redirect = $redirect->with('success', 'Saved as the solution. The assistant can reuse it on similar tickets.');
+        } elseif ($isSolution) {
+            $redirect = $redirect->with('success', 'Marked as the solution. A team lead reviews it before the assistant reuses it.');
         }
 
-        if ($this->assistantShouldAnswer($fields, $user)) {
+        if (! $internal && $this->assistantShouldAnswer($fields, $user)) {
             $redirect = $redirect->with('assist_message_id', (int) $messageId);
         }
 
@@ -715,7 +943,7 @@ class TicketController extends BaseController
         $after = max(0, (int) $this->request->getGet('after'));
 
         $newer = array_filter(
-            $this->messageModel->forTicket($id),
+            $this->messageModel->forTicket($id, $this->canManage($fields, current_user())),
             static fn ($m) => (int) $m['id'] > $after
         );
 
@@ -733,7 +961,7 @@ class TicketController extends BaseController
     {
         return $this->assistant->isEnabled()
             && $this->assistant->isRequester($fields, $user)
-            && ($fields['Status'] ?? 'New') !== 'Closed';
+            && ! in_array($fields['Status'] ?? 'New', ['Closed', 'Cancelled', 'Pending Approval'], true);
     }
 
     private function renderMessage(array $message): string

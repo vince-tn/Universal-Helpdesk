@@ -12,7 +12,7 @@ $kindLabel = match ($kind) {
     default       => '',
 };
 ?>
-<div class="msg role-<?= esc($role) ?> kind-<?= esc($kind) ?>" data-message-id="<?= (int) ($msg['id'] ?? 0) ?>">
+<div class="msg role-<?= esc($role) ?> kind-<?= esc($kind) ?><?= (int) ($msg['is_internal'] ?? 0) === 1 ? ' is-internal' : '' ?>" data-message-id="<?= (int) ($msg['id'] ?? 0) ?>">
     <div class="msg-avatar" aria-hidden="true">
         <?= $isAi ? icon('sparkle', 18) : esc(strtoupper(substr((string) ($msg['author_name'] ?? '?'), 0, 1))) ?>
     </div>
@@ -29,11 +29,15 @@ $kindLabel = match ($kind) {
                 <span class="badge-outline"><?= esc($role) ?></span>
             <?php endif ?>
 
-            <span class="msg-time"><?= esc(date('M j, g:i A', strtotime((string) ($msg['created_at'] ?? 'now')))) ?></span>
+            <?php if ((int) ($msg['is_internal'] ?? 0) === 1): ?><span class="badge-outline">internal note</span><?php endif ?>
+            <span class="msg-time"><?= esc(date('j M, g:i A', strtotime((string) ($msg['created_at'] ?? 'now'))) . ' ' . brand()->timezoneLabel) ?></span>
         </div>
 
-        <?php if ((int) ($msg['is_solution'] ?? 0) === 1): ?>
+        <?php $solutionState = (int) ($msg['is_solution'] ?? 0) === 1 ? (string) ($msg['solution_state'] ?? '') : ''; ?>
+        <?php if ($solutionState === 'approved'): ?>
             <span class="badge-solution"><?= icon('check', 11) ?> Solution</span>
+        <?php elseif ($solutionState === 'pending' && (current_user()['role'] ?? 'requester') !== 'requester'): ?>
+            <span class="badge-solution is-pending" title="A team lead has to approve it before the assistant reuses it"><?= icon('clock', 11) ?> Waiting for review</span>
         <?php endif ?>
 
         <div class="msg-text"><?= esc($msg['body'] ?? '') ?></div>

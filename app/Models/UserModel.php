@@ -14,7 +14,8 @@ class UserModel extends Model
     protected $updatedField     = 'updated_at';
     protected $allowedFields    = [
         'name', 'email', 'company', 'password_hash', 'role', 'department', 'department_role_id',
-        'can_edit_knowledge', 'is_active',
+        'can_edit_knowledge', 'is_active', 'notify_email', 'expires_at',
+        'mfa_secret', 'mfa_enabled', 'mfa_recovery', 'mfa_last_step', 'sso_subject',
     ];
 
     public const ROLE_SUPERADMIN = 'superadmin';
@@ -50,6 +51,14 @@ class UserModel extends Model
             ->where('is_active', 1)
             ->orderBy('name', 'ASC')
             ->findAll();
+    }
+
+    // true once a temporary account has passed its end date
+    public static function isExpired(?array $user): bool
+    {
+        $at = (string) ($user['expires_at'] ?? '');
+
+        return $at !== '' && strtotime($at) !== false && strtotime($at) <= time();
     }
 
     public function findByEmail(string $email): ?array

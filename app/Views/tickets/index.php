@@ -8,9 +8,10 @@
     function statusPillClass(string $status): string {
         return match ($status) {
             'New' => 'pill-status-new',
-            'In Progress' => 'pill-status-in-progress',
+            'In Progress', 'Reopened' => 'pill-status-in-progress',
+            'Awaiting Requester', 'On Hold', 'Pending Approval' => 'pill-status-waiting',
             'Resolved' => 'pill-status-resolved',
-            'Closed' => 'pill-status-closed',
+            'Closed', 'Cancelled' => 'pill-status-closed',
             default => 'pill-status-new',
         };
     }
@@ -23,7 +24,7 @@
         };
     }
     function sourcePillClass(string $source): string {
-        return $source === 'Gemini' ? 'pill-source-gemini' : 'pill-source-local';
+        return in_array($source, ['Gemini', 'OpenRouter'], true) ? 'pill-source-gemini' : 'pill-source-local';
     }
 
     function sortLink(string $field, string $label, string $currentSort, array $params): string {
@@ -33,7 +34,11 @@
         return '<a href="?' . esc($qs) . '">' . esc($label) . ($active ? icon('sort', 13) : '') . '</a>';
     }
 
-    $baseParams = ['q' => $q, 'status' => $status, 'category' => $category, 'priority' => $priority, 'department' => $department];
+    $baseParams = ['q' => $q, 'status' => $status, 'category' => $category, 'priority' => $priority, 'department' => $department, 'view' => $view];
+
+    $views = $user['role'] === 'requester'
+        ? ['' => 'All my tickets']
+        : ['' => 'All', 'assigned' => 'Assigned to me', 'team' => "My team's queue", 'unassigned' => 'Unassigned', 'breaching' => 'SLA at risk', 'approval' => 'Waiting approval', 'mine' => 'Raised by me'];
     $exportParams = array_merge($baseParams, ['sort' => $sort]);
 ?>
 
@@ -47,12 +52,14 @@
         </div>
     </div>
     <div class="table-actions">
+        <?php if (\App\Libraries\ExportGuard::allowed($user)): ?>
         <div class="export-group">
             <span class="export-label"><?= icon('download', 14) ?> Export</span>
             <a href="/tickets/export?<?= esc(http_build_query(array_merge($exportParams, ['format' => 'csv']))) ?>">CSV</a>
             <a href="/tickets/export?<?= esc(http_build_query(array_merge($exportParams, ['format' => 'xls']))) ?>">Excel</a>
             <a href="/tickets/export?<?= esc(http_build_query(array_merge($exportParams, ['format' => 'json']))) ?>">JSON</a>
         </div>
+        <?php endif ?>
         <a href="/tickets/new" class="btn"><?= icon('plus', 16) ?> New Ticket</a>
     </div>
 </div>
@@ -83,14 +90,23 @@
     </div>
 </div>
 
+<?php if (count($views) > 1): ?>
+    <nav class="queue-tabs" aria-label="Ticket queues">
+        <?php foreach ($views as $key => $label): ?>
+            <a href="?<?= esc(http_build_query(array_merge($baseParams, ['view' => $key, 'page' => 1]))) ?>" class="<?= $view === $key ? 'active' : '' ?>"><?= esc($label) ?></a>
+        <?php endforeach ?>
+    </nav>
+<?php endif ?>
+
 <form class="toolbar" method="get" action="/tickets">
+    <input type="hidden" name="view" value="<?= esc($view) ?>">
     <div class="search-field">
         <?= icon('search', 16) ?>
         <input type="search" name="q" placeholder="Search title, requester, email…" value="<?= esc($q) ?>">
     </div>
     <select name="status">
         <option value="">All statuses</option>
-        <?php foreach (['New', 'In Progress', 'Resolved', 'Closed'] as $opt): ?>
+        <?php foreach (\App\Models\TicketModel::STATUSES as $opt): ?>
             <option value="<?= $opt ?>" <?= $status === $opt ? 'selected' : '' ?>><?= $opt ?></option>
         <?php endforeach ?>
     </select>
@@ -135,10 +151,11 @@
                 <tr>
                     <th><?= sortLink('title', 'Title', $sort, $baseParams) ?></th>
                     <th>Department <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
-                    <th>Category <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
-                    <th>Requester</th>
+                    <th class="col-optional">Category <span class="badge-ai sm"><?= icon('sparkle', 10) ?> AI</span></th>
+                    <th class="col-optional">Requester</th>
                     <th><?= sortLink('priority', 'Priority', $sort, $baseParams) ?></th>
                     <th>Status</th>
+                    <th>SLA</th>
                     <th>Assigned</th>
                     <th><?= sortLink('created', 'Created', $sort, $baseParams) ?></th>
                 </tr>
@@ -148,12 +165,13 @@
                     <tr class="ticket-row" onclick="window.location='/tickets/<?= esc($t['id'] ?? '') ?>'">
                         <td><a class="ticket-title" href="/tickets/<?= esc($t['id'] ?? '') ?>"><?= esc($f['Request Title'] ?? $f['Title'] ?? 'Untitled') ?></a></td>
                         <td><?= $t['department'] ? '<span class="badge-outline">' . esc($t['department']) . '</span>' : '<span class="cell-muted">—</span>' ?></td>
-                        <td class="cell-muted"><?= esc($f['Category'] ?? '—') ?></td>
-                        <td class="cell-muted"><?= esc($f['Requester'] ?? '—') ?></td>
+                        <td class="cell-muted col-optional"><?= esc($f['Category'] ?? '') ?></td>
+                        <td class="cell-muted col-optional"><?= esc($f['Requester'] ?? '') ?></td>
                         <td><span class="pill <?= priorityPillClass($m['priority']) ?>"><span class="dot"></span><?= esc($m['priority']) ?></span></td>
                         <td><span class="pill <?= statusPillClass($f['Status'] ?? 'New') ?>"><?= esc($f['Status'] ?? 'New') ?></span></td>
+                        <td><span class="sla-chip sla-<?= esc(str_replace('_', '-', $m['sla'] ?? 'none')) ?>" title="<?= esc(format_when($m['due_at'] ?? null)) ?>"><?= esc(\App\Libraries\Sla::label($m['sla'] ?? 'none')) ?></span></td>
                         <td class="cell-muted"><?= $m['assigned_name'] ? esc($m['assigned_name']) : '—' ?></td>
-                        <td class="cell-muted"><?= esc(date('M j, g:i A', strtotime($f['CreatedAt'] ?? 'now'))) ?></td>
+                        <td class="cell-muted"><?= esc(date('j M, g:i A', strtotime($f['CreatedAt'] ?? 'now'))) ?></td>
                     </tr>
                 <?php endforeach ?>
             </tbody>

@@ -21,7 +21,7 @@ class N8n extends BaseConfig
 
     public string $imageModel = '@preset/image-processing';
 
-    public array $imageFallbacks = ['inclusionai/ling-3.2-flash:free', 'google/gemma-4-26b-a4b-it:free'];
+    public array $imageFallbacks = [];
 
     public int $imageTimeout = 45;
 
@@ -116,6 +116,12 @@ class N8n extends BaseConfig
             self::PROVIDER_GEMINI     => 'Gemini',
             default                   => 'None',
         };
+    }
+
+    // confidential teams never leave the box when this is on
+    public function confidentialLocalOnly(): bool
+    {
+        return $this->truthy('CONFIDENTIAL_LOCAL_ONLY', true);
     }
 
     private function truthy(string $key, bool $default): bool

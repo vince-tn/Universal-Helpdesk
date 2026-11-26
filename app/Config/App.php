@@ -47,6 +47,16 @@ class App extends BaseConfig
             return;
         }
 
+        // office lan addresses answer on their own host instead of bouncing to the public url
+        $lan   = array_filter(array_map(static fn ($h) => strtolower(trim($h)), explode(',', (string) (env('LAN_HOSTS') ?: ''))));
+        $asked = strtolower((string) ($_SERVER['HTTP_HOST'] ?? ''));
+
+        if ($lan !== [] && (in_array($host, $lan, true) || in_array($asked, $lan, true)) && preg_match('/^[a-z0-9.:-]+$/', $asked) === 1) {
+            $this->baseURL = 'http://' . $asked . '/';
+
+            return;
+        }
+
         foreach ($suffixes as $suffix) {
             if (str_ends_with($host, $suffix) && strlen($host) > strlen($suffix)) {
                 $this->baseURL = 'https://' . $host . '/';

@@ -120,7 +120,41 @@ class TicketAssistant
             return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
         }
 
+        $body = self::clean($body);
+
+        if ($body === '' || self::soundsLikeRequester($body)) {
+            return $this->noFirmFix($ticketId, $notice, $output, $department, $articles);
+        }
+
         return $this->say($ticketId, $notice . $body, $kind, $this->confidenceOf($output), $article);
+    }
+
+    // strips internal ids, placeholder lines and empty asks from a reply
+    public static function clean(string $text): string
+    {
+        $text = preg_replace('/[ \t]*\(?\b(?:(?:per|from|see|according to|as in)\s+)?article\s*#?\d+\b\)?\s*:?/iu', ' ', $text) ?? $text;
+        $text = preg_replace('/[ \t]+([.,;:!?])/u', '$1', $text) ?? $text;
+        $text = preg_replace('/\bmatched_[a-z_]+\b/u', '', $text) ?? $text;
+
+        $keep = [];
+        foreach (preg_split('/\R/u', $text) as $line) {
+            if (preg_match('/to be confirmed|not provided in the request|^\s*(to start, we need|requirements needed)\s*:?\s*(none|n\/a|-)?\s*$/iu', $line) === 1) {
+                continue;
+            }
+            $line   = trim($line);
+            $keep[] = $line === "" ? "" : mb_strtoupper(mb_substr($line, 0, 1)) . mb_substr($line, 1);
+        }
+
+        $text = preg_replace('/\n{3,}/', "\n\n", implode("\n", $keep)) ?? '';
+        $text = preg_replace('/[ \t]{2,}/', ' ', $text) ?? $text;
+
+        return trim($text);
+    }
+
+    // true when the model wrote as if it were the requester
+    public static function soundsLikeRequester(string $text): bool
+    {
+        return preg_match('/\b(I have tried|I tried|I will let you know|I\'ll let you know|I understand the issue is with my|with my (laptop|headset|computer|pc|account|payslip|screen|mouse|keyboard)|my (laptop|headset|computer|pc|account|payslip) (is|keeps|stopped)|I am unable to|I can\'t log in|I need (a|my|the)\b)\b/iu', $text) === 1;
     }
 
     private function noFirmFix(string $ticketId, string $notice, array $output, string $department, array $articles): ?array
@@ -308,6 +342,12 @@ class TicketAssistant
             $kind  = $this->replyKind($result, false);
         }
 
+        $result['reply'] = self::clean($result['reply']);
+
+        if (self::soundsLikeRequester($result['reply'])) {
+            $result['reply'] = $this->ungroundedReply($department);
+        }
+
         $stored = $this->say(
             $ticketId,
             $result['reply'],
@@ -366,7 +406,7 @@ class TicketAssistant
         $meta = $this->meta->firstOrCreate($ticketId);
 
         $history = [];
-        foreach ($this->messages->forTicket($ticketId) as $row) {
+        foreach ($this->messages->forTicket($ticketId, false) as $row) {
             if ($excludeMessageId !== null && (int) $row['id'] === $excludeMessageId) {
                 continue;
             }
@@ -413,6 +453,7 @@ class TicketAssistant
             'message'             => $message,
             'history'             => array_slice($history, -self::HISTORY_LIMIT),
             'prior_context'       => (new PriorCases())->context($prior),
+            'local_only'          => (int) ($fields['Confidential'] ?? 0) === 1,
         ];
     }
 
@@ -464,6 +505,13 @@ class TicketAssistant
             log_message('error', 'Assistant update failed on ticket {id}', ['id' => $ticketId]);
 
             return [];
+        }
+
+        // a resolve by the assistant runs the same clock, log and notice as a person would
+        if (isset($changes['status'])) {
+            (new \App\Libraries\Sla())->onStatusChange($ticketId, $status, 'Resolved');
+            \App\Libraries\Activity::ticket($ticketId, 'status', $status, 'Resolved', ['id' => null, 'name' => self::AUTHOR]);
+            (new \App\Libraries\Notifier())->statusChanged($ticketId, $fields, $status, 'Resolved');
         }
 
         log_message('info', 'Assistant updated ticket {id}: {fields}', [

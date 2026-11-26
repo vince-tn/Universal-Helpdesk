@@ -7,7 +7,9 @@ use App\Models\TicketModel;
 
 class RoutingDirectory
 {
-    public const LIMIT = 4;
+    public const LIMIT = 6;
+
+    private const PER_DEPARTMENT = 2;
 
     private const STOPWORDS = [
         'the', 'and', 'for', 'with', 'that', 'this', 'have', 'has', 'had', 'from', 'you', 'your', 'our', 'are',
@@ -43,9 +45,26 @@ class RoutingDirectory
         return $entries;
     }
 
+    public const FALLBACK_LIMIT = 40;
+
     public function shortlist(string $text, string $department, string $role): array
     {
-        return self::rank($this->entries(), $text, $department, $role);
+        $entries = $this->entries();
+        $ranked  = self::rank($entries, $text, $department, $role);
+
+        if (count($ranked) > 1 || count($entries) < 2) {
+            return $ranked;
+        }
+
+        // nothing matched by words, so let the model choose from every team
+        $all = [$ranked[0]];
+        foreach ($entries as $entry) {
+            if (! self::same($entry, $ranked[0]['department'], $ranked[0]['role']) && count($all) < self::FALLBACK_LIMIT) {
+                $all[] = $entry;
+            }
+        }
+
+        return $all;
     }
 
     public static function rank(array $entries, string $text, string $department, string $role, int $limit = self::LIMIT): array
@@ -95,8 +114,18 @@ class RoutingDirectory
         usort($scored, static fn ($a, $b) => $b[0] <=> $a[0]);
 
         $options = [$chosen];
-        foreach (array_slice($scored, 0, $limit - 1) as [, $i]) {
-            $options[] = $entries[$i];
+        // cap each department so one team's shared words cannot fill the list
+        $seen = [];
+        foreach ($scored as [, $i]) {
+            if (count($options) >= $limit) {
+                break;
+            }
+            $dept = strtolower($entries[$i]['department']);
+            if (($seen[$dept] ?? 0) >= self::PER_DEPARTMENT) {
+                continue;
+            }
+            $seen[$dept] = ($seen[$dept] ?? 0) + 1;
+            $options[]   = $entries[$i];
         }
 
         return $options;
@@ -138,7 +167,10 @@ class RoutingDirectory
             return null;
         }
 
-        if (self::evidence($to, $request) <= self::evidence($from, $request)) {
+        $toScore   = self::evidence($to, $request);
+        $fromScore = self::evidence($from, $request);
+
+        if ($toScore < $fromScore) {
             return null;
         }
 
@@ -149,6 +181,9 @@ class RoutingDirectory
             'to'              => self::label($to),
             'from_department' => $from['department'],
             'from_role'       => $from['role'],
+            'reason'          => $toScore > $fromScore
+                ? 'the request matches what ' . self::label($to) . ' handles'
+                : 'the assistant judged ' . self::label($to) . ' a better fit',
         ];
     }
 
@@ -158,6 +193,7 @@ class RoutingDirectory
 
         if ($route !== null) {
             (new TicketModel())->applyRoute($ticketId, $route['department'], $route['role'], 'moved by the assistant from ' . $route['from']);
+            (new TicketModel())->update((int) $ticketId, ['routing_reason' => mb_substr($route['reason'], 0, 255)]);
 
             log_message('info', 'Routing: ticket {id} moved from {from} to {to}', [
                 'id' => $ticketId, 'from' => $route['from'], 'to' => $route['to'],

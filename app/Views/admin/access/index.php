@@ -77,7 +77,7 @@
                         <td><strong><?= esc(($isDomain ? '@' : '') . $entry['value']) ?></strong></td>
                         <td><span class="badge-outline"><?= $isDomain ? 'Whole domain' : 'One person' ?></span></td>
                         <td class="cell-muted"><?= esc($entry['label'] ?? '—') ?></td>
-                        <td class="cell-muted"><?= esc(date('M j, Y', strtotime((string) ($entry['created_at'] ?? 'now')))) ?></td>
+                        <td class="cell-muted"><?= esc(date('j M Y', strtotime((string) ($entry['created_at'] ?? 'now')))) ?></td>
                         <td>
                             <form action="/admin/access/<?= (int) $entry['id'] ?>/delete" method="post"
                                   onsubmit="return confirm('Stop new sign-ups from <?= esc(($isDomain ? '@' : '') . $entry['value'], 'js') ?>? Existing accounts are not affected.');">

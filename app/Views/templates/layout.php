@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Chikiting System</title>
+    <title><?= esc(brand_name()) ?></title>
     <?= theme_head() ?>
     <link rel="stylesheet" href="<?= esc(asset('css/style.css')) ?>">
+    <?= brand_css() ?>
 </head>
 <body>
     <?php $user = current_user(); ?>
     <div class="app-shell">
         <aside class="sidebar">
             <div class="brand">
-                <?= brand_mark() ?>
-                Chikiting System
+                <?= brand_lockup(30) ?>
             </div>
-            <div class="tagline">Support &amp; Ticketing</div>
+            <div class="tagline"><?= esc(brand()->tagline) ?></div>
 
             <nav>
                 <a href="/tickets" class="<?= uri_string() === 'tickets' ? 'active' : '' ?>">
@@ -25,6 +25,10 @@
                 <a href="/tickets/new" class="<?= uri_string() === 'tickets/new' ? 'active' : '' ?>">
                     <?= icon('plus') ?>
                     New Ticket
+                </a>
+                <a href="/rooms" class="<?= str_starts_with(uri_string(), 'rooms') ? 'active' : '' ?>">
+                    <?= icon('building') ?>
+                    Room bookings
                 </a>
 
                 <?php $unread = unread_notifications(); ?>
@@ -52,11 +56,23 @@
                         <?= icon('department') ?>
                         Departments
                     </a>
+                    <a href="/admin/knowledge-review" class="<?= str_starts_with(uri_string(), 'admin/knowledge-review') ? 'active' : '' ?>">
+                        <?= icon('check') ?>
+                        Knowledge review
+                    </a>
+                    <a href="/admin/sla" class="<?= str_starts_with(uri_string(), 'admin/sla') ? 'active' : '' ?>">
+                        <?= icon('clock') ?>
+                        SLA targets
+                    </a>
                 <?php elseif (\App\Libraries\Org::canOpenAdmin($user)): ?>
                     <div class="nav-section-label">Your departments</div>
                     <a href="/admin/departments" class="<?= str_starts_with(uri_string(), 'admin/departments') ? 'active' : '' ?>">
                         <?= icon('department') ?>
                         Departments &amp; AI knowledge
+                    </a>
+                    <a href="/admin/knowledge-review" class="<?= str_starts_with(uri_string(), 'admin/knowledge-review') ? 'active' : '' ?>">
+                        <?= icon('check') ?>
+                        Knowledge review
                     </a>
                 <?php else: ?>
                     <?php $knowledgeDept = \App\Libraries\Org::knowledgeOnlyDepartment($user); ?>

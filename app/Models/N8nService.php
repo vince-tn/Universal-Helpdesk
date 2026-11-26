@@ -20,7 +20,7 @@ class N8nService
         $this->client = \Config\Services::curlrequest([], null, null, false);
     }
 
-    public function classify(array $submission, string $priorContext = ''): ?array
+    public function classify(array $submission, string $priorContext = '', bool $localOnly = false): ?array
     {
         $department = (string) ($submission['Submitting Department'] ?? '');
         $request    = (string) ($submission['Request'] ?? '');
@@ -32,7 +32,7 @@ class N8nService
 
         $item = $this->post($this->config->webhookUrl, $submission + [
 
-            'allow_escalation' => $this->cloudAllowed($department) ? 'Yes' : 'No',
+            'allow_escalation' => $this->cloudFor($department, $localOnly) ? 'Yes' : 'No',
             'prior_context'    => $priorContext,
             'dept_context'     => $knowledge->context($articles),
             'dept_guardrails'  => (new Guardrails())->instructions($department),
@@ -59,10 +59,13 @@ class N8nService
 
     public function chat(array $payload): ?array
     {
+        $localOnly = ! empty($payload['local_only']);
+        unset($payload['local_only']);
+
         $ticket     = $payload['ticket'] ?? [];
         $department = (string) (($ticket['responsible_department'] ?? '') ?: ($ticket['submitting_department'] ?? ''));
 
-        $payload['prefer_cloud'] = $this->cloudAllowed($department) ? 'Yes' : 'No';
+        $payload['prefer_cloud'] = $this->cloudFor($department, $localOnly) ? 'Yes' : 'No';
         $knowledge  = new KnowledgeBase();
         $question   = trim(($ticket['request_body'] ?? '') . ' ' . ($payload['message'] ?? ''));
 
@@ -116,6 +119,12 @@ class N8nService
 
             return false;
         }
+    }
+
+    // department switch first, then confidential tickets stay on the local model
+    private function cloudFor(string $department, bool $localOnly): bool
+    {
+        return $this->cloudAllowed($department) && ! ($localOnly && $this->config->confidentialLocalOnly());
     }
 
     private function post(string $url, array $payload): ?array
