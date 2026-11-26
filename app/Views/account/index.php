@@ -44,6 +44,11 @@
     </form>
 </div>
 
+<div class="form-card password-card">
+    <h2 class="section-title"><?= icon('lock', 16) ?> Password</h2>
+    <?= $this->include('account/_password_form') ?>
+</div>
+
 <div class="form-card mfa-card">
     <h2 class="section-title"><?= icon('shield', 16) ?> Two-step sign-in</h2>
     <?php if ($mfaEnabled): ?>

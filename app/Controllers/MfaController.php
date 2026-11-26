@@ -73,6 +73,10 @@ class MfaController extends BaseController
                 . ' left. Make new ones below if you are running low.');
         }
 
+        if ((int) ($user['must_change_password'] ?? 0) === 1) {
+            return redirect()->to('/account/password')->with('error', 'Choose a new password to continue.');
+        }
+
         return redirect()->to('/tickets')->with('success', 'Welcome back, ' . $user['name'] . '.');
     }
 

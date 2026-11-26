@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\PasswordPolicy;
 use App\Models\UserModel;
 
 class AdminUserController extends BaseController
@@ -47,8 +48,14 @@ class AdminUserController extends BaseController
 
         $allowedRoles = UserModel::ROLES;
 
-        if ($name === '' || $email === '' || strlen($password) < 8 || ! in_array($role, $allowedRoles, true)) {
-            return redirect()->back()->withInput()->with('error', 'Please fill in all fields correctly (password min. 8 characters).');
+        if ($name === '' || $email === '' || ! in_array($role, $allowedRoles, true)) {
+            return redirect()->back()->withInput()->with('error', 'Please fill in all fields correctly.');
+        }
+
+        $pwError = PasswordPolicy::check($password, $password, $email);
+
+        if ($pwError !== null) {
+            return redirect()->back()->withInput()->with('error', $pwError);
         }
 
         if (in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR], true) && ! in_array($department, departments(), true)) {
@@ -70,6 +77,7 @@ class AdminUserController extends BaseController
             'department'         => $scoped ? $department : null,
             'can_edit_knowledge' => $this->knowledgeFlag($role),
             'is_active'          => 1,
+            'must_change_password' => 1,
         ]);
 
         return redirect()->to('/admin/users')->with('success', "Account for {$name} created.");
@@ -147,11 +155,20 @@ class AdminUserController extends BaseController
             'is_active'          => $isActive,
         ];
 
+        $self = (int) current_user()['id'] === $id;
+
         if ($password !== '') {
-            if (strlen($password) < 8) {
-                return redirect()->back()->withInput()->with('error', 'Password must be at least 8 characters.');
+            $error = PasswordPolicy::check($password, $password, (string) $user['email']);
+
+            if ($error !== null) {
+                return redirect()->back()->withInput()->with('error', $error);
             }
             $data['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+
+            // someone else's password set by an admin is temporary
+            if (! $self) {
+                $data['must_change_password'] = 1;
+            }
         }
 
         $data['department_role_id'] = in_array($role, [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER], true)
@@ -160,7 +177,11 @@ class AdminUserController extends BaseController
 
         $this->userModel->update($id, $data);
 
-        return redirect()->to('/admin/users')->with('success', "Account for {$name} updated.");
+        if ($password !== '') {
+            \App\Libraries\Activity::audit('password_set', $self ? 'set own password' : 'set a temporary password for ' . $user['email']);
+        }
+
+        return redirect()->to('/admin/users')->with('success', "Account for {$name} updated." . ($password !== '' && ! $self ? ' They must choose a new password at their next sign in.' : ''));
     }
 
     private function knowledgeFlag(string $role): int
