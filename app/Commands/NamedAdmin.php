@@ -30,10 +30,10 @@ class NamedAdmin extends BaseCommand
             $existing = $users->findByEmail($email);
 
             if ($existing !== null) {
-                $users->update($existing['id'], ['role' => UserModel::ROLE_SUPERADMIN, 'is_active' => 1, 'password_hash' => password_hash($password, PASSWORD_DEFAULT), 'expires_at' => $expires]);
+                $users->update($existing['id'], ['role' => UserModel::ROLE_SUPERADMIN, 'is_active' => 1, 'password_hash' => password_hash($password, PASSWORD_DEFAULT), 'expires_at' => $expires, 'must_change_password' => 1]);
             } else {
                 $id = $users->createAccount($name, $email, $password, UserModel::ROLE_SUPERADMIN);
-                $users->update((int) $id, ['expires_at' => $expires]);
+                $users->update((int) $id, ['expires_at' => $expires, 'must_change_password' => 1]);
             }
 
             Activity::audit('admin_created', 'named super admin ' . $email . ($expires ? ' until ' . $expires : ''));

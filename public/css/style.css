@@ -2456,3 +2456,11 @@ input[type="number"], input[type="url"], input[type="tel"], input[type="search"]
   .mfa-scan { border-right: none; border-bottom: 1px solid var(--line-soft); padding: 24px 18px; }
   .mfa-confirm { padding: 24px 18px; }
 }
+
+/* password change card and forgot password link */
+.password-card { margin-top: 20px; }
+.password-card .password-form { max-width: 720px; }
+.password-card .password-rules { margin: 0 0 14px; }
+.password-logout { margin-top: 14px; }
+.auth-forgot { display: inline-block; margin-top: 8px; font-size: 13px; color: var(--ink-2); text-decoration: underline; text-decoration-color: var(--line); }
+.auth-forgot:hover { color: var(--vermilion); }

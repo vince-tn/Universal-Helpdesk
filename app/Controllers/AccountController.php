@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Libraries\Activity;
+use App\Libraries\PasswordPolicy;
+use App\Libraries\SecurityNotice;
 use App\Models\UserModel;
 
 // lets each person choose how they hear about their tickets
@@ -17,6 +20,7 @@ class AccountController extends BaseController
             'mfaEnabled'  => $mfa->isEnabled($user),
             'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role']),
             'mfaCodes'    => $mfa->recoveryLeft($user),
+            'pwRules'     => PasswordPolicy::rulesText(),
         ]);
     }
 
@@ -40,5 +44,58 @@ class AccountController extends BaseController
         session()->set('user', $session);
 
         return redirect()->to('/account')->with('success', 'Settings saved.');
+    }
+
+    public function passwordForm()
+    {
+        $user = (new UserModel())->find((int) current_user()['id']);
+
+        return view('account/password', [
+            'forced'  => (int) ($user['must_change_password'] ?? 0) === 1,
+            'pwRules' => PasswordPolicy::rulesText(),
+        ]);
+    }
+
+    public function changePassword()
+    {
+        $users = new UserModel();
+        $user  = $users->find((int) current_user()['id']);
+        $back  = (int) ($user['must_change_password'] ?? 0) === 1 ? '/account/password' : '/account';
+
+        // stops a borrowed session from guessing the current password
+        $failKey  = 'pw_change_fail_' . (int) $user['id'];
+        $failures = (int) (cache($failKey) ?? 0);
+
+        if ($failures >= 5) {
+            return redirect()->to($back)->with('error', 'Too many wrong current passwords. Wait 15 minutes and try again.');
+        }
+
+        if (! $users->verifyPassword($user, (string) $this->request->getPost('current_password'))) {
+            cache()->save($failKey, $failures + 1, 900);
+            Activity::audit('password_change_failed', 'wrong current password');
+
+            return redirect()->to($back)->with('error', 'Your current password is not right.');
+        }
+
+        $password = (string) $this->request->getPost('password');
+        $error    = PasswordPolicy::check($password, (string) $this->request->getPost('password_confirm'), (string) $user['email'], (string) $user['password_hash']);
+
+        if ($error !== null) {
+            return redirect()->to($back)->with('error', $error);
+        }
+
+        $users->update((int) $user['id'], [
+            'password_hash'        => password_hash($password, PASSWORD_DEFAULT),
+            'must_change_password' => 0,
+        ]);
+
+        cache()->delete($failKey);
+        session()->regenerate(true);
+        Activity::audit('password_changed', 'changed own password');
+        SecurityNotice::passwordChanged($user, 'changed in My settings');
+
+        return $back === '/account/password'
+            ? redirect()->to('/tickets')->with('success', 'Password changed. You are all set.')
+            : redirect()->to('/account')->with('success', 'Password changed.');
     }
 }

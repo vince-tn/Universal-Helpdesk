@@ -14,6 +14,14 @@ $routes->group('', ['filter' => 'guest'], static function (RouteCollection $rout
     $routes->post('signup/verify', 'AuthController::verify');
     $routes->post('signup/resend', 'AuthController::resend');
 
+    $routes->get('forgot', 'AuthController::forgotForm');
+    $routes->post('forgot', 'AuthController::forgot');
+    $routes->get('forgot/code', 'AuthController::forgotCodeForm');
+    $routes->post('forgot/code', 'AuthController::forgotCode');
+    $routes->post('forgot/resend', 'AuthController::forgotResend');
+    $routes->get('forgot/new', 'AuthController::resetForm');
+    $routes->post('forgot/new', 'AuthController::reset');
+
     $routes->get('login/mfa', 'MfaController::challengeForm');
     $routes->post('login/mfa', 'MfaController::challenge');
 
@@ -108,6 +116,8 @@ $routes->group('account', ['filter' => 'auth'],static function (RouteCollection 
     $routes->post('mfa/setup', 'MfaController::setup');
     $routes->post('mfa/disable', 'MfaController::disable');
     $routes->post('mfa/recovery', 'MfaController::regenerate');
+    $routes->get('password', 'AccountController::passwordForm');
+    $routes->post('password', 'AccountController::changePassword');
 });
 
 $routes->group('rooms/manage', ['filter' => 'auth:superadmin'], static function (RouteCollection $routes) {

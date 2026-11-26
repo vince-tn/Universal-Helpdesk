@@ -31,8 +31,8 @@
 
         <div class="form-group">
             <label for="password">Temporary password</label>
-            <input type="password" id="password" name="password" required minlength="8">
-            <div class="field-hint">At least 8 characters. Share this securely — they can change it later.</div>
+            <input type="password" id="password" name="password" required minlength="12" autocomplete="new-password">
+            <div class="field-hint">At least 12 characters. Share it securely. They must change it at their first sign in.</div>
         </div>
 
         <div class="form-group">

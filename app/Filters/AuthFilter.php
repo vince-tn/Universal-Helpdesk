@@ -60,6 +60,15 @@ class AuthFilter implements FilterInterface
             }
         }
 
+        // a temporary password must be replaced before anything else
+        if ((int) ($row['must_change_password'] ?? 0) === 1) {
+            $path = trim($request->getPath(), '/');
+
+            if (! in_array($path, ['account/password', 'account/mfa/setup', 'logout'], true)) {
+                return redirect()->to('/account/password')->with('error', 'Choose a new password to continue.');
+            }
+        }
+
         if ($arguments !== null && ! in_array($role, $arguments, true)) {
             return redirect()->to('/tickets')->with('error', "You don't have access to that page.");
         }

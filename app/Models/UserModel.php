@@ -15,7 +15,7 @@ class UserModel extends Model
     protected $allowedFields    = [
         'name', 'email', 'company', 'password_hash', 'role', 'department', 'department_role_id',
         'can_edit_knowledge', 'is_active', 'notify_email', 'expires_at',
-        'mfa_secret', 'mfa_enabled', 'mfa_recovery', 'mfa_last_step', 'sso_subject',
+        'mfa_secret', 'mfa_enabled', 'mfa_recovery', 'mfa_last_step', 'sso_subject', 'must_change_password',
     ];
 
     public const ROLE_SUPERADMIN = 'superadmin';

@@ -34,6 +34,7 @@
                     <div class="form-group">
                         <label for="password">Password</label>
                         <input type="password" id="password" name="password" required>
+                        <a href="/forgot" class="auth-forgot">Forgot password?</a>
                     </div>
                     <button type="submit" class="btn"><?= icon('lock', 16) ?> Log in</button>
                 </form>

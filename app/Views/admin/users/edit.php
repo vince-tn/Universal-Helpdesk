@@ -35,7 +35,8 @@
 
         <div class="form-group">
             <label for="password">Reset password</label>
-            <input type="password" id="password" name="password" minlength="8" placeholder="Leave blank to keep current password">
+            <input type="password" id="password" name="password" minlength="12" autocomplete="new-password" placeholder="Leave blank to keep current password">
+            <div class="field-hint">At least 12 characters. They must change it at their next sign in.</div>
         </div>
 
         <div class="form-group">
