@@ -2,7 +2,7 @@ name: universal-helpdesk
 
 services:
   db:
-    image: mysql:8
+    image: mysql:8.4.11
     container_name: helpdesk-db
     restart: unless-stopped
     environment:
@@ -74,7 +74,7 @@ services:
         condition: service_started
 
   mailpit:
-    image: axllent/mailpit:latest
+    image: axllent/mailpit:v1.31.5
     container_name: helpdesk-mailpit
     restart: unless-stopped
     ports:
@@ -87,7 +87,7 @@ services:
       - MP_SMTP_AUTH_ALLOW_INSECURE=true
 
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:2.42.6
     container_name: helpdesk-n8n
     restart: unless-stopped
     ports:
@@ -121,7 +121,7 @@ services:
       start_period: 180s
 
   ollama:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.40.3
     container_name: helpdesk-ollama
     restart: unless-stopped
     ports:
@@ -138,7 +138,7 @@ services:
       start_period: 10s
 
   ollama-init:
-    image: ollama/ollama:latest
+    image: ollama/ollama:0.40.3
     container_name: helpdesk-ollama-init
     restart: "no"
     environment:
