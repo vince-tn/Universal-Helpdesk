@@ -13,7 +13,7 @@ class NamedAdmin extends BaseCommand
     protected $group       = 'Helpdesk';
     protected $name        = 'helpdesk:admin';
     protected $description = 'Creates a named super admin with a one-time password, and can lock the shared admin account.';
-    protected $usage       = 'helpdesk:admin --name "Full Name" --email you@company.com [--lock-shared]';
+    protected $usage       = 'helpdesk:admin --name "Full Name" --email you@company.com [--expires-days N] [--lock-shared]';
 
     private const SHARED = 'admin@universalhelpdesk.local';
 
@@ -25,16 +25,19 @@ class NamedAdmin extends BaseCommand
 
         if ($name !== '' && filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $password = rtrim(strtr(base64_encode(random_bytes(12)), '+/', 'Kx'), '=');
+            $days     = (int) (CLI::getOption('expires-days') ?? 0);
+            $expires  = $days > 0 ? date('Y-m-d H:i:s', time() + $days * 86400) : null;
             $existing = $users->findByEmail($email);
 
             if ($existing !== null) {
-                $users->update($existing['id'], ['role' => UserModel::ROLE_SUPERADMIN, 'is_active' => 1, 'password_hash' => password_hash($password, PASSWORD_DEFAULT)]);
+                $users->update($existing['id'], ['role' => UserModel::ROLE_SUPERADMIN, 'is_active' => 1, 'password_hash' => password_hash($password, PASSWORD_DEFAULT), 'expires_at' => $expires]);
             } else {
-                $users->createAccount($name, $email, $password, UserModel::ROLE_SUPERADMIN);
+                $id = $users->createAccount($name, $email, $password, UserModel::ROLE_SUPERADMIN);
+                $users->update((int) $id, ['expires_at' => $expires]);
             }
 
-            Activity::audit('admin_created', 'named super admin ' . $email);
-            CLI::write("super admin {$email} ready, one-time password: {$password}", 'green');
+            Activity::audit('admin_created', 'named super admin ' . $email . ($expires ? ' until ' . $expires : ''));
+            CLI::write("super admin {$email} ready, one-time password: {$password}" . ($expires ? ", expires {$expires}" : ''), 'green');
         }
 
         if (CLI::getOption('lock-shared')) {

@@ -62,8 +62,8 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', 'Invalid email or password.');
         }
 
-        if ((int) $user['is_active'] !== 1) {
-            return redirect()->back()->withInput()->with('error', 'This account has been deactivated. Contact your administrator.');
+        if ((int) $user['is_active'] !== 1 || UserModel::isExpired($user)) {
+            return redirect()->back()->withInput()->with('error', 'This account has been deactivated or has expired. Contact your administrator.');
         }
 
         cache()->delete($lockKey);

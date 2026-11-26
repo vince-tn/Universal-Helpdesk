@@ -53,7 +53,7 @@
                         <?php endif ?>
                     </td>
                     <td class="cell-muted"><?= esc($u['department'] ?? '—') ?></td>
-                    <td><?= (int) $u['is_active'] === 1 ? '<span class="pill pill-status-resolved">Active</span>' : '<span class="pill pill-status-closed">Disabled</span>' ?></td>
+                    <td><?= (int) $u['is_active'] === 1 ? '<span class="pill pill-status-resolved">Active</span>' : '<span class="pill pill-status-closed">Disabled</span>' ?><?= ! empty($u['expires_at']) ? '<div class="field-hint">Expires ' . esc(format_when($u['expires_at'])) . '</div>' : '' ?></td>
                     <td>
                         <div class="row-actions">
                             <a href="/admin/users/<?= $u['id'] ?>/edit" class="btn btn-secondary btn-sm"><?= icon('edit', 14) ?> Edit</a>

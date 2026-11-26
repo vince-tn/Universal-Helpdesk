@@ -69,7 +69,7 @@ class SsoController extends BaseController
             Activity::audit('sso_user_created', 'requester account created on first microsoft sign in for ' . $email, null, $user);
         }
 
-        if ((int) $user['is_active'] !== 1) {
+        if ((int) $user['is_active'] !== 1 || UserModel::isExpired($user)) {
             return redirect()->to('/login')->with('error', 'This account has been deactivated. Contact your administrator.');
         }
 

@@ -9,6 +9,7 @@ use App\Libraries\Notifier;
 use App\Libraries\Sla;
 use App\Models\TicketMetaModel;
 use App\Models\TicketModel;
+use App\Models\UserModel;
 use CodeIgniter\CLI\BaseCommand;
 use CodeIgniter\CLI\CLI;
 
@@ -70,6 +71,13 @@ class Housekeeping extends BaseCommand
             } catch (\Throwable $e) {
                 CLI::error('mail intake failed: ' . $e->getMessage());
             }
+        }
+
+        // temporary accounts are switched off once their end date passes
+        $expired = (new UserModel())->where('is_active', 1)->where('expires_at IS NOT NULL', null, false)->where('expires_at <=', date('Y-m-d H:i:s'))->findAll();
+        foreach ($expired as $u) {
+            (new UserModel())->update((int) $u['id'], ['is_active' => 0]);
+            Activity::audit('user_expired', 'disabled ' . $u['email'] . ' at its end date', null, ['id' => null, 'name' => 'System']);
         }
 
         $sent = Notifier::flush((int) (env('MAIL_BATCH') ?: 30));

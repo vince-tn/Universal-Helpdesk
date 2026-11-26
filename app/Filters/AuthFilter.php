@@ -22,7 +22,7 @@ class AuthFilter implements FilterInterface
         $id  = (int) ($session->get('user')['id'] ?? 0);
         $row = $id > 0 ? (new UserModel())->find($id) : null;
 
-        if ($row === null || (int) $row['is_active'] !== 1) {
+        if ($row === null || (int) $row['is_active'] !== 1 || UserModel::isExpired($row)) {
             $session->remove(['isLoggedIn', 'user']);
 
             return redirect()->to('/login')->with('error', 'Your account is no longer active. Contact your administrator.');
