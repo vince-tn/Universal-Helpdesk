@@ -328,6 +328,8 @@ if (! function_exists('icon')) {
             'send' => '<path d="M3 11l16.5-7.5L13 20l-2.5-6.5L3 11z"/><path d="M10.5 13.5L16 8"/>',
             'chevron-left' => '<path d="M14.5 5l-7 7 7 7"/>',
             'sort' => '<path d="M7 9l4-4 4 4M7 15l4 4 4-4"/>',
+            'sort-asc' => '<path d="M12 19V5M6 11l6-6 6 6"/>',
+            'sort-desc' => '<path d="M12 5v14M6 13l6 6 6-6"/>',
             'clock' => '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
             'flag' => '<path d="M6 3v18"/><path d="M6 4.5h10l-2.5 3.5L16 11.5H6"/>',
             'assign' => '<circle cx="12" cy="8.2" r="3.4"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/>',

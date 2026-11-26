@@ -6,6 +6,8 @@ use App\Controllers\TicketController;
 use App\Libraries\Activity;
 use App\Libraries\GraphMail;
 use App\Libraries\Notifier;
+use App\Libraries\Settings;
+use App\Libraries\WeeklySummary;
 use App\Libraries\Sla;
 use App\Models\TicketMetaModel;
 use App\Models\TicketModel;
@@ -78,6 +80,17 @@ class Housekeeping extends BaseCommand
         foreach ($expired as $u) {
             (new UserModel())->update((int) $u['id'], ['is_active' => 0]);
             Activity::audit('user_expired', 'disabled ' . $u['email'] . ' at its end date', null, ['id' => null, 'name' => 'System']);
+        }
+
+        // monday 8 am manila summary, once per week
+        $manila = new \DateTimeImmutable('now', new \DateTimeZone(WeeklySummary::TZ));
+        if (WeeklySummary::isDue($manila, Settings::get(WeeklySummary::SETTING))) {
+            try {
+                Settings::set(WeeklySummary::SETTING, $manila->format('Y-m-d H:i:s'));
+                $this->call('tickets:weekly-summary');
+            } catch (\Throwable $e) {
+                CLI::error('weekly summary failed: ' . $e->getMessage());
+            }
         }
 
         $sent = Notifier::flush((int) (env('MAIL_BATCH') ?: 30));

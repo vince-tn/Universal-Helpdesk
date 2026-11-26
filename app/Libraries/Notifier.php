@@ -149,6 +149,12 @@ class Notifier
         );
     }
 
+    // queues the monday summary, skipped when emails are off or the user opted out
+    public function weeklySummary(array $user, string $subject, string $body): void
+    {
+        $this->mailUser($user, $subject, $body);
+    }
+
     // sends up to $limit queued mails, returns how many went out
     public static function flush(int $limit = 20): int
     {

@@ -2456,3 +2456,25 @@ input[type="number"], input[type="url"], input[type="tel"], input[type="search"]
   .mfa-scan { border-right: none; border-bottom: 1px solid var(--line-soft); padding: 24px 18px; }
   .mfa-confirm { padding: 24px 18px; }
 }
+
+/* dashboard bulk bar, sort arrows and ai answer votes */
+.bulk-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; padding: 10px 14px; background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--radius); }
+.bulk-bar select, .bulk-bar input[type="text"] { padding: 8px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--paper); color: var(--ink); font-size: 13px; min-width: 0; max-width: 100%; }
+.bulk-bar input[type="text"] { flex: 1 1 220px; }
+.bulk-bar [hidden] { display: none; }
+.bulk-all { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--ink-2); }
+.bulk-count { font-size: 12.5px; color: var(--ink-3); margin-right: auto; }
+.bulk-pick { display: inline-flex; align-items: center; margin-right: 8px; vertical-align: middle; cursor: pointer; }
+.bulk-pick input, .bulk-all input { width: 16px; height: 16px; accent-color: var(--accent); }
+.sort-link { display: inline-flex; align-items: center; gap: 4px; color: inherit; text-decoration: none; }
+.sort-link .sort-arrow { display: inline-flex; color: var(--ink-3); }
+.sort-link.is-active .sort-arrow { color: var(--accent); }
+.ai-vote { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+.ai-vote-label { font-size: 12.5px; color: var(--ink-2); }
+.ai-vote-btn { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border: 1px solid var(--line-soft); border-radius: var(--radius); background: var(--surface); color: var(--ink-2); font-size: 12.5px; cursor: pointer; }
+.ai-vote-btn:hover { color: var(--ink); border-color: var(--line); }
+.ai-vote-btn.is-picked { background: var(--accent-soft); color: var(--accent-dark); border-color: var(--accent); }
+@media (max-width: 560px) {
+  .bulk-bar > * { flex: 1 1 100%; }
+  .bulk-bar .bulk-count { margin-right: 0; }
+}

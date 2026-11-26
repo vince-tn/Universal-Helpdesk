@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Libraries\AiDeflection;
 use App\Libraries\ExportGuard;
 use App\Models\TicketMetaModel;
 use App\Models\UserModel;
@@ -417,6 +418,12 @@ class ReportsController extends BaseController
         arsort($categoryCounts);
         $total = count($tickets);
 
+        // self help: resolved with no staff reply after an ai suggestion, plus answer votes
+        $doneTickets   = array_filter($tickets, static fn ($t) => in_array($t['status'], self::DONE, true));
+        $userIdByEmail = array_map(static fn ($u) => (int) $u['id'], $byEmail);
+        $deflected     = $this->hasTable('ticket_events') ? count(AiDeflection::deflectedIds($doneTickets, $userIdByEmail)) : 0;
+        $votes         = $this->hasTable('ai_feedback') ? AiDeflection::votesFor($ids) : ['helpful' => 0, 'total' => 0];
+
         return $filters + [
             'total'          => $total,
             'openCount'      => $open,
@@ -441,6 +448,11 @@ class ReportsController extends BaseController
             'csatAverage'    => $csat === [] ? null : round(array_sum($csat) / count($csat), 2),
             'csatCount'      => count($csat),
             'csatOn'         => $hasFeedback,
+            'deflectedCount' => $deflected,
+            'deflectionPct'  => self::pct($deflected, $resolved),
+            'aiVotes'        => $votes['total'],
+            'aiHelpful'      => $votes['helpful'],
+            'aiHelpfulPct'   => self::pct($votes['helpful'], $votes['total']),
             'ageing'         => $ageing,
             'oldestOpen'     => $oldestOpen,
             'statusCounts'   => $statusCounts,
@@ -518,6 +530,10 @@ class ReportsController extends BaseController
             ['Reopen rate %', $sla($d['reopenRate'])],
             ['CSAT average (1 to 5)', $d['csatAverage'] ?? ''],
             ['CSAT responses', $d['csatCount']],
+            ['AI deflection %', $sla($d['deflectionPct'])],
+            ['Resolved by AI self help', $d['deflectedCount']],
+            ['AI answers rated helpful %', $sla($d['aiHelpfulPct'])],
+            ['AI answer votes', $d['aiVotes']],
         ];
         foreach ($d['ageing'] as $bucket => $count) {
             $lines[] = ['Open backlog ' . $bucket, $count];

@@ -348,6 +348,31 @@
 
 <script>
 (function () {
+    // vote on assistant answers without a reload, delegated so new messages work too
+    document.addEventListener('submit', function (e) {
+        var form = e.target;
+        if (!form.matches || !form.matches('form[data-ai-vote]') || !e.submitter || !window.fetch) return;
+        e.preventDefault();
+        var data = new FormData(form);
+        data.append('helpful', e.submitter.value);
+        fetch(form.action, { method: 'POST', body: data, headers: { 'X-Requested-With': 'XMLHttpRequest' }, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                var label = form.querySelector('[data-ai-vote-label]');
+                if (label) label.textContent = res.message || 'Thanks for the feedback.';
+                if (!res.ok) return;
+                form.querySelectorAll('button[name="helpful"]').forEach(function (b) {
+                    var on = b.value === (res.helpful ? '1' : '0');
+                    b.classList.toggle('is-picked', on);
+                    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+                });
+            })
+            .catch(function () {
+                var label = form.querySelector('[data-ai-vote-label]');
+                if (label) label.textContent = 'Could not save that. Please try again.';
+            });
+    });
+
     var pick = document.getElementById('status-pick');
     var note = document.getElementById('resolve-note');
     if (pick && note) {
