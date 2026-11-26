@@ -2432,3 +2432,27 @@ input[type="number"], input[type="url"], input[type="tel"], input[type="search"]
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* mfa setup: centred two panel card */
+.mfa-header, .mfa-setup { max-width: 980px; margin-left: auto; margin-right: auto; }
+.mfa-header { text-align: center; justify-content: center; }
+.mfa-header .subtitle { margin-left: auto; margin-right: auto; }
+.mfa-setup { padding: 0; overflow: hidden; }
+.mfa-setup .mfa-setup-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0; align-items: stretch; }
+.mfa-scan { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 10px; padding: 32px 28px; background: var(--paper-tint); border-right: 1px solid var(--line-soft); }
+.mfa-confirm { display: flex; flex-direction: column; justify-content: center; gap: 10px; padding: 32px 36px; }
+.mfa-step { display: flex; align-items: center; gap: 10px; font-family: var(--font-display); font-weight: 700; font-size: 18px; color: var(--ink); }
+.mfa-scan .mfa-step { justify-content: center; }
+.mfa-step-no { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--vermilion); color: #fff; font-size: 14px; flex-shrink: 0; }
+.mfa-step-next { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line-soft); font-size: 16px; }
+.mfa-step-next .mfa-step-no { background: var(--paper-tint); color: var(--ink-2); border: 1px solid var(--line); }
+.mfa-scan .mfa-qr { margin: 6px 0 8px; background: #fff; box-shadow: var(--block-sm); }
+.mfa-scan .mfa-secret { width: 100%; max-width: 340px; text-align: center; letter-spacing: 0.08em; }
+.mfa-confirm .form-group { margin-bottom: 14px; }
+.mfa-confirm .mfa-code-input { font-size: 26px; text-align: center; letter-spacing: 0.35em; padding: 14px 12px; }
+.mfa-submit { width: 100%; justify-content: center; }
+@media (max-width: 760px) {
+  .mfa-setup .mfa-setup-grid { grid-template-columns: 1fr; }
+  .mfa-scan { border-right: none; border-bottom: 1px solid var(--line-soft); padding: 24px 18px; }
+  .mfa-confirm { padding: 24px 18px; }
+}

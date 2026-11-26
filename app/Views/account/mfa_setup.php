@@ -6,7 +6,7 @@
     <a href="/account" class="back-link"><?= icon('chevron-left', 14) ?> Back to my settings</a>
 <?php endif ?>
 
-<div class="page-header">
+<div class="page-header mfa-header">
     <div>
         <h1>Set up two-step sign-in</h1>
         <div class="subtitle">
@@ -30,23 +30,25 @@
 <?php else: ?>
     <div class="form-card mfa-setup">
         <div class="mfa-setup-grid">
-            <div>
-                <h2 class="section-title">1. Scan this code</h2>
-                <p class="field-hint">Use Microsoft Authenticator, Google Authenticator or any app that supports time-based codes.</p>
+            <div class="mfa-scan">
+                <div class="mfa-step"><span class="mfa-step-no">1</span> Scan this code</div>
                 <div class="mfa-qr" id="mfa-qr" data-otpauth="<?= esc($otpauth, 'attr') ?>" role="img" aria-label="QR code for your authenticator app"></div>
                 <div class="field-hint">Cannot scan? Add an account by hand with this key:</div>
                 <div class="mfa-secret"><?= esc($secret) ?></div>
             </div>
-            <div>
-                <h2 class="section-title">2. Enter the code it shows</h2>
+            <div class="mfa-confirm">
+                <div class="mfa-step"><span class="mfa-step-no">2</span> Enter the 6-digit code</div>
+                <p class="field-hint">Open Microsoft Authenticator, Google Authenticator or any app with time-based codes, add the account, then type the code it shows. The code changes every 30 seconds.</p>
                 <form action="/account/mfa/setup" method="post">
                     <?= csrf_field() ?>
                     <div class="form-group">
-                        <label for="code">6-digit code</label>
-                        <input type="text" id="code" name="code" class="mfa-code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" required autofocus>
+                        <label for="code">Code from your app</label>
+                        <input type="text" id="code" name="code" class="mfa-code-input" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]{6,7}" maxlength="7" placeholder="000 000" required autofocus>
                     </div>
-                    <button type="submit" class="btn"><?= icon('shield', 16) ?> Turn on two-step sign-in</button>
+                    <button type="submit" class="btn mfa-submit"><?= icon('shield', 16) ?> Turn on two-step sign-in</button>
                 </form>
+                <div class="mfa-step mfa-step-next"><span class="mfa-step-no">3</span> Save your recovery codes</div>
+                <p class="field-hint">The next screen shows 10 one-time codes. Keep them somewhere safe in case you lose your phone.</p>
             </div>
         </div>
     </div>
@@ -56,7 +58,7 @@
     (function () {
         var el = document.getElementById('mfa-qr');
         if (!el || typeof QRCode === 'undefined') return;
-        new QRCode(el, { text: el.getAttribute('data-otpauth'), width: 192, height: 192, correctLevel: QRCode.CorrectLevel.M });
+        new QRCode(el, { text: el.getAttribute('data-otpauth'), width: 208, height: 208, correctLevel: QRCode.CorrectLevel.M });
     })();
     </script>
 <?php endif ?>
