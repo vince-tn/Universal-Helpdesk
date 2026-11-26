@@ -124,26 +124,26 @@
         -180
       ],
       "id": "b6e0d341-8f27-4a19-bc63-1d4e8a2c6605",
-      "name": "Assistant (Gemini)",
+      "name": "Assistant (Cloud)",
       "onError": "continueErrorOutput"
     },
     {
       "parameters": {
-        "modelName": "__GEMINI_MODEL__",
+        "model": "__OPENROUTER_MODEL__",
         "options": {}
       },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1.1,
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
       "position": [
         720,
         20
       ],
       "id": "f4a71c50-6b83-4e27-8d90-5c1b3f7e9906",
-      "name": "Google Gemini Chat Model",
+      "name": "OpenRouter Chat Model",
       "credentials": {
-        "googlePalmApi": {
-          "id": "HelpdeskGemini01",
-          "name": "Helpdesk Gemini (cloud)"
+        "openRouterApi": {
+          "id": "HelpdeskOpenRouter01",
+          "name": "Helpdesk OpenRouter (cloud)"
         }
       }
     },
@@ -233,7 +233,7 @@
             {
               "id": "b3d5f710-gem1-4a28-9c37-5e1b7d0a2209",
               "name": "ai_source",
-              "value": "Gemini",
+              "value": "OpenRouter",
               "type": "string"
             }
           ]
@@ -248,7 +248,7 @@
         -180
       ],
       "id": "c5e28a41-7b39-4d62-8e15-9f3c1b6d4410",
-      "name": "Tag Source: Gemini"
+      "name": "Tag Source: Cloud"
     },
     {
       "parameters": {
@@ -327,7 +327,7 @@
         "options": {}
       },
       "id": "4ccaf78d-9bfb-45ff-b808-7f08c974c4e2",
-      "name": "Retry Gemini once?",
+      "name": "Retry cloud once?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
@@ -382,7 +382,7 @@
         -180
       ],
       "id": "5b892909-7c90-4a9c-b8d5-632560db9a9c",
-      "name": "Gemini answered?"
+      "name": "Cloud answered?"
     }
   ],
   "connections": {
@@ -412,7 +412,7 @@
       "main": [
         [
           {
-            "node": "Assistant (Gemini)",
+            "node": "Assistant (Cloud)",
             "type": "main",
             "index": 0
           }
@@ -426,11 +426,11 @@
         ]
       ]
     },
-    "Google Gemini Chat Model": {
+    "OpenRouter Chat Model": {
       "ai_languageModel": [
         [
           {
-            "node": "Assistant (Gemini)",
+            "node": "Assistant (Cloud)",
             "type": "ai_languageModel",
             "index": 0
           }
@@ -448,18 +448,18 @@
         ]
       ]
     },
-    "Assistant (Gemini)": {
+    "Assistant (Cloud)": {
       "main": [
         [
           {
-            "node": "Gemini answered?",
+            "node": "Cloud answered?",
             "type": "main",
             "index": 0
           }
         ],
         [
           {
-            "node": "Retry Gemini once?",
+            "node": "Retry cloud once?",
             "type": "main",
             "index": 0
           }
@@ -477,7 +477,7 @@
         ]
       ]
     },
-    "Tag Source: Gemini": {
+    "Tag Source: Cloud": {
       "main": [
         [
           {
@@ -510,7 +510,7 @@
         ]
       ]
     },
-    "Retry Gemini once?": {
+    "Retry cloud once?": {
       "main": [
         [
           {
@@ -532,18 +532,18 @@
       "main": [
         [
           {
-            "node": "Assistant (Gemini)",
+            "node": "Assistant (Cloud)",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Gemini answered?": {
+    "Cloud answered?": {
       "main": [
         [
           {
-            "node": "Tag Source: Gemini",
+            "node": "Tag Source: Cloud",
             "type": "main",
             "index": 0
           }
