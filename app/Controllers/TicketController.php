@@ -8,6 +8,7 @@ use App\Libraries\Notifier;
 use App\Libraries\Org;
 use App\Libraries\PriorCases;
 use App\Libraries\RoutingDirectory;
+use App\Libraries\ScreenshotReader;
 use App\Libraries\TicketAssistant;
 use App\Models\N8nService;
 use App\Models\TicketModel;
@@ -353,13 +354,24 @@ class TicketController extends BaseController
             $session->close();
         }
 
-        $text  = (string) ($fields['Request'] ?? '');
-        $prior = $this->ticketModel->similarResolved($text, $id);
+        $text       = (string) ($fields['Request'] ?? '');
+        $department = (string) ($fields['Submitting Department'] ?? '');
+        $prior      = $this->ticketModel->similarResolved($text, $id);
+
+        $notes = (new ScreenshotReader())->notesFor(
+            $id,
+            (string) ($fields['Request HTML'] ?? ''),
+            (string) ($fields['Image Notes'] ?? ''),
+            $text,
+            $this->n8nService->cloudAllowed($department)
+        );
+
+        $text .= ScreenshotReader::notesBlock($notes);
 
         $result = $this->n8nService->classify([
             'Requester Name'        => $fields['Requester'] ?? '',
             'Requester Email'       => $fields['Requester Email'] ?? '',
-            'Submitting Department' => $fields['Submitting Department'] ?? '',
+            'Submitting Department' => $department,
             'Submitting Role'       => $fields['Submitting Role'] ?? '',
             'Request'               => $text,
         ], $this->priorCases->context($prior));

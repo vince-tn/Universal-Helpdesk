@@ -17,6 +17,12 @@ class N8n extends BaseConfig
 
     public bool $assistantEnabled = true;
 
+    public string $openRouterUrl = 'https://openrouter.ai/api/v1';
+
+    public string $imageModel = '@preset/image-processing';
+
+    public int $imageTimeout = 60;
+
     public function __construct()
     {
         parent::__construct();
@@ -32,6 +38,26 @@ class N8n extends BaseConfig
         $this->timeout = max(15, (int) (env('AI_TIMEOUT') ?: $this->timeout));
 
         $this->assistantEnabled = $this->truthy('AI_ASSISTANT', true);
+
+        $this->imageModel = trim((string) (env('OPENROUTER_IMAGE_MODEL') ?: $this->imageModel));
+    }
+
+    public function imagesEnabled(): bool
+    {
+        return self::imagesFor(
+            $this->truthy('AI_IMAGES', true),
+            $this->imageModel,
+            $this->cloudEnabled(),
+            $this->cloudProvider()
+        );
+    }
+
+    public static function imagesFor(bool $switchedOn, string $model, bool $cloudEnabled, string $provider): bool
+    {
+        return $switchedOn
+            && trim($model) !== ''
+            && $cloudEnabled
+            && $provider === self::PROVIDER_OPENROUTER;
     }
 
     public const PROVIDER_NONE       = 'none';

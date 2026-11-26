@@ -4,6 +4,7 @@ namespace App\Commands;
 
 use App\Libraries\PriorCases;
 use App\Libraries\RoutingDirectory;
+use App\Libraries\ScreenshotReader;
 use App\Libraries\TicketAssistant;
 use App\Models\N8nService;
 use App\Models\TicketMetaModel;
@@ -34,6 +35,7 @@ class Reclassify extends BaseCommand
         $n8n       = new N8nService();
         $assistant = new TicketAssistant();
         $cases     = new PriorCases();
+        $reader    = new ScreenshotReader();
 
         $rows = $this->candidates($tickets, $only === null ? null : (int) $only, (bool) $all);
 
@@ -63,12 +65,21 @@ class Reclassify extends BaseCommand
                 continue;
             }
 
-            $prior = $tickets->similarResolved($body, $id);
+            $prior      = $tickets->similarResolved($body, $id);
+            $department = (string) ($row['submitting_department'] ?? '');
+
+            $body .= ScreenshotReader::notesBlock($reader->notesFor(
+                $id,
+                (string) ($row['request_html'] ?? ''),
+                (string) ($row['image_notes'] ?? ''),
+                $body,
+                $n8n->cloudAllowed($department)
+            ));
 
             $result = $n8n->classify([
                 'Requester Name'        => $row['requester'] ?? '',
                 'Requester Email'       => $row['requester_email'] ?? '',
-                'Submitting Department' => $row['submitting_department'] ?? '',
+                'Submitting Department' => $department,
                 'Submitting Role'       => $row['submitting_role'] ?? '',
                 'Request'               => $body,
             ], $cases->context($prior));

@@ -155,7 +155,11 @@ class Doctor extends BaseCommand
     private function cloud(N8n $config): void
     {
         if ($config->cloudEnabled()) {
-            $this->ok('cloud model enabled - Gemini answers first, Ollama takes over if it fails');
+            $this->ok('cloud model enabled - ' . $config->cloudLabel() . ' answers first, Ollama takes over if it fails');
+
+            CLI::write($config->imagesEnabled()
+                ? '  --   screenshots are read by ' . $config->imageModel
+                : '  --   screenshots are not sent to any model', 'dark_gray');
 
             try {
                 $local = (new \App\Models\DepartmentModel())->localOnlyNames();

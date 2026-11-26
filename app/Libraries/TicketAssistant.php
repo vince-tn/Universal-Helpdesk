@@ -389,7 +389,8 @@ class TicketAssistant
                 'submitting_department'  => $fields['Submitting Department'] ?? '',
                 'requester'              => $fields['Requester'] ?? '',
                 'description'            => mb_substr((string) ($fields['Description'] ?? ''), 0, self::REQUEST_CHARS),
-                'request_body'           => mb_substr((string) ($fields['Request'] ?? ''), 0, self::REQUEST_CHARS),
+                'request_body'           => mb_substr((string) ($fields['Request'] ?? ''), 0, self::REQUEST_CHARS)
+                    . ScreenshotReader::notesBlock((string) ($fields['Image Notes'] ?? '')),
                 'expected_deliverable'   => $fields['Expected Deliverable'] ?? '',
                 'requirements_needed'    => $fields['Requirements Needed'] ?? '',
                 'closure_criteria'       => $fields['Closure Criteria'] ?? '',
