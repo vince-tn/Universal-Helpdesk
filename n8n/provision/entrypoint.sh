@@ -29,7 +29,22 @@ if [ -n "$GEMINI_API_KEY" ]; then
         || log "WARNING: could not import the Gemini credential"
     rm -f "$WORK/gemini.json"
 else
-    log "GEMINI_API_KEY is empty - running local-only, on Ollama"
+    log "GEMINI_API_KEY is empty"
+fi
+
+if [ -n "$OPENROUTER_API_KEY" ]; then
+    log "seeding the OpenRouter credential from OPENROUTER_API_KEY"
+    sed "s|__OPENROUTER_API_KEY__|${OPENROUTER_API_KEY}|" \
+        "$PROVISION_DIR/credentials/openrouter.json" > "$WORK/openrouter.json"
+    n8n import:credentials --input="$WORK/openrouter.json" \
+        || log "WARNING: could not import the OpenRouter credential"
+    rm -f "$WORK/openrouter.json"
+else
+    log "OPENROUTER_API_KEY is empty"
+fi
+
+if [ -z "$GEMINI_API_KEY" ] && [ -z "$OPENROUTER_API_KEY" ]; then
+    log "no cloud key set - running local-only, on Ollama"
 fi
 
 list_ids() {
@@ -51,6 +66,7 @@ import_workflow() {
     log "importing $label ($id)"
     sed -e "s|__OLLAMA_MODEL__|${OLLAMA_MODEL}|g" \
         -e "s|__GEMINI_MODEL__|${GEMINI_MODEL}|g" \
+        -e "s|__OPENROUTER_MODEL__|${OPENROUTER_MODEL}|g" \
         "$file" > "$WORK/${id}.json"
     n8n import:workflow --input="$WORK/${id}.json" \
         || log "WARNING: could not import $label"

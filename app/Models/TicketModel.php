@@ -22,6 +22,8 @@ class TicketModel extends Model
 
     public const STATUSES = ['New', 'In Progress', 'Resolved', 'Closed'];
 
+    public const AI_SOURCES = ['Local', 'Gemini', 'OpenRouter'];
+
     private const ASSISTANT_WRITABLE = ['status', 'description', 'ai_resolution_note', 'ai_updated_at'];
 
     private const FIELD_MAP = [
@@ -268,7 +270,7 @@ class TicketModel extends Model
 
     public function replaceClassification(string $id, array $output, string $aiSource = 'Local'): bool
     {
-        $row = ['ai_source' => in_array($aiSource, ['Local', 'Gemini'], true) ? $aiSource : 'Local'];
+        $row = ['ai_source' => in_array($aiSource, self::AI_SOURCES, true) ? $aiSource : 'Local'];
 
         foreach (self::CLASSIFIER_MAP as $key => $column) {
             $value = $output[$key] ?? null;
@@ -310,7 +312,7 @@ class TicketModel extends Model
             'request_body'          => $submission['Request'] ?? null,
 
             'request_html'          => ($submission['Request HTML'] ?? '') !== '' ? $submission['Request HTML'] : null,
-            'ai_source'             => in_array($aiSource, ['Local', 'Gemini'], true) ? $aiSource : 'Local',
+            'ai_source'             => in_array($aiSource, self::AI_SOURCES, true) ? $aiSource : 'Local',
             'status'                => 'New',
         ];
 

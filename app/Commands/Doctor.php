@@ -170,7 +170,7 @@ class Doctor extends BaseCommand
             return;
         }
 
-        CLI::write('  --   cloud model off - running local-only. Set GEMINI_API_KEY in .env to enable.', 'dark_gray');
+        CLI::write('  --   cloud model off - running local-only. Set OPENROUTER_API_KEY or GEMINI_API_KEY in .env to enable.', 'dark_gray');
     }
 
     private function mail(): void

@@ -34,14 +34,53 @@ class N8n extends BaseConfig
         $this->assistantEnabled = $this->truthy('AI_ASSISTANT', true);
     }
 
+    public const PROVIDER_NONE       = 'none';
+    public const PROVIDER_GEMINI     = 'gemini';
+    public const PROVIDER_OPENROUTER = 'openrouter';
+
     public function cloudEnabled(): bool
     {
         $mode = strtolower(trim((string) (env('AI_ESCALATION') ?: 'auto')));
 
         return match ($mode) {
-            'on', 'true', '1', 'yes'  => true,
+            'on', 'true', '1', 'yes'  => $this->cloudProvider() !== self::PROVIDER_NONE,
             'off', 'false', '0', 'no' => false,
-            default                   => trim((string) (env('GEMINI_API_KEY') ?: '')) !== '',
+            default                   => $this->cloudProvider() !== self::PROVIDER_NONE,
+        };
+    }
+
+    public function cloudProvider(): string
+    {
+        return self::providerFor(
+            (string) (env('AI_CLOUD_PROVIDER') ?: ''),
+            (string) (env('OPENROUTER_API_KEY') ?: ''),
+            (string) (env('GEMINI_API_KEY') ?: '')
+        );
+    }
+
+    public static function providerFor(string $named, string $openRouterKey, string $geminiKey): string
+    {
+        $hasOpenRouter = trim($openRouterKey) !== '';
+        $hasGemini     = trim($geminiKey) !== '';
+
+        return match (strtolower(trim($named))) {
+            self::PROVIDER_OPENROUTER => $hasOpenRouter ? self::PROVIDER_OPENROUTER : self::PROVIDER_NONE,
+            self::PROVIDER_GEMINI     => $hasGemini ? self::PROVIDER_GEMINI : self::PROVIDER_NONE,
+            self::PROVIDER_NONE       => self::PROVIDER_NONE,
+            default                   => match (true) {
+                $hasOpenRouter => self::PROVIDER_OPENROUTER,
+                $hasGemini     => self::PROVIDER_GEMINI,
+                default        => self::PROVIDER_NONE,
+            },
+        };
+    }
+
+    public function cloudLabel(): string
+    {
+        return match ($this->cloudProvider()) {
+            self::PROVIDER_OPENROUTER => 'OpenRouter',
+            self::PROVIDER_GEMINI     => 'Gemini',
+            default                   => 'None',
         };
     }
 
