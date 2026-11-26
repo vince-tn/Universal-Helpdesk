@@ -120,6 +120,28 @@
                     </select>
                     <div class="field-hint">Choose local only for payroll, employee relations and anything else that must not be sent outside.</div>
                 </div>
+
+                <?php $mode = (string) ($d['assignment_mode'] ?? 'none'); ?>
+                <div class="field">
+                    <label for="am-<?= $id ?>">New tickets go to</label>
+                    <select id="am-<?= $id ?>" name="dept[<?= $id ?>][assignment_mode]">
+                        <option value="none" <?= $mode === 'none' ? 'selected' : '' ?>>Nobody, the team picks them up</option>
+                        <option value="round_robin" <?= $mode === 'round_robin' ? 'selected' : '' ?>>Next agent, fewest open tickets first</option>
+                        <option value="default_person" <?= $mode === 'default_person' ? 'selected' : '' ?>>One default person</option>
+                    </select>
+                    <div class="field-hint">Applies when a ticket arrives or is moved here with nobody assigned.</div>
+                </div>
+
+                <div class="field">
+                    <label for="da-<?= $id ?>">Default person</label>
+                    <select id="da-<?= $id ?>" name="dept[<?= $id ?>][default_assignee_id]">
+                        <option value="">None</option>
+                        <?php foreach ($d['assignees'] as $p): ?>
+                            <option value="<?= (int) $p['id'] ?>" <?= (int) ($d['default_assignee_id'] ?? 0) === (int) $p['id'] ? 'selected' : '' ?>><?= esc($p['name']) ?></option>
+                        <?php endforeach ?>
+                    </select>
+                    <div class="field-hint">Used only with "One default person".</div>
+                </div>
             </div>
 
             <div class="note-strip">

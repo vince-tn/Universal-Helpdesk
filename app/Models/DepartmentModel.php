@@ -10,7 +10,9 @@ class DepartmentModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'handles', 'allow_cloud_ai', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order', 'is_confidential'];
+    protected $allowedFields = ['name', 'handles', 'allow_cloud_ai', 'supervisor_id', 'team_leader_id', 'is_active', 'sort_order', 'is_confidential', 'assignment_mode', 'default_assignee_id'];
+
+    public const ASSIGNMENT_MODES = ['none', 'round_robin', 'default_person'];
 
     public const HANDLES_MAX = 150;
 

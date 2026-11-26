@@ -19,7 +19,7 @@ class TicketModel extends Model
         'closure_criteria', 'ai_source', 'matched_catalogue_key',
         'needs_human_review', 'status', 'ai_updated_at', 'ai_resolution_note',
         'requester_department', 'service_key', 'service_fields', 'is_confidential', 'approval_state',
-        'resolution_note', 'routing_reason',
+        'resolution_note', 'routing_reason', 'requested_for', 'duplicate_of',
     ];
 
     public const STATUSES = [
@@ -66,6 +66,8 @@ class TicketModel extends Model
         'approval_state'         => 'Approval State',
         'resolution_note'        => 'Resolution Note',
         'routing_reason'         => 'Routing Reason',
+        'requested_for'          => 'Requested For',
+        'duplicate_of'           => 'Duplicate Of',
     ];
 
     private const CLAIM_TTL = 600;

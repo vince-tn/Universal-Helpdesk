@@ -95,6 +95,26 @@
     </div>
 <?php endif ?>
 
+<?php if (! empty($duplicate)): ?>
+    <div class="note-strip dup-strip">
+        <?= icon('flag', 15) ?>
+        <span class="dup-text">Possible duplicate of <a href="/tickets/<?= esc($duplicate['id']) ?>">#<?= esc($duplicate['id']) ?></a><?= $duplicate['title'] !== '' ? ': ' . esc($duplicate['title']) : '' ?>. Same requester, similar request.</span>
+        <span class="row-actions">
+            <?php if ($duplicate['canMerge']): ?>
+                <form action="/tickets/<?= esc($tid) ?>/merge" method="post" onsubmit="return confirm('Merge this ticket into #<?= esc($duplicate['id']) ?> and close it?');">
+                    <?= csrf_field() ?>
+                    <input type="hidden" name="target_id" value="<?= esc($duplicate['id']) ?>">
+                    <button type="submit" class="btn btn-sm">Merge into #<?= esc($duplicate['id']) ?></button>
+                </form>
+            <?php endif ?>
+            <form action="/tickets/<?= esc($tid) ?>/not-duplicate" method="post">
+                <?= csrf_field() ?>
+                <button type="submit" class="btn-link">Not a duplicate</button>
+            </form>
+        </span>
+    </div>
+<?php endif ?>
+
 <div class="detail-layout">
     <div>
         <div class="ai-tags" id="ai-tags">
@@ -115,6 +135,9 @@
                 <?php endif ?>
                 <div><span class="k">Category</span><span class="v"><?= esc($f['Category'] ?? 'Not set') ?></span></div>
                 <div><span class="k">Assigned</span><span class="v"><?= $assignedTo ? esc($assignedTo['name']) : 'Unassigned' ?></span></div>
+                <?php if (! empty($f['Requested For'])): ?>
+                    <div><span class="k">Requested for</span><span class="v"><?= esc($requestedFor['name'] ?? $f['Requested For']) ?></span></div>
+                <?php endif ?>
                 <div><span class="k">Requester's department</span><span class="v"><?= esc($f['Requester Department'] ?? '') ?: 'Not given' ?></span></div>
                 <?php if (! empty($f['Service Key'])): ?>
                     <div><span class="k">Request type</span><span class="v"><?= esc($f['Service Key']) ?></span></div>
@@ -152,6 +175,8 @@
             <?php if (! empty($feedback) && (int) $feedback['rating'] > 0): ?>
                 <div class="field-hint">Rated <?= (int) $feedback['rating'] ?> out of 5 by the requester.</div>
             <?php endif ?>
+        <?php elseif (empty($canReply)): ?>
+            <div class="thread-empty">You are watching this ticket. You get its updates by email, and the requester and team reply here.</div>
         <?php else: ?>
             <form action="/tickets/<?= esc($tid) ?>/messages" method="post" class="composer" id="composer">
                 <?= csrf_field() ?>
@@ -343,6 +368,75 @@
                 <div class="field-hint">Anything you add in the conversation is visible to the team handling this.</div>
             </div>
         <?php endif ?>
+
+        <?php if ($canManage || ! empty($watchers) || ! empty($f['Requested For'])): ?>
+            <div class="side-panel">
+                <h3><?= icon('users', 15) ?> People</h3>
+                <ul class="people-list">
+                    <li><span class="k">Requester</span> <span class="v"><?= esc($f['Requester'] ?? '') ?></span></li>
+                    <?php if (! empty($f['Requested For'])): ?>
+                        <li><span class="k">Requested for</span> <span class="v"><?= esc($requestedFor['name'] ?? $f['Requested For']) ?></span></li>
+                    <?php endif ?>
+                    <?php foreach ($watchers as $w): ?>
+                        <li>
+                            <span class="k">Watcher</span> <span class="v"><?= esc($w['name']) ?></span>
+                            <?php if ($canManage): ?>
+                                <form action="/tickets/<?= esc($tid) ?>/watchers/<?= (int) $w['id'] ?>/delete" method="post" class="people-x">
+                                    <?= csrf_field() ?>
+                                    <button type="submit" class="chip-x" title="Remove <?= esc($w['name']) ?>" aria-label="Remove <?= esc($w['name']) ?>">&times;</button>
+                                </form>
+                            <?php endif ?>
+                        </li>
+                    <?php endforeach ?>
+                </ul>
+                <?php if ($canManage && count($watchers) < \App\Libraries\Watchers::MAX): ?>
+                    <form action="/tickets/<?= esc($tid) ?>/watchers" method="post" class="inline-form">
+                        <?= csrf_field() ?>
+                        <label for="add-watchers">Add watchers</label>
+                        <input type="text" id="add-watchers" name="watchers" maxlength="1000" placeholder="name@company.com, other@company.com" autocomplete="off">
+                        <button type="submit" class="btn btn-secondary btn-sm"><?= icon('plus', 14) ?> Add</button>
+                    </form>
+                    <div class="field-hint">Watchers can read the ticket and get email updates. They cannot reply or change it.</div>
+                <?php endif ?>
+            </div>
+        <?php endif ?>
+
+        <?php if ($canManage || ! empty($links)): ?>
+            <div class="side-panel">
+                <h3><?= icon('ticket', 15) ?> Related tickets</h3>
+                <?php if (! empty($links)): ?>
+                    <ul class="people-list">
+                        <?php foreach ($links as $l): ?>
+                            <li>
+                                <a href="/tickets/<?= esc($l['id']) ?>" class="ticket-ref">#<?= esc($l['id']) ?></a>
+                                <span class="v"><?= esc($l['title']) ?> <span class="by-user"><?= esc($l['status']) ?></span></span>
+                                <?php if ($canManage): ?>
+                                    <form action="/tickets/<?= esc($tid) ?>/link" method="post" class="people-x">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="target_id" value="<?= esc($l['id']) ?>">
+                                        <button type="submit" name="unlink" value="1" class="chip-x" title="Unlink #<?= esc($l['id']) ?>" aria-label="Unlink #<?= esc($l['id']) ?>">&times;</button>
+                                    </form>
+                                <?php endif ?>
+                            </li>
+                        <?php endforeach ?>
+                    </ul>
+                <?php elseif ($canManage): ?>
+                    <div class="field-hint">No linked tickets.</div>
+                <?php endif ?>
+                <?php if ($canManage && in_array((string) ($f['Status'] ?? 'New'), \App\Models\TicketModel::OPEN_STATUSES, true)): ?>
+                    <form action="/tickets/<?= esc($tid) ?>/link" method="post" class="inline-form related-form" id="related-form">
+                        <?= csrf_field() ?>
+                        <label for="target_id">Ticket number</label>
+                        <input type="text" id="target_id" name="target_id" inputmode="numeric" pattern="#?[0-9]+" maxlength="12" placeholder="e.g. 1042" required>
+                        <div class="row-actions">
+                            <button type="submit" class="btn btn-secondary btn-sm">Link</button>
+                            <button type="submit" class="btn btn-secondary btn-sm" formaction="/tickets/<?= esc($tid) ?>/merge" data-merge>Merge into it</button>
+                        </div>
+                    </form>
+                    <div class="field-hint">Merge copies this ticket into the other one as an internal note and closes this one.</div>
+                <?php endif ?>
+            </div>
+        <?php endif ?>
     </div>
 </div>
 
@@ -364,6 +458,14 @@
             body.value = (body.value ? body.value + '\n\n' : '') + canned.value;
             canned.value = '';
             body.focus();
+        });
+    }
+    var related = document.getElementById('related-form');
+    if (related) {
+        related.addEventListener('submit', function (e) {
+            var btn = e.submitter;
+            var no = (document.getElementById('target_id').value || '').replace('#', '');
+            if (btn && btn.hasAttribute('data-merge') && !confirm('Merge this ticket into #' + no + ' and close it?')) e.preventDefault();
         });
     }
     var internal = document.getElementById('is-internal');

@@ -153,8 +153,17 @@ class Org
             return false;
         }
 
-        return self::canManageTicket($user, $fields)
-            || strcasecmp((string) ($fields['Requester Email'] ?? ''), (string) ($user['email'] ?? '')) === 0;
+        if (self::canManageTicket($user, $fields) || Watchers::isRequesterSide($user, $fields)) {
+            return true;
+        }
+
+        return Watchers::isWatching($user, (string) ($fields['Ticket ID'] ?? '')) && Watchers::allowed($user, $fields);
+    }
+
+    // watchers read only, the requester side and staff can reply
+    public static function canReplyTicket(?array $user, array $fields): bool
+    {
+        return $user !== null && (self::canManageTicket($user, $fields) || Watchers::isRequesterSide($user, $fields));
     }
 
     // leads of the team, the assignee and the matching sub-team staff for a confidential ticket

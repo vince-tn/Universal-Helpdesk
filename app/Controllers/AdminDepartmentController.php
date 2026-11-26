@@ -31,6 +31,7 @@ class AdminDepartmentController extends BaseController
         foreach ($departments as &$department) {
             $department['staff_count']     = $this->departments->staffCount((string) $department['name']);
             $department['leads']           = $users->leadCandidates((string) $department['name']);
+            $department['assignees']       = $this->assignees($department);
             $department['article_count']   = $articles[(int) $department['id']] ?? 0;
             $department['guardrail_count'] = $rules[(int) $department['id']] ?? 0;
         }
@@ -52,6 +53,7 @@ class AdminDepartmentController extends BaseController
         $isSuper = Org::isSuperadmin($me);
         $rows    = (array) $this->request->getPost('dept');
         $saved   = 0;
+        $noPerson = [];
 
         foreach ($rows as $id => $fields) {
             $id = (int) $id;
@@ -91,6 +93,20 @@ class AdminDepartmentController extends BaseController
 
             if (array_key_exists('handles', $fields)) {
                 $data['handles'] = $this->handles($fields['handles']);
+            }
+
+            if (array_key_exists('assignment_mode', $fields)) {
+                $mode     = (string) $fields['assignment_mode'];
+                $personId = (int) ($fields['default_assignee_id'] ?? 0);
+                $allowed  = array_map('intval', array_column($this->assignees($current), 'id'));
+
+                $data['assignment_mode']     = in_array($mode, DepartmentModel::ASSIGNMENT_MODES, true) ? $mode : 'none';
+                $data['default_assignee_id'] = in_array($personId, $allowed, true) ? $personId : null;
+
+                if ($data['assignment_mode'] === 'default_person' && $data['default_assignee_id'] === null) {
+                    $data['assignment_mode'] = 'none';
+                    $noPerson[]              = $name;
+                }
             }
 
             $this->departments->update($id, $data);
@@ -159,8 +175,27 @@ class AdminDepartmentController extends BaseController
             ]);
         }
 
-        return redirect()->to('/admin/departments')
+        $redirect = redirect()->to('/admin/departments')
             ->with('success', $saved === 0 ? 'Nothing to save.' : $saved . ' department(s) saved.');
+
+        if ($noPerson !== []) {
+            $redirect = $redirect->with('error', 'No default person picked, so auto-assign is off for: ' . implode(', ', $noPerson) . '.');
+        }
+
+        return $redirect;
+    }
+
+    // active staff of the department plus its leads, who can take tickets by default
+    private function assignees(array $department): array
+    {
+        $leads = array_filter([(int) ($department['team_leader_id'] ?? 0), (int) ($department['supervisor_id'] ?? 0)]);
+
+        return array_values(array_filter(
+            (new UserModel())->whereIn('role', [UserModel::ROLE_AGENT, UserModel::ROLE_TEAM_LEADER, UserModel::ROLE_SUPERVISOR])
+                ->where('is_active', 1)->orderBy('name', 'ASC')->findAll(),
+            static fn ($u) => strcasecmp(trim((string) $u['department']), (string) $department['name']) === 0
+                || in_array((int) $u['id'], $leads, true)
+        ));
     }
 
     private function handles($raw): ?string

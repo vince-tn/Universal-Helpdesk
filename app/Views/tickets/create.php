@@ -101,6 +101,18 @@
                 <input type="date" id="needed_by" name="needed_by" value="<?= esc(old('needed_by')) ?>" min="<?= date('Y-m-d') ?>">
             </div>
 
+            <div class="form-group">
+                <label for="requested_for">Request for (optional)</label>
+                <input type="email" id="requested_for" name="requested_for" value="<?= esc(old('requested_for')) ?>" maxlength="190" placeholder="colleague@company.com" autocomplete="off">
+                <div class="field-hint">Raising this for someone else? Add their work email. They can follow and reply.</div>
+            </div>
+
+            <div class="form-group">
+                <label for="watchers">CC / watchers (optional)</label>
+                <input type="text" id="watchers" name="watchers" value="<?= esc(old('watchers')) ?>" maxlength="1000" placeholder="name@company.com, other@company.com" autocomplete="off">
+                <div class="field-hint">Up to 10 colleagues, separated by commas. They get updates but cannot reply.</div>
+            </div>
+
             <div class="form-group span-2">
                 <label for="request_description">Describe your request</label>
 
