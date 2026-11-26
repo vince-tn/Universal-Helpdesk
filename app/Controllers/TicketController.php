@@ -441,6 +441,12 @@ class TicketController extends BaseController
 
         $localOnly = (int) ($fields['Confidential'] ?? 0) === 1;
 
+        // screenshots are read by the image model first so the classifier sees the error text too
+        $reading = (new \App\Libraries\AttachmentVision())->readTicket($id, (string) ($fields['Request HTML'] ?? ''), $localOnly);
+        if ($reading !== '') {
+            $text .= "\n\nAttached screenshot shows:\n" . $reading;
+        }
+
         $result = $this->n8nService->classify([
             'Requester Name'        => $fields['Requester'] ?? '',
             'Requester Email'       => $fields['Requester Email'] ?? '',

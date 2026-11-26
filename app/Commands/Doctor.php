@@ -158,6 +158,8 @@ class Doctor extends BaseCommand
     {
         if ($config->cloudEnabled()) {
             $this->ok('cloud model enabled - ' . ((new \Config\N8n())->cloudProvider() === 'openrouter' ? 'OpenRouter' : 'Gemini') . ' answers first, Ollama takes over if it fails');
+            $this->ok('text router ' . \App\Libraries\OpenRouter::textModel() . ', image model ' . (\App\Libraries\OpenRouter::visionModel() ?: 'not set, run helpdesk:models --apply'));
+            CLI::write('  --   classification and chat go through n8n; keep training off in the OpenRouter account privacy settings', 'dark_gray');
 
             return;
         }

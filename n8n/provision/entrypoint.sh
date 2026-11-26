@@ -10,7 +10,7 @@ CHAT_ID=HelpdeskChat0001
 
 OLLAMA_MODEL="${OLLAMA_MODEL:-qwen2.5:3b}"
 GEMINI_MODEL="${GEMINI_MODEL:-models/gemini-3.6-flash}"
-OPENROUTER_MODEL="${OPENROUTER_MODEL:-openrouter/free}"
+OPENROUTER_MODEL="${OPENROUTER_MODEL:-openrouter/auto}"
 BRAND_NAME="${BRAND_NAME:-Service Desk}"
 
 log() { echo "[provision] $*"; }

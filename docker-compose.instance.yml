@@ -21,6 +21,8 @@ services:
       - CONFIDENTIAL_LOCAL_ONLY=${CONFIDENTIAL_LOCAL_ONLY:-on}
       - AI_CLOUD_PROVIDER=openrouter
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/auto}
+      - OPENROUTER_VISION_MODEL=${OPENROUTER_VISION_MODEL:-}
 
   mailpit:
     container_name: ${INSTANCE}-mailpit
@@ -31,8 +33,7 @@ services:
     ports: !reset []
     environment:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
-      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/free}
-      - OPENROUTER_FALLBACK_MODEL=${OPENROUTER_FALLBACK_MODEL:-google/gemma-4-31b-it:free}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openrouter/auto}
       - BRAND_NAME=${BRAND_NAME:-Service Desk}
 
   ollama:

@@ -513,7 +513,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ model: '__OPENROUTER_MODEL__', temperature: 0, max_tokens: 40, messages: [ { role: 'system', content: 'You route helpdesk tickets. Pick the ONE team whose handles list covers the request, and return its name exactly as written in the list. Reply with the team name only.' }, { role: 'user', content: $('Webhook').first().json.body.routing_prompt } ] }) }}",
+        "jsonBody": "={{ JSON.stringify({ model: '__OPENROUTER_MODEL__', provider: { data_collection: 'deny', allow_fallbacks: true }, temperature: 0, max_tokens: 40, messages: [ { role: 'system', content: 'You route helpdesk tickets. Pick the ONE team whose handles list covers the request, and return its name exactly as written in the list. Reply with the team name only.' }, { role: 'user', content: $('Webhook').first().json.body.routing_prompt } ] }) }}",
         "options": {
           "timeout": 60000
         }
