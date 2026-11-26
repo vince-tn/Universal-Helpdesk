@@ -15,7 +15,7 @@ class AccountController extends BaseController
         return view('account/index', [
             'account'     => $user,
             'mfaEnabled'  => $mfa->isEnabled($user),
-            'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role']),
+            'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role'], (string) ($user['email'] ?? '')),
             'mfaCodes'    => $mfa->recoveryLeft($user),
         ]);
     }

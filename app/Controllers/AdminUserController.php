@@ -97,7 +97,7 @@ class AdminUserController extends BaseController
             'editUser'    => $user,
             'deptRoles'   => $byDept,
             'mfaEnabled'  => (new \App\Libraries\Mfa())->isEnabled($user),
-            'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role']),
+            'mfaRequired' => \App\Libraries\Mfa::requiredFor((string) $user['role'], (string) ($user['email'] ?? '')),
         ]);
     }
 
